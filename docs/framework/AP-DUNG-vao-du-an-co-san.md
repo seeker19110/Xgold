@@ -19,6 +19,18 @@
 
 ---
 
+## Mang khung sang dự án (một lệnh)
+Từ repo khung, chạy `copy-framework.sh` trỏ tới dự án đích:
+```bash
+bash copy-framework.sh /đường-dẫn/tới/dự-án
+```
+Script **không đè** file đang chạy: tài liệu khung + `CLAUDE.md` (nếu chưa có) copy thẳng; file cấu hình
+theo stack được đưa vào `_framework-dropins/` để bạn tự merge. Sau đó **mở phiên Claude Code trong dự án đích**
+→ AI tự đọc `CLAUDE.md` và chạy Bước 0 (tự dò stack). *Vì sao phải copy chứ không "đưa link": một phiên
+chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link.*
+
+---
+
 ## PHẦN A — Trình tự áp dụng (4 bước)
 
 ### Bước 0 — Hiểu & ghi lại hiện trạng (AI TỰ XÁC ĐỊNH bằng cách đọc repo)

@@ -33,6 +33,14 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
   **nâng cao i18n/PWA/Sentry/SEO**).
 - `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật.
 
+## Mang khung sang một dự án khác
+Dùng `copy-framework.sh` (chép tài liệu khung + `CLAUDE.md` sang dự án đích, không đè cấu hình
+đang chạy — đưa vào `_framework-dropins/` để tự merge):
+```bash
+bash copy-framework.sh /đường-dẫn/tới/dự-án
+```
+Chi tiết cho dự án đã phát triển: `docs/framework/AP-DUNG-vao-du-an-co-san.md`.
+
 ## 2 việc phải làm tay
 1. `MERGE-vao-package.json.md` — cài gói + thêm khối `scripts` + `npx husky init`.
 2. `MERGE-vao-tsconfig.json.md` — thêm các cờ TypeScript strict.
