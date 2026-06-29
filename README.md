@@ -28,8 +28,9 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
 - `.husky/pre-commit`, `.husky/commit-msg` — hook (cần chạy `npx husky init` trước, xem dưới).
 - `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/`, `.github/dependabot.yml`,
   `.github/workflows/ci.yml`, `.github/workflows/lighthouse-ci.yml`
-- `docs/framework/` — 8 tài liệu khung (quy trình, luật AI, **chọn công nghệ research-first**,
-  cấu hình, runbook, bổ sung chất lượng Nhóm 1 & 2, theme, **nâng cao i18n/PWA/Sentry/SEO**).
+- `docs/framework/` — 9 tài liệu khung (quy trình, luật AI, **chọn công nghệ research-first**,
+  cấu hình, runbook dự án mới, **áp vào dự án có sẵn**, bổ sung chất lượng Nhóm 1 & 2, theme,
+  **nâng cao i18n/PWA/Sentry/SEO**).
 - `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật.
 
 ## 2 việc phải làm tay

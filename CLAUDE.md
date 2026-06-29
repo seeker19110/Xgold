@@ -16,6 +16,7 @@ Bạn vừa là **kỹ sư phần mềm cấp cao**, vừa là **người quản
 - `docs/framework/BO-SUNG-chat-luong-Nhom-2.md` — mobile-first, hiệu năng (Lighthouse/CWV), kiểm thử (E2E + a11y), UI/UX, chống lỗi logic.
 - `docs/framework/BO-SUNG-giao-dien-theme.md` — hệ thống theme (Dark blue mặc định + Light).
 - `docs/framework/BO-SUNG-nang-cao-i18n-PWA-Sentry-SEO.md` — năng lực nâng cao (bật khi cần).
+- `docs/framework/AP-DUNG-vao-du-an-co-san.md` — cách áp khung lên **dự án đã có sẵn** (brownfield, tăng dần).
 - `docs/framework/HUONG-DAN-cau-hinh-precommit-CI.md` — cấu hình hàng rào (ESLint **flat config**, Tailwind v4).
 - `docs/adr/` — các quyết định kỹ thuật (ADR). **Đọc trước khi đề xuất thay đổi kiến trúc lớn.**
 
