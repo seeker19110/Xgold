@@ -2,7 +2,7 @@
 
 Giải nén bộ này vào **gốc repo** của một dự án Next.js mới (đã tạo bằng
 `create-next-app` với TypeScript + Tailwind + ESLint). Phần lớn file đã ở đúng chỗ;
-chỉ 2 file cần gộp tay (xem bên dưới).
+phần cài gói + sửa `package.json`/`tsconfig` làm theo runbook (Phần D).
 
 ## Bắt đầu từ đâu
 Đọc **`docs/framework/KHOI-TAO-du-an-moi.md`** — runbook chỉ rõ làm gì theo thứ tự và
@@ -33,12 +33,11 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
   `lighthouse-ci.yml`, `codeql.yml` (SAST), `secret-scan.yml` (gitleaks), `release.yml` (release-please).
 - `supabase/migrations/` — **migration MẪU** (bảng + ràng buộc + index + **RLS + policy**); `supabase/README.md`.
 - `LICENSE` (MIT — đổi chủ sở hữu/giấy phép theo dự án), `SECURITY.md`, `CONTRIBUTING.md`.
-- `docs/framework/` — 9 tài liệu khung (quy trình, luật AI, **chọn công nghệ research-first**,
-  cấu hình, runbook dự án mới, **áp vào dự án có sẵn**, bổ sung chất lượng Nhóm 1 & 2, theme,
-  **nâng cao i18n/PWA/Sentry/SEO**).
-- `docs/ops/` — vận hành GĐ 8: runbook **xử lý sự cố** + mẫu **post-mortem**.
-- `docs/framework/CHECKLIST-trien-khai-du-an-that.md` — **ghi chú** mọi việc cần làm khi triển khai trên dự án thật.
-- `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật.
+- `docs/framework/` — 6 tài liệu khung: **KHUNG-1/2/3** (quy trình · luật AI · chọn công nghệ research-first);
+  **KHOI-TAO-du-an-moi** (runbook: trình tự + cấu hình hàng rào *Phần D* + checklist dự án thật *Phần E*);
+  **AP-DUNG-vao-du-an-co-san** (brownfield); **BO-SUNG-chat-luong** (Nhóm 1+2 + theme + nâng cao i18n/PWA/Sentry/SEO/analytics).
+- `docs/ops/incident-response.md` — vận hành GĐ 8: xử lý sự cố + **mẫu post-mortem**.
+- `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật (ví dụ đã điền: `0001-chon-stack.md`).
 
 ## Mang khung sang một dự án khác
 Dùng `copy-framework.sh` (chép tài liệu khung + `CLAUDE.md` sang dự án đích, không đè cấu hình
@@ -48,15 +47,15 @@ bash copy-framework.sh /đường-dẫn/tới/dự-án
 ```
 Chi tiết cho dự án đã phát triển: `docs/framework/AP-DUNG-vao-du-an-co-san.md`.
 
-## 2 việc phải làm tay
-1. `MERGE-vao-package.json.md` — cài gói + thêm khối `scripts` + `npx husky init`.
-2. `MERGE-vao-tsconfig.json.md` — thêm các cờ TypeScript strict.
+## Việc phải làm tay (không đè được file của create-next-app)
+Theo **`docs/framework/KHOI-TAO-du-an-moi.md` Phần D**: cài gói + thêm khối `scripts` + `npx husky init`;
+thêm các cờ TypeScript `strict` vào `tsconfig.json`.
 
-> Sau khi gộp xong, làm tiếp theo runbook (`docs/framework/KHOI-TAO-du-an-moi.md`):
-> bật branch protection trên GitHub, kết nối Supabase, deploy thử Vercel, rồi
-> **kiểm chứng hàng rào** (thử commit sai phải bị chặn) trước khi code tính năng.
+> Sau đó làm tiếp theo runbook: bật branch protection + Code scanning trên GitHub, kết nối Supabase,
+> deploy thử Vercel, rồi **kiểm chứng hàng rào** (thử commit sai phải bị chặn) trước khi code tính năng.
+> Danh mục đầy đủ việc-dự-án-thật: Phần E của runbook.
 
 ## Lưu ý
 - ESLint dùng **flat config** (`eslint.config.mjs`) cho ESLint 9/10 + Next 16. Nếu phiên bản Next/ESLint
   của bạn khác, đối chiếu lại cách `eslint-config-next` xuất config (FlatCompat vs flat gốc).
-- Hai file MERGE và README này KHÔNG cần commit — xóa sau khi setup xong nếu muốn.
+- README này KHÔNG cần commit vào dự án thật — xóa sau khi setup xong nếu muốn.

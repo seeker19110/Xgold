@@ -108,8 +108,8 @@
 
 **Giao diện:**
 - [ ] Design tokens nhất quán (màu, khoảng cách, font) — không "màu tùy hứng".
-- [ ] **Theme: nền Dark blue mặc định + chế độ Light** (xem `BO-SUNG-giao-dien-theme.md`).
-- [ ] Mobile-first; responsive (checklist cụ thể: `BO-SUNG-chat-luong-Nhom-2.md` mục 1).
+- [ ] **Theme: nền Dark blue mặc định + chế độ Light** (xem `BO-SUNG-chat-luong.md` PHẦN 3).
+- [ ] Mobile-first; responsive (checklist cụ thể: `BO-SUNG-chat-luong.md` Nhóm 2 mục 1).
 - [ ] Tương phản màu đạt WCAG AA **ở cả hai chế độ nền**.
 
 **Cổng:** Schema + kiến trúc + API contract được phản biện và duyệt.

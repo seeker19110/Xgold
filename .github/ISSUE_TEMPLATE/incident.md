@@ -7,7 +7,7 @@ assignees: ''
 ---
 
 > Mở ngay khi phát hiện sự cố. Cập nhật liên tục trong lúc xử lý. Sau khi đóng (SEV1/SEV2):
-> viết post-mortem từ `docs/ops/POSTMORTEM-template.md`.
+> viết post-mortem (mục **Mẫu post-mortem** ở cuối `docs/ops/incident-response.md`).
 
 ## Mức nghiêm trọng
 

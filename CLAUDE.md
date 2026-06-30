@@ -13,12 +13,9 @@ Bạn vừa là **kỹ sư phần mềm cấp cao**, vừa là **người quản
 - `docs/framework/KHUNG-1-quy-trinh-va-tieu-chuan.md` — quy trình 9 giai đoạn + tiêu chuẩn từng giai đoạn.
 - `docs/framework/KHUNG-2-luat-AI-va-mau-du-an.md` — luật AI đầy đủ + mẫu dự án.
 - `docs/framework/KHUNG-3-chon-cong-nghe-va-de-xuat-chu-dong.md` — **research-first**: chọn công nghệ/phiên bản từ ý tưởng + đề xuất chủ động mọi mặt. **Đọc ở GĐ 0–2.**
-- `docs/framework/BO-SUNG-chat-luong-Nhom-2.md` — mobile-first, hiệu năng (Lighthouse/CWV), kiểm thử (E2E + a11y), UI/UX, chống lỗi logic.
-- `docs/framework/BO-SUNG-giao-dien-theme.md` — hệ thống theme (Dark blue mặc định + Light).
-- `docs/framework/BO-SUNG-nang-cao-i18n-PWA-Sentry-SEO.md` — năng lực nâng cao (bật khi cần).
+- `docs/framework/KHOI-TAO-du-an-moi.md` — runbook khởi tạo: trình tự + **cấu hình hàng rào** (Phần D) + **checklist triển khai dự án thật** (Phần E).
 - `docs/framework/AP-DUNG-vao-du-an-co-san.md` — cách áp khung lên **dự án đã có sẵn** (brownfield, tăng dần).
-- `docs/framework/HUONG-DAN-cau-hinh-precommit-CI.md` — cấu hình hàng rào (ESLint **flat config**, Tailwind v4).
-- `docs/framework/CHECKLIST-trien-khai-du-an-that.md` — **việc chỉ làm được trên dự án thật** (tạo app, repo settings, secrets, Supabase/Vercel, analytics). Đọc khi áp khung vào dự án thật.
+- `docs/framework/BO-SUNG-chat-luong.md` — bổ sung chất lượng & năng lực: Nhóm 1 (env, migration, ADR, DoR), Nhóm 2 (mobile, hiệu năng/CWV, E2E+a11y, UI/UX, chống lỗi logic), theme (Dark blue+Light), nâng cao (i18n/PWA/Sentry/SEO/analytics).
 - `docs/ops/` — vận hành GĐ 8: **xử lý sự cố** (incident-response) + mẫu **post-mortem**. Đọc khi có sự cố production.
 - `docs/adr/` — các quyết định kỹ thuật (ADR). **Đọc trước khi đề xuất thay đổi kiến trúc lớn.**
 

@@ -83,7 +83,7 @@ Thứ tự tăng dần để không bị "ngộp lỗi":
 - [ ] **Lighthouse:** đo điểm hiện tại làm baseline; đặt budget kiểu "không tệ hơn hiện tại", cải thiện dần (Nhóm 2 mục 2).
 - [ ] **Accessibility:** chạy axe, lập danh sách vi phạm, sửa theo mức nghiêm trọng (Nhóm 2 mục 3).
 - [ ] **Theme/mobile:** nếu đã có UI, **retrofit dần** sang design tokens (`styles/theme.css`) — không viết lại giao diện.
-- [ ] **Observability (Sentry):** thêm sớm để **thấy lỗi production thật** (Nhóm nâng cao mục 3).
+- [ ] **Observability (Sentry):** thêm sớm để **thấy lỗi production thật** (`BO-SUNG-chat-luong.md` PHẦN 4).
 - [ ] **Migration:** nếu áp kỷ luật migration lên CSDL đang chạy → **baseline schema hiện tại thành migration đầu tiên**
       (dump schema), rồi mọi thay đổi sau đi qua migration có phiên bản.
 
