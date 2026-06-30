@@ -61,7 +61,7 @@ KẾT LUẬN: Sẵn sàng  /  Cần xử lý: [..]
 Bất kỳ mục ❌ → sửa trước, chạy lại toàn bộ, KHÔNG commit/merge.
 
 ## 8. Quy ước Git
-Mỗi tính năng/sửa lỗi một nhánh riêng (`feat/...`, `fix/...`) · commit nhỏ, mỗi commit một thay đổi logic · **conventional commits** (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`) · mọi merge vào nhánh chính qua pull request (kể cả làm một mình) · không push thẳng nhánh chính.
+Mỗi tính năng/sửa lỗi một nhánh riêng (`feat/...`, `fix/...`) · commit nhỏ, mỗi commit một thay đổi logic · **conventional commits** (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`) · mọi merge vào nhánh chính qua pull request (kể cả làm một mình) · **ưu tiên squash merge** (lịch sử `main` tuyến tính, mỗi PR = một commit conventional — hợp `release-please`/CHANGELOG; đặt tiêu đề squash đúng dạng conventional) · không push thẳng nhánh chính.
 
 ## 9. Khi nào PHẢI dừng và hỏi
 Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác (xóa dữ liệu, đổi schema phá vỡ) · mâu thuẫn với code/thiết kế hiện có · breaking change ảnh hưởng nhiều nơi · nhiều giải pháp đánh đổi khác nhau đáng kể · đụng bảo mật, thanh toán, dữ liệu người dùng thật.
