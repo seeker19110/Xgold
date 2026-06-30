@@ -23,6 +23,10 @@ Mục tiêu phản hồi: xác nhận trong vòng **72 giờ**; thống nhất m
 | Biến môi trường | `lib/env.ts` (Zod) | thiếu/sai biến → dừng ngay khi khởi động |
 | CSDL | RLS bật + policy (`supabase/migrations/`) | truy cập dữ liệu của người khác |
 
+> **Thiết lập một lần cho CodeQL:** bật **Code scanning** trong repo (Settings → Code security & analysis).
+> Nếu chưa bật, job CodeQL sẽ lỗi "Code scanning is not enabled for this repository" khi upload kết quả.
+> Repo public: miễn phí. Repo private: cần GitHub Advanced Security. Repo khung chưa có app sẽ tự bỏ qua CodeQL.
+
 ## Nguyên tắc bất biến (không bao giờ phá)
 
 - **Bí mật không bao giờ vào Git** — dùng biến môi trường (`.env*` đã bị `.gitignore` chặn).
