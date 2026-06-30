@@ -23,14 +23,20 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
 - `app/` — starter: `not-found.tsx`, `error.tsx`, `global-error.tsx` (trang lỗi), `robots.ts`,
   `sitemap.ts` (SEO), `manifest.ts` + `sw.ts` (PWA).
 - `i18n/request.ts`, `messages/{vi,en}.json` — đa ngôn ngữ (next-intl).
-- `.prettierrc`, `.prettierignore`, `commitlint.config.js`,
+- `.prettierrc`, `.prettierignore`, `commitlint.config.cjs`,
   `.lintstagedrc.json`, `vitest.config.ts`, `vitest.setup.ts`, `.gitignore`
 - `.husky/pre-commit`, `.husky/commit-msg` — hook (cần chạy `npx husky init` trước, xem dưới).
-- `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/`, `.github/dependabot.yml`,
-  `.github/workflows/ci.yml`, `.github/workflows/lighthouse-ci.yml`
+- `components/theme-toggle.tsx` — nút chuyển theme (Dark blue ↔ Light) dùng ngay.
+- `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/` (gồm mẫu **sự cố**),
+  `.github/dependabot.yml`, `.github/CODEOWNERS`, và các workflow:
+  `ci.yml` (lint/type/format/test+coverage/build/audit + **E2E** + chặn `[ĐIỀN]`),
+  `lighthouse-ci.yml`, `codeql.yml` (SAST), `secret-scan.yml` (gitleaks), `release.yml` (release-please).
+- `supabase/migrations/` — **migration MẪU** (bảng + ràng buộc + index + **RLS + policy**); `supabase/README.md`.
+- `LICENSE` (MIT — đổi chủ sở hữu/giấy phép theo dự án), `SECURITY.md`, `CONTRIBUTING.md`.
 - `docs/framework/` — 9 tài liệu khung (quy trình, luật AI, **chọn công nghệ research-first**,
   cấu hình, runbook dự án mới, **áp vào dự án có sẵn**, bổ sung chất lượng Nhóm 1 & 2, theme,
   **nâng cao i18n/PWA/Sentry/SEO**).
+- `docs/ops/` — vận hành GĐ 8: runbook **xử lý sự cố** + mẫu **post-mortem**.
 - `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật.
 
 ## Mang khung sang một dự án khác

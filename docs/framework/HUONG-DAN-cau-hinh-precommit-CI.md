@@ -11,9 +11,12 @@
 1. **ESLint + Prettier + TypeScript** — báo lỗi ngay khi gõ.
 2. **Pre-commit hook (Husky + lint-staged)** — chặn `git commit` nếu lint/format/type sai.
 3. **commit-msg hook (commitlint)** — ép commit message đúng chuẩn.
-4. **CI (GitHub Actions)** — chạy lại toàn bộ kiểm tra trên máy chủ sạch ở mỗi push/PR.
-5. **Branch protection** — cấm merge khi CI chưa xanh.
-6. **Dependabot** — tự vá thư viện có lỗ hổng.
+4. **CI (GitHub Actions)** — chạy lại toàn bộ kiểm tra trên máy chủ sạch ở mỗi push/PR
+   (lint/type/format/test+coverage/build/audit + **E2E Playwright** + chặn placeholder `[ĐIỀN]`).
+5. **Lighthouse CI** — cổng ngân sách hiệu năng (Core Web Vitals) trên mỗi PR.
+6. **CodeQL (SAST) + gitleaks** — quét lỗ hổng mã nguồn + bí mật lỡ commit.
+7. **Branch protection** — cấm merge khi CI chưa xanh.
+8. **Dependabot** — tự vá thư viện có lỗ hổng.
 
 ---
 
@@ -190,13 +193,17 @@ Tạo file `.lintstagedrc.json`:
 
 ## Bước 8 — commitlint & commit-msg hook
 
-Tạo file `commitlint.config.js`:
+Tạo file `commitlint.config.cjs`:
 
 ```js
 module.exports = {
   extends: ['@commitlint/config-conventional'],
 };
 ```
+
+> Dùng đuôi **`.cjs`** (CommonJS) thay vì `.js`: nếu `package.json` đặt `"type": "module"` thì file
+> `.js` sẽ bị coi là ESM và `module.exports` vỡ. `.cjs` chạy đúng bất kể cấu hình module của dự án.
+> (commitlint tự nhận diện `commitlint.config.{cjs,js,mjs,ts}`.)
 
 Tạo file `.husky/commit-msg` với nội dung:
 
@@ -242,7 +249,8 @@ Viết thử một test nhỏ (ví dụ `lib/example.test.ts`) để xác nhận
 
 ## Bước 10 — CI với GitHub Actions
 
-Tạo file `.github/workflows/ci.yml`:
+File `.github/workflows/ci.yml` (đã kèm ở gốc repo) chạy trên Node 22 với khung sau (rút gọn — xem file
+thật để biết đầy đủ guard `package.json`):
 
 ```yaml
 name: CI
@@ -261,11 +269,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Cài đặt
         run: npm ci
+
+      - name: Quét bảo mật phụ thuộc
+        run: npm audit --audit-level=high
 
       - name: Lint
         run: npm run lint
@@ -276,18 +287,37 @@ jobs:
       - name: Kiểm tra format
         run: npm run format:check
 
-      - name: Test
-        run: npm test
+      - name: Test (unit + coverage)
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+  # Cổng E2E riêng: build app rồi chạy Playwright (desktop + mobile) + axe.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e
 ```
 
 > CI chạy trên máy chủ sạch nên bắt được lỗi kiểu "máy tôi chạy được mà". Mọi pull request sẽ hiển thị xanh/đỏ theo kết quả này.
 >
-> File `ci.yml` kèm theo có một step kiểm tra đầu job: **nếu chưa có `package.json`** (repo mới chỉ có
-> khung) thì các bước build/test được bỏ qua để CI vẫn xanh; **khi dự án thật được tạo**, toàn bộ hàng rào
-> tự kích hoạt. Khi đã có app, có thể xóa step guard này nếu muốn CI luôn chạy đầy đủ.
+> File `ci.yml` kèm theo có một step kiểm tra đầu mỗi job: **nếu chưa có `package.json`** (repo mới chỉ có
+> khung) thì các bước build/test/E2E được bỏ qua để CI vẫn xanh; **khi dự án thật được tạo**, toàn bộ hàng rào
+> tự kích hoạt. Khi đã có app, có thể xóa step guard này nếu muốn CI luôn chạy đầy đủ. File thật còn có thêm:
+> bước **chặn placeholder `[ĐIỀN]`** trong CLAUDE.md, và job **e2e** lưu báo cáo Playwright làm artifact.
+>
+> **Hàng rào CI khác kèm theo** (file riêng trong `.github/workflows/`): `lighthouse-ci.yml` (ngân sách hiệu năng),
+> `codeql.yml` (SAST), `secret-scan.yml` (gitleaks), `release.yml` (release-please — sinh CHANGELOG/phiên bản
+> từ conventional commits khi đã có dự án thật).
 
 ---
 
@@ -296,8 +326,10 @@ jobs:
 Vào repo → **Settings → Branches → Add branch ruleset** (hoặc Add rule) cho nhánh `main`:
 
 - [ ] Bật **Require a pull request before merging** (cấm push thẳng).
-- [ ] Bật **Require status checks to pass** → chọn job `quality` (CI ở trên).
+- [ ] Bật **Require status checks to pass** → chọn các job: `quality`, `e2e`, `lighthouse`,
+      `analyze` (CodeQL), `gitleaks` (chọn những cái bạn đã bật).
 - [ ] Bật **Require branches to be up to date before merging**.
+- [ ] Bật **Require review from Code Owners** (kết hợp `.github/CODEOWNERS`).
 - [ ] (Tùy chọn) Bật **Require conversation resolution before merging**.
 
 > Đây là lưới an toàn cuối: dù làm một mình, không gì lọt vào `main` khi CI chưa xanh.

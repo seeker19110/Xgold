@@ -22,27 +22,34 @@ dự-án/
 │  │  ├─ BO-SUNG-chat-luong-Nhom-2.md
 │  │  ├─ BO-SUNG-giao-dien-theme.md
 │  │  └─ BO-SUNG-nang-cao-i18n-PWA-Sentry-SEO.md
+│  ├─ ops/                            ← vận hành GĐ 8: incident-response + post-mortem (mẫu)
 │  └─ adr/                            ← các quyết định kỹ thuật
 │     └─ 0000-template.md
+├─ LICENSE · SECURITY.md · CONTRIBUTING.md  ← giấy phép + chính sách bảo mật + hướng dẫn đóng góp
 ├─ eslint.config.mjs                  ← ESLint flat config (Next 16 / ESLint 9-10)
 ├─ postcss.config.mjs                 ← Tailwind v4
 ├─ .nvmrc · .editorconfig · .env.example
 ├─ lib/env.ts                         ← xác thực biến môi trường
 ├─ styles/theme.css                   ← design tokens (Dark blue + Light)
+├─ components/theme-toggle.tsx        ← nút chuyển theme (dùng ngay)
 ├─ app/                               ← starter: trang lỗi, robots/sitemap, manifest, sw (PWA)
 ├─ i18n/request.ts · messages/*.json  ← đa ngôn ngữ (next-intl)
 ├─ e2e/smoke.spec.ts                  ← E2E mẫu (Playwright + axe)
 ├─ playwright.config.ts               ← cấu hình E2E (desktop + mobile)
 ├─ lighthouserc.json                  ← ngân sách hiệu năng (Lighthouse CI)
 ├─ CHANGELOG.md                       ← lịch sử thay đổi
-├─ supabase/migrations/               ← migration có phiên bản
+├─ supabase/migrations/               ← migration có phiên bản (mẫu: bảng + ràng buộc + RLS policy)
 └─ .github/
    ├─ pull_request_template.md
-   ├─ ISSUE_TEMPLATE/                  ← mẫu báo lỗi / đề xuất tính năng
+   ├─ CODEOWNERS                       ← tự gán reviewer (ăn khớp branch protection)
+   ├─ ISSUE_TEMPLATE/                  ← mẫu báo lỗi / đề xuất tính năng / sự cố
    ├─ dependabot.yml
    └─ workflows/
-      ├─ ci.yml
-      └─ lighthouse-ci.yml
+      ├─ ci.yml                        ← lint/type/format/test+coverage/build/audit + E2E + chặn [ĐIỀN]
+      ├─ lighthouse-ci.yml             ← cổng hiệu năng (Core Web Vitals)
+      ├─ codeql.yml                    ← SAST (quét lỗ hổng mã nguồn)
+      ├─ secret-scan.yml               ← gitleaks (chặn bí mật lỡ commit)
+      └─ release.yml                   ← release-please (CHANGELOG + phiên bản tự động)
 ```
 
 ---
@@ -79,7 +86,10 @@ dự-án/
 - [ ] commitlint → **commit-msg hook** (ép conventional commits).
 - [ ] Vitest (`npm test`) + **ngưỡng coverage** (`npm run test:coverage`).
 - [ ] **Playwright** E2E (desktop + mobile) + **axe** (`npm run test:e2e`).
-- [ ] CI (GitHub Actions): build + lint + type-check + format:check + test + `npm audit`; **Lighthouse CI** trên PR (`lighthouse-ci.yml`).
+- [ ] CI (GitHub Actions): build + lint + type-check + format:check + test+coverage + `npm audit` + **chặn `[ĐIỀN]`**;
+      job **E2E Playwright** (desktop + mobile + axe); **Lighthouse CI** trên PR (`lighthouse-ci.yml`).
+- [ ] **CodeQL** (SAST) + **gitleaks** (secret scan) — `codeql.yml`, `secret-scan.yml`.
+- [ ] **release-please** (`release.yml`) — sinh CHANGELOG + phiên bản tự động từ conventional commits.
 - [ ] Dependabot.
 - **Tuân thủ:** không bỏ bước nào của hàng rào — đây là tầng chặn lỗi đáng tin cậy nhất.
 

@@ -68,6 +68,7 @@ echo ""
 # ── LỚP 1 — Quy trình & tiêu chuẩn (áp mọi stack): copy thẳng ──
 echo "[1/3] Tài liệu khung (Lớp 1 — dùng được ngay, mọi stack):"
 copy_into "docs/framework"
+copy_into "docs/ops"
 copy_if_absent "docs/adr/0000-template.md"
 
 # ── File gốc dự án: chỉ copy nếu chưa có ──
@@ -75,21 +76,26 @@ copy_if_absent "CLAUDE.md"
 copy_if_absent "PROJECT.md"
 copy_if_absent "PROGRESS.md"
 copy_if_absent "CHANGELOG.md"
+copy_if_absent "CONTRIBUTING.md"
+copy_if_absent "SECURITY.md"
 copy_if_absent ".editorconfig"
 copy_if_absent ".nvmrc"
 copy_if_absent ".env.example"
+# LICENSE KHÔNG copy: mỗi dự án tự chọn giấy phép + chủ sở hữu riêng.
 
 # ── LỚP 2 — File cấu hình/stack: đưa vào _framework-dropins/ để tự merge ──
 echo ""
 echo "[2/3] File cấu hình (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"
 for f in \
   eslint.config.mjs postcss.config.mjs \
-  .prettierrc .prettierignore .lintstagedrc.json commitlint.config.js \
+  .prettierrc .prettierignore .lintstagedrc.json commitlint.config.cjs \
   vitest.config.ts vitest.setup.ts playwright.config.ts lighthouserc.json \
   .husky/pre-commit .husky/commit-msg \
   .github/workflows/ci.yml .github/workflows/lighthouse-ci.yml \
-  .github/pull_request_template.md .github/dependabot.yml .github/ISSUE_TEMPLATE \
-  lib/env.ts styles/theme.css i18n/request.ts messages app \
+  .github/workflows/codeql.yml .github/workflows/secret-scan.yml .github/workflows/release.yml \
+  .github/pull_request_template.md .github/dependabot.yml .github/ISSUE_TEMPLATE .github/CODEOWNERS \
+  lib/env.ts styles/theme.css components/theme-toggle.tsx i18n/request.ts messages app \
+  supabase \
 ; do
   stage "$f"
 done
