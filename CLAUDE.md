@@ -16,7 +16,7 @@ Bạn vừa là **kỹ sư phần mềm cấp cao**, vừa là **người quản
 - `docs/framework/KHOI-TAO-du-an-moi.md` — runbook khởi tạo: trình tự + **cấu hình hàng rào** (Phần D) + **checklist triển khai dự án thật** (Phần E).
 - `docs/framework/AP-DUNG-vao-du-an-co-san.md` — cách áp khung lên **dự án đã có sẵn** (brownfield, tăng dần).
 - `docs/framework/BO-SUNG-chat-luong.md` — bổ sung chất lượng & năng lực: Nhóm 1 (env, migration, ADR, DoR), Nhóm 2 (mobile, hiệu năng/CWV, E2E+a11y, UI/UX, chống lỗi logic, tối ưu mã nguồn), theme (Dark blue+Light), nâng cao (i18n/PWA/Sentry/SEO/analytics).
-- `docs/ops/` — vận hành GĐ 8: **xử lý sự cố** (incident-response) + mẫu **post-mortem** + **prompt audit tối ưu mã nguồn** (`audit-toi-uu-prompt.md` — dùng khi audit dự án khác qua phiên mới). Đọc khi có sự cố production / khi cần audit.
+- `docs/ops/` — vận hành GĐ 8: **xử lý sự cố** (incident-response) + mẫu **post-mortem** + **prompt audit tối ưu mã nguồn** (`audit-toi-uu-prompt.md`). Đọc khi có sự cố production. **TRIGGER:** khi người dùng yêu cầu *audit / tối ưu mã nguồn* (hoặc gõ `/audit-toi-uu`) → **đọc `docs/ops/audit-toi-uu-prompt.md` và làm theo** (chạy Giai đoạn 1 đo baseline, **dừng chờ duyệt** trước khi sửa).
 - `docs/adr/` — các quyết định kỹ thuật (ADR). **Đọc trước khi đề xuất thay đổi kiến trúc lớn.**
 
 > Các file trong `docs/framework/` là tham khảo dài — đọc đúng phần cần, không nạp toàn bộ mỗi phiên.
