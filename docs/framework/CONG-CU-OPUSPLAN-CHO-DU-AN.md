@@ -46,9 +46,10 @@ bash copy-framework.sh /đường-dẫn/tới/dự-án-của-bạn
 
 **`.claude/settings.json`** (copy từ `.claude/settings-shared-opusplan.json`):
 
-### Model
+### Model & effort
 - **`"model": "opusplan"`** — Opus lập kế hoạch, Sonnet code, Haiku (subagent) việc phụ.
 - **`"fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5"]`** — nếu opusplan không khả dụng, hạ dần Sonnet → Haiku.
+- **`"effortLevel": "medium"`** — mức suy luận mặc định cân bằng; nâng `xhigh` khi cần suy nghĩ, hạ `low` cho việc cơ học (xem §3b).
 
 ### Permissions
 - **Read/Edit/Write:** chỉnh sửa file
@@ -94,6 +95,51 @@ bash copy-framework.sh /đường-dẫn/tới/dự-án-của-bạn
 /model claude-opus-4-8   # hoặc claude-fable-5 cho ca kiến trúc khó nhất
 ```
 Dùng khi đang ở KHUNG-3 (chọn công nghệ), `/adr`, `/su-co`, hay rà lỗi logic tinh vi — xong quay lại opusplan.
+
+---
+
+## 3b. Effort & thinking theo tác vụ (tối ưu token thứ 2)
+
+Model là cần thứ nhất; **effort + thinking** là cần thứ hai. Nguyên tắc: **cần suy nghĩ thì max; việc cơ học thì hạ** — đừng để mọi task nhỏ đều "suy nghĩ 32k token".
+
+> ⚠️ **Giới hạn thật (đã xác minh với tài liệu):** `effortLevel` và `MAX_THINKING_TOKENS` là **session-global** — KHÔNG đặt riêng được cho subagent, KHÔNG tự đổi giữa chừng theo task. Cách per-task duy nhất là **đổi thủ công bằng `/effort`** khi chuyển sang loại việc khác.
+
+### Hai cần điều khiển
+| Cần | Giá trị | Đặt ở đâu |
+|---|---|---|
+| **`effortLevel`** | `low` · `medium` · `high` · `xhigh` | `settings.json` (mặc định) · `/effort <mức>` (runtime) · `--effort` (CLI) |
+| **`MAX_THINKING_TOKENS`** | `0` = tắt thinking · số cao (vd `31999`) = suy nghĩ sâu | `env` block trong `settings.json` |
+
+### Mặc định của khung: `effortLevel: "medium"`
+Cân bằng cho đa số việc code hằng ngày. **Chủ động nâng/hạ** theo tác vụ:
+
+| Loại tác vụ | Effort | Ghi chú |
+|---|---|---|
+| Tìm kiếm, đọc file, format, đổi tên, sửa 1 dòng | **`low`** | Giao subagent Haiku càng tốt (rẻ nhất) |
+| Code tính năng thường, viết test | **`medium`** (mặc định) | Không cần đổi gì |
+| **Cần suy nghĩ:** KHUNG-3 chọn công nghệ, `/adr`, `/su-co`, rà lỗi logic tinh vi (async race, tiền tệ, idempotency), phân tích breaking change | **`xhigh` + thinking max** | `/effort xhigh` rồi gõ **`ultrathink`** trong prompt |
+
+### Cách đổi nhanh
+```bash
+# Vào việc suy nghĩ nặng:
+/effort xhigh
+# … kèm từ khoá "ultrathink" (hoặc "think hard") trong câu hỏi để mở rộng thinking budget.
+
+# Xong, quay lại việc thường (tiết kiệm token):
+/effort medium
+
+# Việc cơ học hàng loạt (vd đổi tên, format cả loạt file):
+/effort low
+```
+
+### Tắt hẳn thinking cho việc siêu nhẹ (tuỳ chọn)
+Chạy loạt việc máy móc, muốn rẻ tối đa → thêm vào `.claude/settings.json`:
+```json
+{ "env": { "MAX_THINKING_TOKENS": "0" } }
+```
+(Bỏ dòng này khi quay lại việc cần suy nghĩ. Lưu ý: Fable 5 không tắt được thinking.)
+
+> **Độ ưu tiên:** CLI `--effort` / env `CLAUDE_CODE_EFFORT_LEVEL` **>** `settings.json`. Môi trường chạy (vd Claude Code trên web) có thể đã set sẵn env effort/thinking → **ghi đè** giá trị trong `settings.json` cho phiên đó. Đổi bằng `/effort` lúc chạy luôn thắng.
 
 ---
 
