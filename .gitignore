@@ -23,3 +23,6 @@ public/swe-worker-*.js
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# Khai bao lenh dev dac thu du an (copy tu .claude/project-commands.example.sh)
+.claude/project-commands.sh

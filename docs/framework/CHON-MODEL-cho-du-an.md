@@ -192,7 +192,24 @@ Các mục dưới **cố ý KHÔNG bake sẵn** vào template (vì khung hỗ t
 4. **`CLAUDE_CODE_SUBAGENT_MODEL`** (env) → khi cần **ép tạm** toàn bộ subagent về một model (vd chạy rẻ đồng loạt bằng `sonnet`), không phải sửa từng frontmatter. Bỏ trống để tôn trọng routing per-agent.
 5. **Thêm subagent Haiku cho đúng việc cơ học khác** khi phát sinh (đọc log/git history, trích cấu hình…) — luôn giữ nguyên tắc: chỉ giao Haiku việc **phạm vi rõ, ít lý luận**; việc phán đoán để opusplan.
 
-> **Ranh giới tự động (trung thực):** phần tự động hóa cao nhất mà **không cần chọn stack** đã bật sẵn (opusplan + 2 subagent Haiku). Các mục 1–2 (hooks) là **automation mạnh nhất còn lại** nhưng phụ thuộc lệnh cụ thể của dự án → chỉ bật được sau GĐ chọn công nghệ. Đây là giới hạn có chủ đích, không phải thiếu sót.
+### "Mọi dự án đều khác nhau" — giải quyết bằng LỚP TRUNG GIAN (đã bake)
+Vấn đề: template hỗ trợ **mọi loại dự án**, nên **không được hardcode** lệnh (`npm`/`ruff`/`go`…) vào hook/settings. Giải pháp tổng quát: **không nhúng lệnh — nhúng một điểm vào ổn định**, phần khác-nhau nằm sau nó.
+
+```
+hook (cố định)  →  scripts/dev-task.sh <task>  →  ┌ 1) lệnh KHAI BÁO (.claude/project-commands.sh)
+   (trong template, đa-loại)   (điểm vào ổn định)   ├ 2) TỰ DÒ hệ sinh thái (node/python/go/rust/make)
+                                                    └ 3) NO-OP (exit 0) nếu chưa có gì
+```
+
+- **`scripts/dev-task.sh`** — điểm vào chung cho `format|lint|typecheck|test|build|gate`. Tự dò lệnh theo hệ sinh thái; **no-op an toàn** khi chưa cấu hình (không làm gãy dự án nào).
+- **`.claude/project-commands.example.sh`** — copy thành `.claude/project-commands.sh` (đã `.gitignore`) và điền lệnh THẬT. Đây là **NƠI DUY NHẤT** chứa lệnh đặc thù stack → mỗi dự án khác nhau chỉ khác đúng file này; template giữ nguyên.
+- **`.claude/hooks/pre-commit-gate.sh`** + hook `PreToolUse(Bash)` trong `settings.json` — **chặn `git commit` khi cổng đỏ** (đồng bộ §5). Chưa cấu hình lệnh → cổng no-op → cho commit; đã cấu hình → build/typecheck/lint/test đỏ thì **chặn**. Bỏ qua có chủ đích: `git commit --no-verify`.
+
+**Nhờ lớp trung gian này, hook GATE-trước-commit đã bake sẵn trong template mà vẫn đa-loại** — không cần biết stack trước. Khi vào GĐ 0–2 chọn công nghệ, chỉ cần điền `project-commands.sh` là automation tự có hiệu lực, **không phải sửa hook/settings**.
+
+> **Còn hook auto-format-khi-sửa-file** (mục 1 ở trên) cố ý **chưa bật mặc định** vì nó *thay đổi file tự động* (dễ bất ngờ). Muốn bật: thêm `PostToolUse(Edit|Write)` gọi `dev-task.sh format` vào `settings.json` sau khi đã điền lệnh format của dự án.
+
+> **Ranh giới tự động (trung thực):** đã tự động sẵn không cần chọn stack: **opusplan + 2 subagent Haiku + gate-trước-commit** (qua lớp trung gian). Việc *thực thi* lệnh format/lint/test chỉ chạy sau khi điền `project-commands.sh` (hoặc dự án có hệ sinh thái tự-dò được) — đây là ranh giới có chủ đích để giữ template dùng cho MỌI loại dự án.
 
 > **Lưu ý bản chất:** `opusplan` đổi model theo **chế độ (plan ⇄ execution)**, không phải "đoán độ khó từng câu". Việc phân tách main (đắt) ↔ subagent (rẻ) mới là cơ chế tự động thực sự. Kết hợp `opusplan` + subagent Haiku là cách "tự động tối ưu chi phí" sát nhất hiện có, không cần bạn đổi tay mỗi lần.
 
