@@ -57,18 +57,45 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
 - `docs/ops/incident-response.md` — vận hành GĐ 8: xử lý sự cố + **mẫu post-mortem**.
 - `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật (ví dụ đã điền: `0001-chon-stack.md`).
 
-## Mang khung sang một dự án khác
-Dùng `copy-framework.sh` (chép tài liệu khung + `CLAUDE.md` sang dự án đích, không đè cấu hình
-đang chạy — đưa vào `_framework-dropins/` để tự merge):
+## Đã có repo khung này — giờ làm gì?
+Bạn đã clone/tải repo khung về máy. Chọn đúng một nhánh:
+
+- **Dự án MỚI (greenfield):** dựng dự án từ khung → theo `docs/framework/KHOI-TAO-du-an-moi.md` (runbook 0→9).
+- **Dự án ĐÃ CÓ (brownfield):** mang khung sang dự án đích rồi mở Claude Code trong đó — các bước bên dưới.
+
+### Bước 1 — Mang khung sang dự án đích (một lệnh)
+Đứng **trong repo khung này**, trỏ tới thư mục gốc của dự án đích. Script **không đè** file đang chạy:
+tài liệu khung + `.claude/commands` copy thẳng; file gốc (`CLAUDE.md`, `PROJECT.md`…) chỉ copy nếu **chưa có**
+(đã có thì để bản `.framework-new` cạnh bên để tự so); file cấu hình/stack đưa vào `_framework-dropins/` để tự merge.
+
+**macOS / Linux (bash):**
 ```bash
 bash copy-framework.sh /đường-dẫn/tới/dự-án
 ```
-Windows (PowerShell) — bản `.ps1` hành vi giống hệt bản `.sh`:
+
+**Windows (PowerShell)** — bản `.ps1` hành vi **giống hệt** bản `.sh`:
 ```powershell
+# Windows PowerShell 5.1 có sẵn trên mọi máy Windows — không cần cài gì thêm:
+powershell -ExecutionPolicy Bypass -File .\copy-framework.ps1 C:\đường-dẫn\tới\dự-án
+
+# Nếu đã cài PowerShell 7 (lệnh pwsh):
 pwsh ./copy-framework.ps1 C:\đường-dẫn\tới\dự-án
-# hoặc: powershell -ExecutionPolicy Bypass -File .\copy-framework.ps1 C:\đường-dẫn\tới\dự-án
 ```
-Chi tiết cho dự án đã phát triển: `docs/framework/AP-DUNG-vao-du-an-co-san.md`.
+> **Vì sao có `-ExecutionPolicy Bypass`:** Windows mặc định chặn chạy script `.ps1` chưa ký. Cờ này chỉ nới
+> cho đúng lần chạy đó (không đổi cấu hình máy). Nếu muốn nới sẵn cho user hiện tại:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+### Bước 2 — Merge phần cấu hình
+Soát thư mục `_framework-dropins/` trong dự án đích: chỉ merge file **khớp stack hiện có** (đừng đè cấu hình đang
+chạy). Xong thì xóa `_framework-dropins/`. Với file `*.framework-new`: so với bản gốc rồi gộp phần cần, sau đó xóa.
+
+### Bước 3 — Mở Claude Code trong dự án đích
+AI tự đọc `CLAUDE.md` và chạy **Bước 0** của `docs/framework/AP-DUNG-vao-du-an-co-san.md` (tự dò stack qua
+`package.json`/config — không cần bạn khai). Từ đó áp khung **tăng dần**: Prettier → ESLint → TS strict → hook →
+CI → lấp lỗ hổng test/a11y/hiệu năng.
+
+> *Vì sao phải copy chứ không "đưa link": một phiên Claude Code chỉ tự nạp luật từ chính repo của nó
+> (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link.* Chi tiết brownfield: `docs/framework/AP-DUNG-vao-du-an-co-san.md`.
 
 ## Việc phải làm tay (không đè được file của create-next-app)
 Theo **`docs/framework/KHOI-TAO-du-an-moi.md` Phần D**: cài gói + thêm khối `scripts` + `npx husky init`;
