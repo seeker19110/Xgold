@@ -100,7 +100,7 @@ cp .claude/project-commands.example.sh .claude/project-commands.sh
 Rồi mở phiên Claude Code trong repo và gõ `/tu-dong`. Xong.
 
 > **Chọn model lúc mở phiên:** picker thường **không** có `opusplan` (là alias chế độ). Chọn **"Default"** để repo tự áp `opusplan` (Opus plan → Sonnet code), hoặc gõ **`/model opusplan`** trong phiên. **Tránh chọn Opus thuần** — chạy Opus cho mọi thứ sẽ đốt hết quota 5h (Pro ~1h).
-> **Tự xác nhận + cảnh báo:** thông báo mở phiên (`session-guide.sh`) đọc model phiên và báo ngay: **✅** nếu đang `opusplan`, **⚠️ CẢNH BÁO** nếu bị picker/UI chọn đè (kèm cách sửa `/model opusplan`), **🔎** nếu không đọc được model → nhắc xác nhận bằng `/model`. Nhờ vậy tránh "tưởng đang opusplan mà thực ra không".
+> **Tự xác nhận + cảnh báo + dẫn chuyển:** thông báo mở phiên (`session-guide.sh`) đọc model phiên và báo ngay: **✅** nếu đang `opusplan`, **⚠️ CẢNH BÁO** nếu bị picker/UI chọn đè (kèm cách sửa `/model opusplan`), **🔎** nếu không đọc được model → nhắc xác nhận bằng `/model`. Khi **không phải opusplan**, hook còn phát `additionalContext` để **AI chủ động nhắc chuyển sang opusplan và CHỜ xác nhận** trước khi chạy tự động (hook/AI không tự gõ `/model` được — người dùng gõ, AI xác nhận). Nhờ vậy tránh "tưởng đang opusplan mà thực ra không".
 
 ---
 

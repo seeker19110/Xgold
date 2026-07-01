@@ -6,6 +6,8 @@
 #   • Đang làm dở      → hướng tiếp tục ('tiếp tục' / /tu-dong / /cong)
 # Đồng thời XÁC NHẬN model phiên (đọc trường "model" từ stdin): ✅ nếu opusplan,
 #   ⚠️ CẢNH BÁO nếu bị picker/UI chọn đè, 🔎 nếu không đọc được → hướng /model opusplan.
+# Khi KHÔNG phải opusplan: còn phát additionalContext để AI CHỦ ĐỘNG nhắc chuyển sang
+#   opusplan và CHỜ xác nhận trước khi chạy tự động (hook/AI không tự gõ /model được).
 # Không đổi gì (chỉ đọc). No-op nếu thiếu jq hoặc không phải dự án của khung.
 set -uo pipefail
 
@@ -56,5 +58,17 @@ Tiếp theo nên:
 • /tu-dong để tự động điều phối  •  /cong trước khi commit  •  /su-co nếu có sự cố"
 fi
 
-jq -n --arg m "$msg" '{systemMessage:$m}'
+# Khi KHÔNG phải opusplan → yêu cầu AI chủ động dẫn việc chuyển & xác nhận.
+# (Hook/AI không tự gõ /model được; AI nhắc người dùng chuyển rồi CHỜ xác nhận.)
+case "$model_id" in
+  *opusplan*) actx="" ;;
+  *) actx="Model phiên hiện tại: '${model_id:-không đọc được}' — KHÔNG phải opusplan (mặc định repo). TRƯỚC KHI chạy tự động: chủ động nhắc người dùng gõ /model opusplan, rồi CHỜ họ xác nhận đã chuyển sang opusplan mới tiếp tục. Nếu người dùng cố ý giữ model khác, tôn trọng nhưng nêu rõ đánh đổi (Opus thuần tốn quota Pro; Sonnet/Haiku thuần mất pha Opus lập kế hoạch)." ;;
+esac
+
+if [ -n "$actx" ]; then
+  jq -n --arg m "$msg" --arg c "$actx" \
+    '{systemMessage:$m, hookSpecificOutput:{hookEventName:"SessionStart", additionalContext:$c}}'
+else
+  jq -n --arg m "$msg" '{systemMessage:$m}'
+fi
 exit 0
