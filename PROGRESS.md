@@ -22,12 +22,14 @@
       CONG-CU-OPUSPLAN + TU-DONG-tong-quan, khử trùng lặp (594→~360 dòng, −2 file). Cập nhật mọi
       tham chiếu: CLAUDE.md, `/adr` `/su-co` `/tu-van` `/tu-dong`, session-guide.sh.
 - ✅ **Quyết định giữ scaffold web** (Next.js+Supabase) làm hồ sơ mặc định — không tách/xóa.
+- ✅ PR #21 đã merge vào `main` (`main` = branch, 0/0).
+- ✅ **Codify quy trình PR → merge tự động** vào CLAUDE.md §8: sau khi tạo PR thì đăng ký theo dõi + đặt lịch 3 phút, CI xanh thì squash-merge vào `main`, luôn quay về `main`, **FIFO không nhảy cóc** (PR tạo trước merge trước).
 
 ## Đang làm
 - (xong)
 
 ## Tiếp theo
-- Merge PR #21 vào main
+- (chưa có — chờ yêu cầu mới)
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 - Cấu hình Opusplan được thêm vào `_framework-dropins/` (an toàn, không đè cấu hình cũ)

@@ -80,6 +80,8 @@ Bất kỳ mục ❌ → sửa trước, chạy lại toàn bộ, KHÔNG commit/
 ## 8. Quy ước Git
 Mỗi tính năng/sửa lỗi một nhánh riêng (`feat/...`, `fix/...`) · commit nhỏ, mỗi commit một thay đổi logic · **conventional commits** (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`) · mọi merge vào nhánh chính qua pull request (kể cả làm một mình) · **ưu tiên squash merge** (lịch sử `main` tuyến tính, mỗi PR = một commit conventional — hợp `release-please`/CHANGELOG; đặt tiêu đề squash đúng dạng conventional) · không push thẳng nhánh chính.
 
+**Quy trình PR → merge tự động (BẮT BUỘC):** Sau khi **tạo PR**: (1) **đăng ký theo dõi** PR (`subscribe_pr_activity`) và **đặt lịch tự kiểm tra mỗi 3 phút**; (2) khi CI **xanh** → **merge vào `main`** (squash); nếu **đỏ** → sửa rồi kích lại, chưa xanh thì **chưa merge**. (3) **Luôn quay về `main`** sau khi merge (nền làm việc mặc định là `main`). (4) **FIFO — không nhảy cóc:** PR nào **tạo trước merge trước**; nhiều PR mở cùng lúc thì merge lần lượt theo thứ tự tạo, merge xong PR trước (cập nhật lại nhánh sau với `main` nếu cần) mới tới PR kế.
+
 ## 9. Khi nào PHẢI dừng và hỏi
 Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác (xóa dữ liệu, đổi schema phá vỡ) · mâu thuẫn với code/thiết kế hiện có · breaking change ảnh hưởng nhiều nơi · nhiều giải pháp đánh đổi khác nhau đáng kể · đụng bảo mật, thanh toán, dữ liệu người dùng thật.
 
