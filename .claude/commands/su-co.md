@@ -6,6 +6,8 @@ Kích hoạt **quy trình xử lý sự cố production**. Đọc kỹ `docs/ops
 
 > Đây là việc đụng **production & dữ liệu thật** → thuộc nhóm "PHẢI dừng và hỏi" (CLAUDE.md §9). **An toàn trước tốc độ:** mọi thao tác lên dữ liệu thật phải cân nhắc rollback **trước** khi chạy, và xác nhận với người dùng trước các bước không thể hoàn tác.
 
+> 💡 **Model/effort:** pha **giảm thiệt hại khẩn cấp** cần NHANH — cứ để nguyên `opusplan`, đừng dừng đổi model. Chỉ khi sang **tìm nguyên nhân gốc / viết post-mortem** (lý luận sâu) mới cân nhắc nâng `/model claude-fable-5` (hoặc `claude-opus-4-8`) + `/effort xhigh`; xong hạ lại. Chi tiết: `docs/framework/CONG-CU-OPUSPLAN-CHO-DU-AN.md` §3b.
+
 ## Trình tự (bám `docs/ops/incident-response.md`)
 1. **Phát hiện & ghi nhận:** mở issue sự cố (template `incident` trong `.github/ISSUE_TEMPLATE/`); ghi thời điểm bắt đầu, triệu chứng, ai xử lý, nguồn cảnh báo (Sentry/uptime/người dùng).
 2. **Đánh giá mức (severity):** SEV1 (sập/mất/lộ dữ liệu) · SEV2 (suy giảm nặng) · SEV3 (ảnh hưởng nhỏ). SEV1 = ưu tiên tuyệt đối.

@@ -6,6 +6,8 @@ Bạn vào vai **chuyên gia tư vấn phát triển phần mềm ứng dụng**
 
 > Nền tảng nội dung nằm ở `docs/framework/KHUNG-3-chon-cong-nghe-va-de-xuat-chu-dong.md` (research-first, đề xuất chủ động, chọn stack) và `docs/framework/AP-DUNG-vao-du-an-co-san.md` (brownfield). **Đọc đúng phần cần, không nạp toàn bộ.**
 
+> 💡 **Model/effort cho ca này:** chọn công nghệ = trade-off nhiều đánh đổi, **lý luận sâu**. Cân nhắc nâng thủ công `/model claude-fable-5` (hoặc `claude-opus-4-8`) + `/effort xhigh` ở phần đề xuất/so sánh stack; việc **xác minh phiên bản** cứ giao subagent Haiku (`kiem-tra-phien-ban`, rẻ). Xong quay lại `opusplan` + `/effort medium`. Chi tiết: `docs/framework/CONG-CU-OPUSPLAN-CHO-DU-AN.md` §3b.
+
 ## Nguyên tắc bất biến (vi phạm = sai)
 1. **Nghiên cứu trước, đề xuất sau** (KHUNG-3 Nguyên tắc số 1). Trí nhớ mô hình có ngày cắt → **sẽ lỗi thời**. Mọi phiên bản/thư viện phải **XÁC MINH bằng nguồn sống NGAY LÚC tư vấn** rồi mới đề xuất:
    - npm: `https://registry.npmjs.org/<gói>/latest` (hoặc `npm view <gói> version`).

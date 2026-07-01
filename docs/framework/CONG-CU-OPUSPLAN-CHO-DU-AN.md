@@ -139,6 +139,9 @@ Chạy loạt việc máy móc, muốn rẻ tối đa → thêm vào `.claude/se
 ```
 (Bỏ dòng này khi quay lại việc cần suy nghĩ. Lưu ý: Fable 5 không tắt được thinking.)
 
+### Nhắc sẵn trong các skill lý luận sâu
+Các skill nặng về suy nghĩ — `/adr`, `/su-co` (pha tìm nguyên nhân), `/tu-van` (chọn công nghệ), `/tu-dong` (plan mode) — đã có **dòng nhắc 💡** ở đầu: gợi ý nâng `/model claude-fable-5` + `/effort xhigh` đúng pha cần, rồi hạ lại. Đây là **nhắc**, không tự đổi model — bạn (hoặc AI) vẫn quyết thủ công. Claude Code không có cơ chế tự nâng Fable/effort theo độ khó.
+
 > **Độ ưu tiên:** CLI `--effort` / env `CLAUDE_CODE_EFFORT_LEVEL` **>** `settings.json`. Môi trường chạy (vd Claude Code trên web) có thể đã set sẵn env effort/thinking → **ghi đè** giá trị trong `settings.json` cho phiên đó. Đổi bằng `/effort` lúc chạy luôn thắng.
 
 ---
