@@ -14,7 +14,7 @@ bash copy-framework.sh /đường-dẫn/tới/dự-án-của-bạn
 
 ✅ **Xong!** Script tự động:
 - Copy `.claude/settings.json` (opusplan) **thẳng** vào dự án
-- Copy `.claude/hooks` và `.claude/agents` (gồm subagent Haiku: `tra-cuu`, `kiem-tra-phien-ban`)
+- Copy `.claude/hooks` và `.claude/agents` (subagent: `tra-cuu`, `kiem-tra-phien-ban` chạy Haiku; `thuc-thi` chạy Sonnet)
 - Copy các file cấu hình khác (eslint, prettier, playwright…) vào `_framework-dropins/` để tự merge
 
 **Kết quả:** Mở phiên Claude Code lần đầu → AI chạy khung ở chế độ **opusplan**, tự dùng model rẻ-nhất-đủ-dùng.
@@ -63,12 +63,13 @@ bash copy-framework.sh /đường-dẫn/tới/dự-án-của-bạn
 - **PostToolUse (Edit/Write):** auto-format file vừa sửa
 - **Stop:** guard cảnh báo dùng nhiều token
 
-### Subagent Haiku (mấu chốt tối ưu token)
-`.claude/agents/` có 2 subagent chạy **Haiku 4.5** cho việc cơ học:
-- `tra-cuu` — tìm file, grep symbol, đọc trích dữ kiện
-- `kiem-tra-phien-ban` — xác minh phiên bản gói bằng nguồn sống
+### Subagent (mấu chốt tối ưu token)
+`.claude/agents/` có 3 subagent chia tải khỏi phiên chính:
+- `tra-cuu` (**Haiku**) — tìm file, grep symbol, đọc trích dữ kiện
+- `kiem-tra-phien-ban` (**Haiku**) — xác minh phiên bản gói bằng nguồn sống
+- `thuc-thi` (**Sonnet**) — thực thi việc RÕ PHẠM VI đã bóc tách (viết test theo spec, boilerplate, cập nhật docs, sửa cơ học nhiều file)
 
-→ Giao việc cơ học cho Haiku = giữ Opus/Sonnet cho việc cần suy nghĩ.
+→ Giao việc cơ học cho Haiku, việc rõ-phạm-vi cho `thuc-thi` = giữ Opus cho việc cần suy nghĩ. Với `thuc-thi`, lợi ích là **cô lập ngữ cảnh + chạy song song** (không phình ngữ cảnh main), không phải "model rẻ hơn" — nó cùng Sonnet với pha-code opusplan.
 
 ---
 

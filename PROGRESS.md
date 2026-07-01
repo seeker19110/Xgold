@@ -14,16 +14,22 @@
 - ✅ **Chốt chiến lược tối ưu token:** giữ **opusplan** (Opus lập kế hoạch, Sonnet code, Haiku phụ)
       — KHÔNG dùng Fable 5 thuần (đắt, "dao mổ trâu"); Fable/Opus chỉ nâng có chọn lọc lúc cần
 - ✅ Push lên nhánh `claude/opusplan-shared-config-rm5ru6`, PR #19
+- ✅ **Thêm subagent Sonnet `thuc-thi`** (`.claude/agents/thuc-thi.md`) — nhận việc RÕ PHẠM VI đã bóc tách
+      (viết test theo spec, boilerplate, cập nhật docs, sửa cơ học nhiều file) để rút tải khỏi main Opus.
+      Đồng bộ mô tả trong CHON-MODEL, TU-DONG-tong-quan, CONG-CU-OPUSPLAN, copy-framework.sh/.ps1, /tu-dong.
 
 ## Đang làm
 - (xong)
 
 ## Tiếp theo
-- Đợi review/merge PR #19
+- Đợi review/merge PR #19; push nhánh `claude/opusplan-optimization-150yp1` (subagent thuc-thi)
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 - Cấu hình Opusplan được thêm vào `_framework-dropins/` (an toàn, không đè cấu hình cũ)
 - `.claude/` (hooks + agents) cũng được copy vào `_framework-dropins/` để dự án cũ tự merge nếu cần
+- **opusplan là điểm ngọt, không đổi**; tối ưu token thêm bằng CHIA VIỆC (subagent) chứ không "route theo độ khó"
+  (Claude Code không có bộ định tuyến model per-query). `thuc-thi` cùng Sonnet với pha-code opusplan —
+  lợi ích là **cô lập ngữ cảnh + song song**, không phải model rẻ hơn.
 
 ## Nợ kỹ thuật (chỗ "làm tạm" cần quay lại)
 - (không có)

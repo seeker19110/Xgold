@@ -27,7 +27,7 @@ Kích hoạt: gõ **`/tu-dong`** khi mô tả dự án MỚI hoặc bắt đầu
                         └─────────┬─────────┘
                                   │  (đã duyệt)
               EXECUTION  →  SONNET 5 viết code, chạy tự động theo kế hoạch
-                                  │
+                                  │  (việc rõ phạm vi → giao subagent thuc-thi: cô lập + song song)
    Trong khi chạy, các hook tự động (không cần hỏi):
      • sửa file  → PostToolUse  → auto-format.sh   → dev-task.sh format-file
      • git commit→ PreToolUse   → pre-commit-gate.sh→ dev-task.sh gate (đỏ = CHẶN)
@@ -51,11 +51,12 @@ Kích hoạt: gõ **`/tu-dong`** khi mô tả dự án MỚI hoặc bắt đầu
 | `permissions.deny` (13) | rm -rf, git push --force, reset --hard, sudo, chmod 777, đọc .env/secrets | **Deny thắng allow**; nguy hiểm vẫn bị chặn |
 | `hooks` | SessionStart, PreToolUse, PostToolUse, Stop | 4 hook tự động (bảng dưới) |
 
-### Subagent Haiku — `.claude/agents/`
-| File | Việc (đúng thế mạnh Haiku) |
-|---|---|
-| `tra-cuu.md` | Tìm file, grep symbol, định vị định nghĩa/tham chiếu, trích dữ kiện — read-only |
-| `kiem-tra-phien-ban.md` | Xác minh phiên bản bằng nguồn sống (npm/pypi/node) cho research-first |
+### Subagent — `.claude/agents/`
+| File | Model | Việc (đúng thế mạnh) |
+|---|---|---|
+| `tra-cuu.md` | Haiku | Tìm file, grep symbol, định vị định nghĩa/tham chiếu, trích dữ kiện — read-only |
+| `kiem-tra-phien-ban.md` | Haiku | Xác minh phiên bản bằng nguồn sống (npm/pypi/node) cho research-first |
+| `thuc-thi.md` | Sonnet | Việc RÕ PHẠM VI đã bóc tách: viết test theo spec, boilerplate, cập nhật docs, sửa cơ học nhiều file — cô lập ngữ cảnh + song song để rút tải khỏi main |
 
 ### Hook — `.claude/hooks/`
 | Hook | Sự kiện | Làm gì |

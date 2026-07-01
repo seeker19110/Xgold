@@ -93,7 +93,7 @@ cp -R "$SRC/.claude/hooks" "$TARGET/.claude/hooks" 2>/dev/null || true
 cp -R "$SRC/.claude/agents" "$TARGET/.claude/agents" 2>/dev/null || true
 echo "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
 echo "  → .claude/hooks"
-echo "  → .claude/agents (subagent Haiku: tra-cuu, kiem-tra-phien-ban)"
+echo "  → .claude/agents (subagent: tra-cuu, kiem-tra-phien-ban [Haiku]; thuc-thi [Sonnet])"
 
 echo ""
 echo "[3/3] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"

@@ -139,7 +139,7 @@ Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull (Join-Path $claude
 Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull (Join-Path $claudeDir 'agents')
 Write-Host "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
 Write-Host "  → .claude/hooks"
-Write-Host "  → .claude/agents (subagent Haiku: tra-cuu, kiem-tra-phien-ban)"
+Write-Host "  → .claude/agents (subagent: tra-cuu, kiem-tra-phien-ban [Haiku]; thuc-thi [Sonnet])"
 
 Write-Host ""
 Write-Host "[3/3] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"
