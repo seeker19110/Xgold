@@ -1,8 +1,13 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 #
 # copy-framework.ps1 — Mang bộ khung sang một DỰ ÁN KHÁC (kể cả dự án đã có sẵn).
 #   → Bản PowerShell của copy-framework.sh, dùng cho Windows PowerShell / PowerShell 7+.
 #     Hành vi giống hệt bản .sh (3 lớp: copy thẳng / copy nếu chưa có / đưa vào _framework-dropins).
+#
+# LƯU Ý MÃ HÓA: file này PHẢI được lưu dưới dạng UTF-8 CÓ BOM. Windows PowerShell 5.1 mặc định
+#   đọc script theo ANSI; thiếu BOM sẽ làm hỏng ký tự tiếng Việt và gây lỗi parse
+#   ("Missing closing '}'"). PowerShell 7 (pwsh) đọc UTF-8 không BOM vẫn được. Đừng lưu lại thành
+#   "UTF-8 no BOM" khi chỉnh file này.
 #
 # Cách dùng:
 #   1) Clone repo khung này về máy (hoặc bạn đang đứng sẵn trong nó).
@@ -25,6 +30,10 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Ép console xuất UTF-8 để chữ tiếng Việt trong thông báo hiển thị đúng trên Windows PowerShell 5.1
+# (mặc định in theo code page hệ thống). Bọc try/catch để không bao giờ làm script dừng.
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 
 $Src = $PSScriptRoot
 $Sep = [System.IO.Path]::DirectorySeparatorChar
