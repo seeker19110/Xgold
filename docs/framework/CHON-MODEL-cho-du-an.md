@@ -175,6 +175,13 @@ Chức năng nền của Claude Code chạy bằng alias `haiku`; cấu hình qu
 | **Trần chi phí toàn dự án** | `availableModels` + `fallbackModel` trong settings |
 | **Ép Sonnet cho toàn subagent tạm thời** | `CLAUDE_CODE_SUBAGENT_MODEL=sonnet` |
 
+### ĐÃ KÍCH HOẠT trong repo này (phương án đóng gói cho cả nhóm)
+Repo đã có sẵn cấu hình để tự tối ưu chi phí — ai mở repo bằng Claude Code đều nhận:
+- **`.claude/settings.json`** → `"model": "opusplan"` (mặc định: Opus khi plan, **Sonnet 5 khi code**) + `"fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5"]`.
+- **`.claude/agents/tra-cuu.md`** → subagent `model: haiku`, **chỉ nhận việc Haiku 4.5 xuất sắc** (tìm file, grep symbol, định vị định nghĩa/tham chiếu, trích dữ kiện cụ thể — read-only). Không giao review/kiến trúc/sửa file cho subagent này.
+
+> Muốn đổi mặc định về Sonnet 5 thuần (không dùng opusplan): sửa `"model"` trong `.claude/settings.json`. Muốn tắt subagent Haiku: xóa `.claude/agents/tra-cuu.md`. Cá nhân override tạm thời bằng `/model` mà không cần đổi file.
+
 > **Lưu ý bản chất:** `opusplan` đổi model theo **chế độ (plan ⇄ execution)**, không phải "đoán độ khó từng câu". Việc phân tách main (đắt) ↔ subagent (rẻ) mới là cơ chế tự động thực sự. Kết hợp `opusplan` + subagent Haiku là cách "tự động tối ưu chi phí" sát nhất hiện có, không cần bạn đổi tay mỗi lần.
 
 ---
