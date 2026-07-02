@@ -1,15 +1,18 @@
-// Flat config (ESLint 9/10) — thay cho .eslintrc.json (đã bỏ).
-// Next.js 16 đã loại bỏ lệnh `next lint`; chạy ESLint trực tiếp qua `npm run lint`.
+// Flat config (ESLint 9/10). Next.js 16 đã loại bỏ lệnh `next lint`; chạy ESLint trực tiếp qua `npm run lint`.
+// eslint-config-next (Next 16+) export flat config qua subpath riêng — không cần FlatCompat nữa
+// (bản FlatCompat cũ gây lỗi "Converting circular structure to JSON" trên eslint-config-next hiện tại).
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const compat = new FlatCompat({ baseDirectory: __dirname });
 
-const eslintConfig = [
+const eslintConfig = defineConfig([
   // eslint-config-next đã gồm React, React Hooks và một bộ rule jsx-a11y cốt lõi.
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...nextVitals,
+  ...nextTs,
 
   {
     files: ['**/*.{ts,tsx}'],
@@ -28,15 +31,15 @@ const eslintConfig = [
     },
   },
 
-  {
-    ignores: [
-      '.next/**',
-      'coverage/**',
-      'playwright-report/**',
-      'public/sw.js',
-      'next-env.d.ts',
-    ],
-  },
-];
+  globalIgnores([
+    '.next/**',
+    'coverage/**',
+    'playwright-report/**',
+    'public/sw.js',
+    'next-env.d.ts',
+    // Chưa merge/xoá dropins thì đừng để ESLint quét — xem new-project-runbook.md Bước 0/3.
+    '_framework-dropins/**',
+  ]),
+]);
 
 export default eslintConfig;

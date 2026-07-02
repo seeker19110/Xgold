@@ -13,6 +13,7 @@
 | `project-completion.md` | HOAN-THIEN | Hoàn thiện dự án: bản đồ tính năng + kế hoạch chi tiết + vòng hội tụ + Definition of Complete | Muốn hết lỗi đã biết (`/completion`) |
 | `quality-supplements.md` | BO-SUNG | Bổ sung chất lượng: Nhóm 1 (env/migration/ADR/DoR), Nhóm 2 (mobile/CWV/E2E+a11y/UI-UX/chống lỗi logic/tối ưu), theme, i18n/PWA/Sentry/SEO | Tra checklist chi tiết |
 | `models-and-automation.md` | MODEL | Chọn model (Sonnet/Opus/Fable) + effort + bản đồ chế độ chạy tự động | Bắt đầu/đổi quy mô; cân chi phí |
+| `case-study-greenfield-dry-run.md` | — | Chạy thật runbook trên `create-next-app` thật: 3 lỗi tìm được + đã vá, bằng chứng chạy đầu-cuối | Kiểm chứng khung / trước khi tin runbook |
 
 ## Tên cũ (tiếng Việt) → tên mới — cho dự án đã copy khung bản trước
 

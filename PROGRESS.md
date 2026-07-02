@@ -73,13 +73,34 @@
       (không khớp file nào hiện có) trong `new-project-runbook.md`; cập nhật lại mục Đang làm/Tiếp theo
       của chính PROGRESS.md cho khớp thực tế (trước đó bị stale so với PR đã merge — vi phạm CLAUDE.md §2).
 
+- ✅ **`scripts/check-docs-consistency.sh`** + job `docs-consistency` trong `ci.yml` (luôn chạy, không cần
+      `package.json`): quét link gãy trong backtick + tên file/lệnh cũ còn sót ngoài bảng ánh xạ.
+- ✅ **`scripts/test-copy-framework.sh`** + job `copy-framework-smoke` trong `ci.yml`: chạy THẬT
+      `copy-framework.sh`/`.ps1` vào thư mục scratch, xác nhận cấu trúc copy đúng + KHÔNG đè file đã có.
+      Bắt được **lỗi thật**: bước "[2/3] Cấu hình Claude Code" của cả 2 script ghi đè không điều kiện
+      `.claude/settings.json`/`hooks`/`agents` — trái cam kết "KHÔNG đè" của chính script. Đã vá theo
+      đúng mẫu `copy_if_absent` (như `CLAUDE.md`); có test hồi quy bảo vệ.
+- ✅ **Case-study chạy thật đầu-cuối** (`docs/framework/case-study-greenfield-dry-run.md`): scaffold
+      `create-next-app@latest` thật (Next 16.2.10) → `copy-framework.sh` → cài đủ gói → chạy 5 cổng
+      (lint/type-check/format:check/test/build) → thử hook pre-commit + commit-msg thật. Tìm thêm 2 lỗi
+      thật:
+      - **`eslint.config.mjs` crash hoàn toàn** trên `eslint-config-next` hiện tại (dùng `FlatCompat` cũ,
+        lỗi "Converting circular structure to JSON") — đã vá sang import subpath flat-config trực tiếp
+        (khớp cách `create-next-app@latest` tự sinh), có kiểm chứng lại `npx eslint . --max-warnings 0` = 0 lỗi.
+      - Thiếu bước bắt buộc "chạy `npm run format` một lần" sau khi cài Prettier → `format:check` đỏ ngay
+        từ commit đầu dù không có lỗi thật — đã thêm vào cuối Bước 3 runbook.
+      - Phát hiện cấu trúc: `_framework-dropins/` tự chứa bản sao `.lintstagedrc.json` của chính nó →
+        vá glob từng công cụ (eslint ignore/tsconfig exclude/lint-staged pattern) không triệt để, còn gây
+        crash thật ("Task killed") khi commit. Vá đúng gốc: bắt buộc xoá `_framework-dropins/` trước gate/
+        commit đầu tiên (thêm vào Bước 0 runbook) — xác nhận lại: xoá xong thì toàn bộ chuỗi hook chạy đúng.
+
 ## Đang làm
 - (không có việc dở)
 
 ## Tiếp theo
-- Cân nhắc thêm script kiểm tra tự động tính nhất quán tài liệu (link gãy/tên file cũ) chạy trong CI của
-  chính repo khung, để không phải rà tay sau mỗi lần đổi tên file.
 - Cân nhắc: dự án đã copy khung bản cũ → dùng bảng ánh xạ trong `docs/framework/README.md` khi cập nhật.
+- Case-study mới chạy phần Phần D (hàng rào cục bộ). Phần Bước 6–8 (branch protection, Supabase, Vercel)
+  cần tài khoản thật, chưa kiểm chứng được — nếu có dịp áp khung vào dự án thật, nên kiểm nốt phần này.
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 - Cấu hình Opusplan được thêm vào `_framework-dropins/` (an toàn, không đè cấu hình cũ)
