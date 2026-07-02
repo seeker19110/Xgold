@@ -21,6 +21,8 @@ dự-án/
 ├─ CLAUDE.md                          ← luật AI (Claude Code tự đọc)
 ├─ PROJECT.md                         ← đặc tả dự án
 ├─ PROGRESS.md                        ← trạng thái dự án (cập nhật liên tục)
+├─ .claude/                           ← cấu hình Claude Code: settings (opusplan) + commands + hooks + agents
+├─ scripts/                           ← dev-task.sh (điểm vào format/lint/test/build/gate cho hook) + usage-estimate.sh
 ├─ docs/
 │  ├─ framework/                      ← khung chung + hướng dẫn (tham khảo)
 │  │  ├─ 01-process-and-standards.md
@@ -673,7 +675,7 @@ Các phần còn lại (Dependabot, Lighthouse CI...) thêm dần sau.
 
 ## 4. Cấu hình GitHub repository (Settings — không đóng gói được trong code)
 
-- [ ] **Branch protection** cho `main` (Bước 6 ở trên): yêu cầu PR + status checks xanh +
+- [ ] **Branch protection** cho `main` (Phần A Bước 6 / Phần D Bước 11): yêu cầu PR + status checks xanh +
       nhánh cập nhật + review từ Code Owners. Chọn các check bắt buộc: `quality`, `e2e`, `lighthouse`,
       `analyze` (CodeQL), `gitleaks`.
 - [ ] **Code scanning**: Settings → Code security & analysis → bật (CodeQL cần để upload kết quả; nếu không

@@ -29,7 +29,8 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
 ## File đã sẵn sàng (chỉ cần giải nén)
 - `CLAUDE.md` — luật cho AI (Claude Code tự đọc). **Nhớ điền các chỗ `[ĐIỀN: ...]`.**
 - `PROJECT.md` — mẫu đặc tả dự án (điền trước khi code).
-- `PROGRESS.md` — mẫu theo dõi trạng thái.
+- `PROGRESS.template.md` — mẫu theo dõi trạng thái (script copy tự tạo thành `PROGRESS.md` sạch ở dự án đích;
+  `PROGRESS.md` trong repo này là nhật ký phát triển của chính bộ khung, không copy sang).
 - `lib/env.ts` — xác thực biến môi trường (đổi tên biến cho khớp dự án).
 - `styles/theme.css` — design tokens: nền **Dark blue** mặc định + chế độ **Light**.
 - `playwright.config.ts`, `e2e/smoke.spec.ts` — E2E (desktop + mobile) + quét a11y axe.
@@ -66,7 +67,8 @@ Bạn đã clone/tải repo khung về máy. Chọn đúng một nhánh:
 
 ### Bước 1 — Mang khung sang dự án đích (một lệnh)
 Đứng **trong repo khung này**, trỏ tới thư mục gốc của dự án đích. Script **không đè** file đang chạy:
-tài liệu khung + `.claude/commands` copy thẳng; file gốc (`CLAUDE.md`, `PROJECT.md`…) chỉ copy nếu **chưa có**
+tài liệu khung + `.claude/` (commands, settings opusplan, hooks, agents) + `scripts/` (dev-task, usage-estimate —
+hook tự động cần 2 file này) copy thẳng; file gốc (`CLAUDE.md`, `PROJECT.md`…) chỉ copy nếu **chưa có**
 (đã có thì để bản `.framework-new` cạnh bên để tự so); file cấu hình/stack đưa vào `_framework-dropins/` để tự merge.
 
 **macOS / Linux (bash):**

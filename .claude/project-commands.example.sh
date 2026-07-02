@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # .claude/project-commands.sh — KHAI BÁO lệnh dev cho DỰ ÁN NÀY (escape hatch)
 #
 # Cách dùng: copy file này thành `.claude/project-commands.sh` rồi điền lệnh THẬT

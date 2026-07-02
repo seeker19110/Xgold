@@ -20,6 +20,10 @@
 #   - Tài liệu khung (docs/framework, mẫu ADR)  → copy thẳng (chỉ là tài liệu tham khảo mới).
 #   - File gốc (CLAUDE.md, PROJECT.md...)        → chỉ copy nếu CHƯA có; nếu đã có thì để bản
 #                                                  khung cạnh bên dưới đuôi .framework-new để bạn tự so.
+#   - Cấu hình Claude Code (.claude/settings.json, .claude/hooks, .claude/agents,
+#     scripts/dev-task.sh, scripts/usage-estimate.sh, 2 file .claude/*.example.sh)
+#                                                  → chỉ copy nếu CHƯA có; nếu đã có thì để bản
+#                                                  khung cạnh bên (đuôi .framework-new) để bạn tự so.
 #   - File cấu hình/stack (eslint, husky, app...) → KHÔNG đè; đưa vào _framework-dropins/ để bạn tự merge.
 #
 [CmdletBinding()]
@@ -111,7 +115,7 @@ Write-Host "Đích:   $Target"
 Write-Host ""
 
 # ── LỚP 1 — Quy trình & tiêu chuẩn (áp mọi stack): copy thẳng ──
-Write-Host "[1/3] Tài liệu khung (Lớp 1 — dùng được ngay, mọi stack):"
+Write-Host "[1/4] Tài liệu khung (Lớp 1 — dùng được ngay, mọi stack):"
 Copy-Into "docs/framework"
 Copy-Into "docs/ops"
 Copy-Into ".claude/commands"                   # slash commands của khung: /consult /bootstrap /auto /gate /adr /ui-ux /audit-optimize /audit-full /completion /incident
@@ -120,7 +124,16 @@ Copy-IfAbsent "docs/adr/0000-template.md"
 # ── File gốc dự án: chỉ copy nếu chưa có ──
 Copy-IfAbsent "CLAUDE.md"
 Copy-IfAbsent "PROJECT.md"
-Copy-IfAbsent "PROGRESS.md"
+# PROGRESS.md: dự án đích nhận bản MẪU SẠCH (PROGRESS.template.md) — KHÔNG nhận
+# nhật ký phát triển của chính repo khung (PROGRESS.md ở repo khung là log của khung).
+$progressDest = Join-Path $Target 'PROGRESS.md'
+if (Test-Path -LiteralPath $progressDest) {
+  Write-Host "  ~ PROGRESS.md đã tồn tại → giữ nguyên"
+}
+else {
+  Copy-Item -LiteralPath (Join-Path $Src 'PROGRESS.template.md') -Destination $progressDest
+  Write-Host "  + PROGRESS.md (từ mẫu sạch PROGRESS.template.md)"
+}
 Copy-IfAbsent "CHANGELOG.md"
 Copy-IfAbsent "CONTRIBUTING.md"
 Copy-IfAbsent "SECURITY.md"
@@ -129,9 +142,9 @@ Copy-IfAbsent ".nvmrc"
 Copy-IfAbsent ".env.example"
 # LICENSE KHÔNG copy: mỗi dự án tự chọn giấy phép + chủ sở hữu riêng.
 
-# ── Cấu hình Claude Code: copy thẳng ──
+# ── Cấu hình Claude Code + script tự động: copy thẳng (KHÔNG đè cấu hình đã có) ──
 Write-Host ""
-Write-Host "[2/3] Cấu hình Claude Code (opusplan — tối ưu token: Opus lập kế hoạch, Sonnet code, Haiku phụ):"
+Write-Host "[2/4] Cấu hình Claude Code (opusplan — tối ưu token) + script tự động (hook gọi qua dev-task.sh):"
 $claudeDir = Join-Path $Target '.claude'
 New-Item -ItemType Directory -Force -Path $claudeDir | Out-Null
 
@@ -145,28 +158,17 @@ else {
   Write-Host "  + .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
 }
 
-$hooksDest = Join-Path $claudeDir 'hooks'
-if (Test-Path -LiteralPath $hooksDest) {
-  Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull ($hooksDest + '.framework-new')
-  Write-Host "  ~ .claude/hooks đã tồn tại → bản khung để ở hooks.framework-new (tự so/merge)"
-}
-else {
-  Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull $hooksDest
-  Write-Host "  + .claude/hooks"
-}
-
-$agentsDest = Join-Path $claudeDir 'agents'
-if (Test-Path -LiteralPath $agentsDest) {
-  Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull ($agentsDest + '.framework-new')
-  Write-Host "  ~ .claude/agents đã tồn tại → bản khung để ở agents.framework-new (tự so/merge)"
-}
-else {
-  Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull $agentsDest
-  Write-Host "  + .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
-}
+Copy-IfAbsent ".claude/hooks"
+Copy-IfAbsent ".claude/agents"
+# Hook phụ thuộc 2 script này — thiếu thì hook no-op (mất auto-format + cổng chặn commit đỏ + nhắc quota):
+Copy-IfAbsent "scripts/dev-task.sh"
+Copy-IfAbsent "scripts/usage-estimate.sh"
+# 2 file mẫu để dự án tự điền (bản điền thật .claude/*.sh đã nằm trong .gitignore của khung):
+Copy-IfAbsent ".claude/project-commands.example.sh"
+Copy-IfAbsent ".claude/usage-budget.example.sh"
 
 Write-Host ""
-Write-Host "[3/3] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"
+Write-Host "[3/4] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"
 $dropins = @(
   'eslint.config.mjs', 'postcss.config.mjs',
   '.prettierrc', '.prettierignore', '.lintstagedrc.json', 'commitlint.config.cjs',
@@ -186,6 +188,9 @@ Write-Host @'
 
   1) Cấu hình Claude Code đã sẵn sàng: .claude/settings.json dùng opusplan (tối ưu token).
      → Opus lập kế hoạch, Sonnet code, Haiku (subagent) việc phụ — chỉ trả giá Opus khi thực sự cần.
+     → Hook tự động (auto-format + chặn commit đỏ + nhắc quota) chạy qua scripts/dev-task.sh
+       (tự dò stack). Dự án có lệnh riêng → copy .claude/project-commands.example.sh
+       thành .claude/project-commands.sh rồi điền.
      ✅ Dự án nhỏ muốn rẻ hơn nữa: đổi "model" thành "claude-sonnet-5".
      ✅ Dự án rất phức tạp: nâng riêng lúc cần bằng /model claude-opus-4-8 (hoặc claude-fable-5).
 

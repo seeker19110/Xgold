@@ -67,6 +67,23 @@
         (trỏ `/completion`); cổng "áp khung xong" thêm 2 file này.
       - CLAUDE.md §1 thêm TRIGGER `/completion`; cập nhật session-guide.sh, copy-framework.sh/.ps1,
         README.md, consult.md, models-and-automation.md (bảng model thêm `/audit-full` + `/completion`).
+- ✅ **Rà toàn diện template + sửa & bổ sung** (nhánh `claude/template-review-k4lpfy`):
+      - **Fix copy-framework.sh/.ps1:** copy kèm `scripts/` (dev-task, usage-estimate) + 2 file
+        `.example.sh` — trước đây hook sang dự án đích bị no-op âm thầm (mất auto-format/gate/quota).
+        Bản `.sh` sửa thêm lỗi copy thư mục LỒNG khi chạy lại lần 2 (`docs/framework/framework`…);
+        đã test đầu-cuối 2 lần chạy trên thư mục scratch.
+      - **PROGRESS.template.md (mới):** dự án đích nhận bản mẫu SẠCH, không nhận nhật ký của khung.
+      - **Sửa 4 tham chiếu lỗi thời:** "CLAUDE.md §3 mục 10/nguyên tắc 10" → mục 7 (3 chỗ);
+        "HUONG-DAN Bước 11" → "Phần D Bước 11" (runbook).
+      - **Đồng bộ:** `settings.json` thêm `effortLevel: medium` (khớp bản shared); cả 2 settings
+        deny thêm `git push --force-with-lease`; KHUNG-2 Phần B thêm mục "0. Loại dự án & Hồ sơ"
+        (khớp PROJECT.md); KHUNG-1 GĐ 1 thêm khối **DoR** cạnh DoD (trả lời ghi chú cũ ở
+        quality-supplements Nhóm 1 mục 7); runbook Phần 0 thêm `.claude/` + `scripts/` vào cây.
+      - **CI cho chính khung (mới):** job `framework-lint` trong `ci.yml` chạy CẢ khi chưa có app —
+        bash -n + shellcheck (error) + jq validate settings/config JSON + `scripts/check-docs-links.sh`
+        (script mới: mọi đường dẫn nhắc trong *.md phải tồn tại; allowlist file sinh tại dự án đích;
+        bỏ qua PROGRESS/CHANGELOG/bảng ánh xạ tên cũ).
+      - models-and-automation.md: ghi chú hook cần Git Bash trên Windows; cập nhật mô tả copy.
 
 - ✅ PR #24 (tái cấu trúc tên file) và PR #25 (hỏi rõ phạm vi "tối ưu"/"kiểm tra lỗi") đã merge vào `main`.
 - ✅ **Rà hoàn thiện chính bộ khung (đợt 2026-07-02):** sửa 1 tham chiếu mồ côi "HUONG-DAN Bước 11"
@@ -94,13 +111,33 @@
         crash thật ("Task killed") khi commit. Vá đúng gốc: bắt buộc xoá `_framework-dropins/` trước gate/
         commit đầu tiên (thêm vào Bước 0 runbook) — xác nhận lại: xoá xong thì toàn bộ chuỗi hook chạy đúng.
 
+- ✅ **Reconcile PR #27 với `main` sau khi PR #26 merge song song** (cùng đợt rà template, 2 phiên làm
+      độc lập trùng phạm vi): merge `origin/main` vào nhánh `claude/template-review-k4lpfy`, hợp nhất
+      5 file xung đột thay vì chọn một bên:
+      - `ci.yml`: giữ cả 3 job — `framework-lint` (bash -n/shellcheck/jq — thu hẹp lại, bỏ bước kiểm
+        tham chiếu tài liệu vì trùng việc), `docs-consistency` (từ #26, kỹ hơn: còn bắt tên file cũ sót
+        ngoài bảng ánh xạ), `copy-framework-smoke` (từ #26, chạy thật copy script vào scratch dir).
+      - Xoá `scripts/check-docs-links.sh` (của #27) — thừa so với `scripts/check-docs-consistency.sh`
+        (của #26, đã bao phủ + kỹ hơn). Tránh đúng lỗi "logic trùng lặp phân kỳ" mà Nhóm 12 audit-full
+        của chính khung này cảnh báo.
+      - `copy-framework.sh`/`.ps1`: hợp nhất fix "không đè `.claude/settings.json`/hooks/agents có sẵn"
+        (#26) với fix "copy kèm `scripts/dev-task.sh`+`usage-estimate.sh`+2 file `.example.sh`" (#27) —
+        dùng chung helper `copy_if_absent`/`Copy-IfAbsent` sẵn có cho toàn bộ nhóm file cấu hình Claude
+        Code, thay vì hard-code từng nhánh if/else.
+      - `new-project-runbook.md`: giữ bản tham chiếu đủ cả "Phần A Bước 6 / Phần D Bước 11" (đủ thông
+        tin hơn bản chỉ ghi "Bước 6 ở trên" của #26 — cả 2 đều sửa đúng cùng một tham chiếu mồ côi).
+      - `PROGRESS.md`: hợp nhất nhật ký cả 2 nhánh, viết lại mục Đang làm/Tiếp theo cho khớp thực tế.
+
 ## Đang làm
-- (không có việc dở)
+- (xong — chờ push lại + CI chạy lại cho nhánh `claude/template-review-k4lpfy` sau khi merge `main`)
 
 ## Tiếp theo
-- Cân nhắc: dự án đã copy khung bản cũ → dùng bảng ánh xạ trong `docs/framework/README.md` khi cập nhật.
-- Case-study mới chạy phần Phần D (hàng rào cục bộ). Phần Bước 6–8 (branch protection, Supabase, Vercel)
-  cần tài khoản thật, chưa kiểm chứng được — nếu có dịp áp khung vào dự án thật, nên kiểm nốt phần này.
+- Push nhánh đã merge, theo dõi CI (đặc biệt `framework-lint` + `docs-consistency` + `copy-framework-smoke`
+  chạy lần đầu cùng lúc), merge khi xanh (CLAUDE.md §8: quay về `main` sau merge).
+- Case-study mới chạy phần D (hàng rào cục bộ). Phần Bước 6–8 (branch protection, Supabase, Vercel) cần
+  tài khoản thật, chưa kiểm chứng được — nếu có dịp áp khung vào dự án thật, nên kiểm nốt phần này.
+- Dự án đã copy khung bản cũ → dùng bảng ánh xạ trong `docs/framework/README.md` khi cập nhật; chạy lại
+  `copy-framework.sh` bản mới để nhận `scripts/` + hook hoạt động thật + fix không-đè-cấu-hình-có-sẵn.
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 - Cấu hình Opusplan được thêm vào `_framework-dropins/` (an toàn, không đè cấu hình cũ)
@@ -115,5 +152,8 @@
 ## Bàn giao phiên (điền khi WIND-DOWN gần chạm limit 5h — để phiên sau "tiếp tục")
 > Chế độ tự động ghi ở đây trước khi dừng: việc vừa xong, việc DỞ ở đâu, bước kế tiếp cụ thể.
 - Lần cập nhật: 2026-07-02
-- Việc DỞ / bước tiếp theo: PR tái cấu trúc (nhánh `claude/project-planning-refinement-ujgfiy`) — theo dõi CI, merge khi xanh.
-- Cần lưu ý khi chạy tiếp: TOÀN BỘ tên file/lệnh đã sang tiếng Anh — tra bản đồ tên cũ→mới ở `docs/framework/README.md`. Doc model/tự động: `docs/framework/models-and-automation.md`. Subagent Sonnet: `.claude/agents/executor.md`.
+- Việc DỞ / bước tiếp theo: PR #27 (nhánh `claude/template-review-k4lpfy`) đã merge `main` (chứa PR #26,
+  merge song song lúc PR #27 đang mở) và giải xong 5 file xung đột (ci.yml, PROGRESS.md, copy-framework.sh/.ps1,
+  new-project-runbook.md) — cần chạy lại toàn bộ cổng cục bộ, commit merge, push, rồi theo dõi CI (3 job mới
+  chạy lần đầu cùng lúc: `framework-lint`, `docs-consistency`, `copy-framework-smoke`), merge khi xanh.
+- Cần lưu ý khi chạy tiếp: TOÀN BỘ tên file/lệnh đã sang tiếng Anh — tra bản đồ tên cũ→mới ở `docs/framework/README.md`. Doc model/tự động: `docs/framework/models-and-automation.md`. Subagent Sonnet: `.claude/agents/executor.md`. Copy-framework giờ copy kèm `scripts/` + `PROGRESS.template.md` + KHÔNG đè `.claude/settings.json`/hooks/agents có sẵn (dùng `copy_if_absent`).

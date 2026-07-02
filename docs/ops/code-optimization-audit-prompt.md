@@ -5,7 +5,7 @@
 > của nó → không thao tác cross-repo được; muốn audit dự án khác thì **mở phiên mới trên chính repo đó**.
 > Prompt dưới đây viết **độc lập** — chạy được dù repo đích đã có hay chưa có bộ khung này.
 > Bám đúng playbook **`quality-supplements.md` Nhóm 2 mục 9** + **`existing-project-adoption.md` Bước 2–3**
-> + nguyên tắc bất biến **`CLAUDE.md` §3 mục 10**.
+> + nguyên tắc bất biến **`CLAUDE.md` §3 mục 7 (Tối ưu mã nguồn)**.
 
 ## Khi nào dùng
 - Có một dự án cần rà & tối ưu: gỡ dead code, giảm trùng lặp/độ phức tạp, tỉa dependency thừa, thu nhỏ bundle.

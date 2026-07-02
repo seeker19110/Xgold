@@ -92,7 +92,14 @@
 - Đã tự review diff một lượt.
 - Đã merge vào nhánh chính và deploy thử OK.
 
-**Cổng:** Mọi tính năng MVP có tiêu chí chấp nhận; DoD được chốt.
+**Định nghĩa "Ready" (DoR) — đối trọng của DoD: một task chỉ BẮT ĐẦU khi** (chi tiết: `quality-supplements.md` Nhóm 1 mục 7):
+- Có tiêu chí chấp nhận rõ ràng, đo được.
+- Không còn câu hỏi mở quan trọng nào.
+- Đã xác định các phần phụ thuộc (cần gì xong trước).
+- Thiết kế/luồng đủ rõ để bắt tay (hoặc đã có wireframe nếu là UI).
+- Phạm vi đủ nhỏ để gói gọn trong một PR.
+
+**Cổng:** Mọi tính năng MVP có tiêu chí chấp nhận; DoD + DoR được chốt.
 
 **Đầu ra:** Danh sách MVP ưu tiên + tiêu chí chấp nhận + DoD + lịch trình.
 
