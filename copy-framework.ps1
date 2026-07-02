@@ -20,6 +20,10 @@
 #   - Tài liệu khung (docs/framework, mẫu ADR)  → copy thẳng (chỉ là tài liệu tham khảo mới).
 #   - File gốc (CLAUDE.md, PROJECT.md...)        → chỉ copy nếu CHƯA có; nếu đã có thì để bản
 #                                                  khung cạnh bên dưới đuôi .framework-new để bạn tự so.
+#   - Cấu hình Claude Code (.claude/settings.json, .claude/hooks, .claude/agents,
+#     scripts/dev-task.sh, scripts/usage-estimate.sh, 2 file .claude/*.example.sh)
+#                                                  → chỉ copy nếu CHƯA có; nếu đã có thì để bản
+#                                                  khung cạnh bên (đuôi .framework-new) để bạn tự so.
 #   - File cấu hình/stack (eslint, husky, app...) → KHÔNG đè; đưa vào _framework-dropins/ để bạn tự merge.
 #
 [CmdletBinding()]
@@ -138,26 +142,30 @@ Copy-IfAbsent ".nvmrc"
 Copy-IfAbsent ".env.example"
 # LICENSE KHÔNG copy: mỗi dự án tự chọn giấy phép + chủ sở hữu riêng.
 
-# ── Cấu hình Claude Code + script tự động: copy thẳng ──
+# ── Cấu hình Claude Code + script tự động: copy thẳng (KHÔNG đè cấu hình đã có) ──
 Write-Host ""
 Write-Host "[2/4] Cấu hình Claude Code (opusplan — tối ưu token) + script tự động (hook gọi qua dev-task.sh):"
 $claudeDir = Join-Path $Target '.claude'
 New-Item -ItemType Directory -Force -Path $claudeDir | Out-Null
-Copy-Tree -SrcFull (Join-Path $Src '.claude/settings-shared-opusplan.json') -DestFull (Join-Path $claudeDir 'settings.json')
-Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull (Join-Path $claudeDir 'hooks')
-Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull (Join-Path $claudeDir 'agents')
+
+$settingsDest = Join-Path $claudeDir 'settings.json'
+if (Test-Path -LiteralPath $settingsDest) {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/settings-shared-opusplan.json') -DestFull ($settingsDest + '.framework-new')
+  Write-Host "  ~ .claude/settings.json đã tồn tại → bản khung để ở settings.json.framework-new (tự so/merge)"
+}
+else {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/settings-shared-opusplan.json') -DestFull $settingsDest
+  Write-Host "  + .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
+}
+
+Copy-IfAbsent ".claude/hooks"
+Copy-IfAbsent ".claude/agents"
 # Hook phụ thuộc 2 script này — thiếu thì hook no-op (mất auto-format + cổng chặn commit đỏ + nhắc quota):
-$scriptsDir = Join-Path $Target 'scripts'
-New-Item -ItemType Directory -Force -Path $scriptsDir | Out-Null
-Copy-Tree -SrcFull (Join-Path $Src 'scripts/dev-task.sh') -DestFull (Join-Path $scriptsDir 'dev-task.sh')
-Copy-Tree -SrcFull (Join-Path $Src 'scripts/usage-estimate.sh') -DestFull (Join-Path $scriptsDir 'usage-estimate.sh')
+Copy-IfAbsent "scripts/dev-task.sh"
+Copy-IfAbsent "scripts/usage-estimate.sh"
 # 2 file mẫu để dự án tự điền (bản điền thật .claude/*.sh đã nằm trong .gitignore của khung):
-Copy-Tree -SrcFull (Join-Path $Src '.claude/project-commands.example.sh') -DestFull (Join-Path $claudeDir 'project-commands.example.sh')
-Copy-Tree -SrcFull (Join-Path $Src '.claude/usage-budget.example.sh') -DestFull (Join-Path $claudeDir 'usage-budget.example.sh')
-Write-Host "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
-Write-Host "  → .claude/hooks + .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
-Write-Host "  → scripts/dev-task.sh + scripts/usage-estimate.sh (hook auto-format/gate/usage cần 2 file này)"
-Write-Host "  → .claude/project-commands.example.sh + .claude/usage-budget.example.sh (mẫu tự điền)"
+Copy-IfAbsent ".claude/project-commands.example.sh"
+Copy-IfAbsent ".claude/usage-budget.example.sh"
 
 Write-Host ""
 Write-Host "[3/4] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"

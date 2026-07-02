@@ -11,6 +11,10 @@
 #   - Tài liệu khung (docs/framework, mẫu ADR)  → copy thẳng (chỉ là tài liệu tham khảo mới).
 #   - File gốc (CLAUDE.md, PROJECT.md...)        → chỉ copy nếu CHƯA có; nếu đã có thì để bản
 #                                                  khung cạnh bên dưới đuôi .framework-new để bạn tự so.
+#   - Cấu hình Claude Code (.claude/settings.json, .claude/hooks, .claude/agents,
+#     scripts/dev-task.sh, scripts/usage-estimate.sh, 2 file .claude/*.example.sh)
+#                                                  → chỉ copy nếu CHƯA có; nếu đã có thì để bản
+#                                                  khung cạnh bên (đuôi .framework-new) để bạn tự so.
 #   - File cấu hình/stack (eslint, husky, app...) → KHÔNG đè; đưa vào _framework-dropins/ để bạn tự merge.
 #
 set -euo pipefail
@@ -101,24 +105,27 @@ copy_if_absent ".nvmrc"
 copy_if_absent ".env.example"
 # LICENSE KHÔNG copy: mỗi dự án tự chọn giấy phép + chủ sở hữu riêng.
 
-# ── Cấu hình Claude Code + script tự động: copy thẳng ──
+# ── Cấu hình Claude Code + script tự động: copy thẳng (KHÔNG đè cấu hình đã có) ──
 echo ""
 echo "[2/4] Cấu hình Claude Code (opusplan — tối ưu token) + script tự động (hook gọi qua dev-task.sh):"
-mkdir -p "$TARGET/.claude/hooks" "$TARGET/.claude/agents" "$TARGET/scripts"
-cp "$SRC/.claude/settings-shared-opusplan.json" "$TARGET/.claude/settings.json"
-cp -R "$SRC/.claude/hooks/." "$TARGET/.claude/hooks/"
-cp -R "$SRC/.claude/agents/." "$TARGET/.claude/agents/"
+mkdir -p "$TARGET/.claude"
+if [ -e "$TARGET/.claude/settings.json" ]; then
+  cp "$SRC/.claude/settings-shared-opusplan.json" "$TARGET/.claude/settings.json.framework-new"
+  echo "  ~ .claude/settings.json đã tồn tại → bản khung để ở settings.json.framework-new (tự so/merge)"
+else
+  cp "$SRC/.claude/settings-shared-opusplan.json" "$TARGET/.claude/settings.json"
+  echo "  + .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
+fi
+copy_if_absent ".claude/hooks"
+copy_if_absent ".claude/agents"
 # Hook phụ thuộc 2 script này — thiếu thì hook no-op (mất auto-format + cổng chặn commit đỏ + nhắc quota):
-cp "$SRC/scripts/dev-task.sh" "$TARGET/scripts/dev-task.sh"
-cp "$SRC/scripts/usage-estimate.sh" "$TARGET/scripts/usage-estimate.sh"
+copy_if_absent "scripts/dev-task.sh"
+copy_if_absent "scripts/usage-estimate.sh"
 # 2 file mẫu để dự án tự điền (bản điền thật .claude/*.sh đã nằm trong .gitignore của khung):
-cp "$SRC/.claude/project-commands.example.sh" "$TARGET/.claude/project-commands.example.sh"
-cp "$SRC/.claude/usage-budget.example.sh" "$TARGET/.claude/usage-budget.example.sh"
-chmod +x "$TARGET/scripts/dev-task.sh" "$TARGET/scripts/usage-estimate.sh" "$TARGET/.claude/hooks/"*.sh 2>/dev/null || true
-echo "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
-echo "  → .claude/hooks + .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
-echo "  → scripts/dev-task.sh + scripts/usage-estimate.sh (hook auto-format/gate/usage cần 2 file này)"
-echo "  → .claude/project-commands.example.sh + .claude/usage-budget.example.sh (mẫu tự điền)"
+copy_if_absent ".claude/project-commands.example.sh"
+copy_if_absent ".claude/usage-budget.example.sh"
+chmod +x "$TARGET/scripts/dev-task.sh" "$TARGET/scripts/usage-estimate.sh" 2>/dev/null || true
+chmod +x "$TARGET/.claude/hooks/"*.sh 2>/dev/null || true
 
 echo ""
 echo "[3/4] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"

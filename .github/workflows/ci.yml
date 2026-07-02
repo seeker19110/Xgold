@@ -9,7 +9,8 @@ on:
 jobs:
   # Hàng rào cho CHÍNH bộ khung — chạy CẢ KHI CHƯA có app (không guard package.json).
   # KHUNG-1 nguyên tắc 6: tiêu chuẩn kiểm được bằng máy thì tự động hóa — áp cho chính template:
-  # shell phải đúng cú pháp, JSON cấu hình phải hợp lệ, tài liệu không được trỏ tới file không tồn tại.
+  # shell phải đúng cú pháp, JSON cấu hình phải hợp lệ. (Kiểm tra link/tên file cũ trong tài
+  # liệu đã có job docs-consistency riêng bên dưới — không lặp lại ở đây.)
   framework-lint:
     runs-on: ubuntu-latest
     steps:
@@ -37,8 +38,22 @@ jobs:
             if [ -f "$f" ]; then jq empty "$f" && echo "OK $f"; fi
           done
 
-      - name: Tham chiếu chéo tài liệu (đường dẫn nhắc trong *.md phải tồn tại)
-        run: bash scripts/check-docs-links.sh
+  # Luôn chạy (không cần package.json) — bắt link gãy / tên file cũ sót lại trong tài liệu
+  # của chính repo khung, để không phải rà tay sau mỗi lần đổi tên file.
+  docs-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/check-docs-consistency.sh
+
+  # Luôn chạy — chạy THẬT copy-framework.sh/.ps1 vào thư mục scratch để xác nhận: copy
+  # đúng cấu trúc (Lớp 1 thẳng, Lớp 2 vào _framework-dropins/), KHÔNG đè file đã có ở
+  # dự án đích, và chạy lại lần hai không lỗi. ubuntu-latest có sẵn pwsh nên kiểm cả .ps1.
+  copy-framework-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/test-copy-framework.sh
 
   quality:
     runs-on: ubuntu-latest
