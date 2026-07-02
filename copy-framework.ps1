@@ -134,12 +134,36 @@ Write-Host ""
 Write-Host "[2/3] Cấu hình Claude Code (opusplan — tối ưu token: Opus lập kế hoạch, Sonnet code, Haiku phụ):"
 $claudeDir = Join-Path $Target '.claude'
 New-Item -ItemType Directory -Force -Path $claudeDir | Out-Null
-Copy-Tree -SrcFull (Join-Path $Src '.claude/settings-shared-opusplan.json') -DestFull (Join-Path $claudeDir 'settings.json')
-Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull (Join-Path $claudeDir 'hooks')
-Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull (Join-Path $claudeDir 'agents')
-Write-Host "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
-Write-Host "  → .claude/hooks"
-Write-Host "  → .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
+
+$settingsDest = Join-Path $claudeDir 'settings.json'
+if (Test-Path -LiteralPath $settingsDest) {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/settings-shared-opusplan.json') -DestFull ($settingsDest + '.framework-new')
+  Write-Host "  ~ .claude/settings.json đã tồn tại → bản khung để ở settings.json.framework-new (tự so/merge)"
+}
+else {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/settings-shared-opusplan.json') -DestFull $settingsDest
+  Write-Host "  + .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
+}
+
+$hooksDest = Join-Path $claudeDir 'hooks'
+if (Test-Path -LiteralPath $hooksDest) {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull ($hooksDest + '.framework-new')
+  Write-Host "  ~ .claude/hooks đã tồn tại → bản khung để ở hooks.framework-new (tự so/merge)"
+}
+else {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/hooks') -DestFull $hooksDest
+  Write-Host "  + .claude/hooks"
+}
+
+$agentsDest = Join-Path $claudeDir 'agents'
+if (Test-Path -LiteralPath $agentsDest) {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull ($agentsDest + '.framework-new')
+  Write-Host "  ~ .claude/agents đã tồn tại → bản khung để ở agents.framework-new (tự so/merge)"
+}
+else {
+  Copy-Tree -SrcFull (Join-Path $Src '.claude/agents') -DestFull $agentsDest
+  Write-Host "  + .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
+}
 
 Write-Host ""
 Write-Host "[3/3] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"

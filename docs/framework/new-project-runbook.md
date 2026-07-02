@@ -66,6 +66,10 @@ dự-án/
 ### Bước 0 — Đưa khung vào repo
 - [ ] Copy thư mục `docs/framework/` (các file KHUNG + runbook + BO-SUNG) và `docs/ops/`, `docs/adr/`.
 - [ ] Copy `CLAUDE.md`, `lib/env.ts`, `pull_request_template.md` vào đúng chỗ theo Phần 0. (Hoặc dùng `copy-framework.sh`.)
+- [ ] **Nếu dùng `copy-framework.sh`/`.ps1`:** soát `_framework-dropins/`, merge file khớp stack vào gốc repo,
+      rồi **XOÁ hẳn `_framework-dropins/` trước khi chạy gate/commit đầu tiên**. Để lại thư mục này khi chạy
+      `lint`/`type-check`/pre-commit sẽ làm hỏng cổng vì nó chứa file ví dụ tham chiếu gói tuỳ chọn chưa cài
+      (`next-intl`, `serwist`...) — đã xác nhận bằng chạy thật (`docs/framework/case-study-greenfield-dry-run.md`).
 
 ### Bước 1 — Định nghĩa dự án → tạo `PROJECT.md`
 *(Tương ứng Giai đoạn 0–2 của khung, làm gọn)*
@@ -308,6 +312,12 @@ coverage
 
 > `prettier-plugin-tailwindcss` tự sắp xếp các class Tailwind theo thứ tự chuẩn.
 
+**Sau khi thêm script (Bước 2) và `.prettierrc`, chạy `npm run format` MỘT LẦN** để định dạng lại toàn bộ mã
+nguồn `create-next-app` sinh ra (dấu nháy đôi → đơn, thứ tự class Tailwind...) và các file tài liệu khung vừa
+copy. Bỏ qua bước này thì `npm run format:check`/CI sẽ đỏ ngay từ commit đầu — không phải do lỗi thật, mà vì
+chưa ai format qua chuẩn Prettier mới (đã xác nhận bằng chạy thật — xem
+`docs/framework/case-study-greenfield-dry-run.md`).
+
 ---
 
 ## Bước 4 — ESLint nghiêm hơn (flat config)
@@ -318,13 +328,15 @@ File `eslint.config.mjs` đã kèm sẵn ở gốc repo:
 ```js
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const compat = new FlatCompat({ baseDirectory: __dirname });
 
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: __dirname } },
@@ -337,12 +349,16 @@ const eslintConfig = [
       'jsx-a11y/label-has-associated-control': 'warn',
     },
   },
-  { ignores: ['.next/**', 'coverage/**', 'playwright-report/**', 'public/sw.js', 'next-env.d.ts'] },
-];
+  globalIgnores(['.next/**', 'coverage/**', 'playwright-report/**', 'public/sw.js', 'next-env.d.ts', '_framework-dropins/**']),
+]);
 
 export default eslintConfig;
 ```
 
+> `eslint-config-next` (Next 16+) export flat config qua subpath riêng (`eslint-config-next/core-web-vitals`,
+> `eslint-config-next/typescript`) — **không dùng `FlatCompat`** nữa: bản cũ dựa vào `@eslint/eslintrc`
+> gây lỗi `TypeError: Converting circular structure to JSON` trên phiên bản `eslint-config-next` hiện tại
+> (đã xác nhận bằng chạy thật — xem `docs/framework/case-study-greenfield-dry-run.md`).
 > `eslint-config-next` đã gồm React/Hooks và bộ rule **jsx-a11y** cốt lõi. `no-explicit-any` ép bỏ `any`;
 > `no-floating-promises` (cần `projectService` để lint theo kiểu) bắt promise quên `await`.
 > **Tailwind v4:** cần `postcss.config.mjs` (đã kèm) với plugin `@tailwindcss/postcss`; trong `globals.css`
@@ -657,7 +673,7 @@ Các phần còn lại (Dependabot, Lighthouse CI...) thêm dần sau.
 
 ## 4. Cấu hình GitHub repository (Settings — không đóng gói được trong code)
 
-- [ ] **Branch protection** cho `main` (KHOI-TAO Bước 6 / HUONG-DAN Bước 11): yêu cầu PR + status checks xanh +
+- [ ] **Branch protection** cho `main` (Bước 6 ở trên): yêu cầu PR + status checks xanh +
       nhánh cập nhật + review từ Code Owners. Chọn các check bắt buộc: `quality`, `e2e`, `lighthouse`,
       `analyze` (CodeQL), `gitleaks`.
 - [ ] **Code scanning**: Settings → Code security & analysis → bật (CodeQL cần để upload kết quả; nếu không

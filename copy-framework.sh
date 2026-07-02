@@ -11,6 +11,9 @@
 #   - Tài liệu khung (docs/framework, mẫu ADR)  → copy thẳng (chỉ là tài liệu tham khảo mới).
 #   - File gốc (CLAUDE.md, PROJECT.md...)        → chỉ copy nếu CHƯA có; nếu đã có thì để bản
 #                                                  khung cạnh bên dưới đuôi .framework-new để bạn tự so.
+#   - Cấu hình Claude Code (.claude/settings.json,
+#     .claude/hooks, .claude/agents)             → chỉ copy nếu CHƯA có; nếu đã có thì để bản
+#                                                  khung cạnh bên dưới đuôi .framework-new để bạn tự so.
 #   - File cấu hình/stack (eslint, husky, app...) → KHÔNG đè; đưa vào _framework-dropins/ để bạn tự merge.
 #
 set -euo pipefail
@@ -88,12 +91,27 @@ copy_if_absent ".env.example"
 echo ""
 echo "[2/3] Cấu hình Claude Code (opusplan — tối ưu token: Opus lập kế hoạch, Sonnet code, Haiku phụ):"
 mkdir -p "$TARGET/.claude"
-cp -R "$SRC/.claude/settings-shared-opusplan.json" "$TARGET/.claude/settings.json"
-cp -R "$SRC/.claude/hooks" "$TARGET/.claude/hooks" 2>/dev/null || true
-cp -R "$SRC/.claude/agents" "$TARGET/.claude/agents" 2>/dev/null || true
-echo "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
-echo "  → .claude/hooks"
-echo "  → .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
+if [ -e "$TARGET/.claude/settings.json" ]; then
+  cp "$SRC/.claude/settings-shared-opusplan.json" "$TARGET/.claude/settings.json.framework-new"
+  echo "  ~ .claude/settings.json đã tồn tại → bản khung để ở settings.json.framework-new (tự so/merge)"
+else
+  cp "$SRC/.claude/settings-shared-opusplan.json" "$TARGET/.claude/settings.json"
+  echo "  + .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
+fi
+if [ -e "$TARGET/.claude/hooks" ]; then
+  cp -R "$SRC/.claude/hooks" "$TARGET/.claude/hooks.framework-new" 2>/dev/null || true
+  echo "  ~ .claude/hooks đã tồn tại → bản khung để ở hooks.framework-new (tự so/merge)"
+else
+  cp -R "$SRC/.claude/hooks" "$TARGET/.claude/hooks" 2>/dev/null || true
+  echo "  + .claude/hooks"
+fi
+if [ -e "$TARGET/.claude/agents" ]; then
+  cp -R "$SRC/.claude/agents" "$TARGET/.claude/agents.framework-new" 2>/dev/null || true
+  echo "  ~ .claude/agents đã tồn tại → bản khung để ở agents.framework-new (tự so/merge)"
+else
+  cp -R "$SRC/.claude/agents" "$TARGET/.claude/agents" 2>/dev/null || true
+  echo "  + .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
+fi
 
 echo ""
 echo "[3/3] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"

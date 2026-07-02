@@ -7,6 +7,23 @@ on:
     branches: [main]
 
 jobs:
+  # Luôn chạy (không cần package.json) — bắt link gãy / tên file cũ sót lại trong tài liệu
+  # của chính repo khung, để không phải rà tay sau mỗi lần đổi tên file.
+  docs-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/check-docs-consistency.sh
+
+  # Luôn chạy — chạy THẬT copy-framework.sh/.ps1 vào thư mục scratch để xác nhận: copy
+  # đúng cấu trúc (Lớp 1 thẳng, Lớp 2 vào _framework-dropins/), KHÔNG đè file đã có ở
+  # dự án đích, và chạy lại lần hai không lỗi. ubuntu-latest có sẵn pwsh nên kiểm cả .ps1.
+  copy-framework-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/test-copy-framework.sh
+
   quality:
     runs-on: ubuntu-latest
     steps:
