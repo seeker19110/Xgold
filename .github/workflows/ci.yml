@@ -7,6 +7,39 @@ on:
     branches: [main]
 
 jobs:
+  # Hàng rào cho CHÍNH bộ khung — chạy CẢ KHI CHƯA có app (không guard package.json).
+  # KHUNG-1 nguyên tắc 6: tiêu chuẩn kiểm được bằng máy thì tự động hóa — áp cho chính template:
+  # shell phải đúng cú pháp, JSON cấu hình phải hợp lệ, tài liệu không được trỏ tới file không tồn tại.
+  framework-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cú pháp shell (bash -n — mọi *.sh + hook husky)
+        run: |
+          set -e
+          find . -name '*.sh' -not -path './node_modules/*' -print0 | xargs -0 -n1 bash -n
+          for f in .husky/pre-commit .husky/commit-msg; do
+            if [ -f "$f" ]; then bash -n "$f"; fi
+          done
+          echo "OK: cú pháp shell sạch"
+
+      - name: ShellCheck (mức error)
+        run: |
+          find . -name '*.sh' -not -path './node_modules/*' -print0 \
+            | xargs -0 shellcheck --severity=error
+
+      - name: JSON cấu hình hợp lệ (jq)
+        run: |
+          set -e
+          for f in .claude/settings.json .claude/settings-shared-opusplan.json \
+                   .lintstagedrc.json .prettierrc lighthouserc.json; do
+            if [ -f "$f" ]; then jq empty "$f" && echo "OK $f"; fi
+          done
+
+      - name: Tham chiếu chéo tài liệu (đường dẫn nhắc trong *.md phải tồn tại)
+        run: bash scripts/check-docs-links.sh
+
   quality:
     runs-on: ubuntu-latest
     steps:
