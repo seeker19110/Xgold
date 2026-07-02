@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # .claude/usage-budget.sh — BUDGET token/5h theo GÓI của bạn (tự hiệu chỉnh)
 #
 # Copy file này thành `.claude/usage-budget.sh` rồi điền số. Có file này thì
