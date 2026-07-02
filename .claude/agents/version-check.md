@@ -1,5 +1,5 @@
 ---
-name: kiem-tra-phien-ban
+name: version-check
 description: >-
   Xác minh phiên bản / sự tồn tại của gói-thư-viện-runtime bằng NGUỒN SỐNG — việc
   cơ học, phạm vi rõ, đúng thế mạnh Haiku 4.5. GIAO cho subagent này ở bước research-first

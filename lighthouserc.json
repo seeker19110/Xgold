@@ -1,5 +1,5 @@
 {
-  "//": "Cấu hình Lighthouse CI — ngân sách hiệu năng (performance budget). Xem docs/framework/BO-SUNG-chat-luong.md (Nhóm 2).",
+  "//": "Cấu hình Lighthouse CI — ngân sách hiệu năng (performance budget). Xem docs/framework/quality-supplements.md (Nhóm 2).",
   "ci": {
     "collect": {
       "//": "Đổi danh sách URL cho khớp các trang quan trọng của dự án. startServerCommand dựng app từ bản build production.",

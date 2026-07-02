@@ -9,7 +9,7 @@
 > chọn hồ sơ** theo **KHUNG-3 PHẦN A0 + PHẦN C**. **Phần 0 và Phần D dưới đây là cấu hình cụ thể của hồ sơ Web app
 > (Next.js + Supabase + Vercel)** — với hồ sơ khác, giữ nguyên trình tự nhưng **thay công cụ tương đương** (vd init
 > dự án, hệ test, đóng gói, CI của loại đó); nguyên tắc hàng rào (pre-commit + commit-msg + CI + branch protection)
-> không đổi. **Dự án có sẵn:** dùng `AP-DUNG-vao-du-an-co-san.md` (chỉ tư vấn & nâng cấp), không chạy runbook này.
+> không đổi. **Dự án có sẵn:** dùng `existing-project-adoption.md` (chỉ tư vấn & nâng cấp), không chạy runbook này.
 > **Không xây dự án "cấm"** (mã độc/phá hoại/DoS… — xem CLAUDE.md §0b).
 
 ---
@@ -23,12 +23,12 @@ dự-án/
 ├─ PROGRESS.md                        ← trạng thái dự án (cập nhật liên tục)
 ├─ docs/
 │  ├─ framework/                      ← khung chung + hướng dẫn (tham khảo)
-│  │  ├─ KHUNG-1-quy-trinh-va-tieu-chuan.md
-│  │  ├─ KHUNG-2-luat-AI-va-mau-du-an.md
-│  │  ├─ KHUNG-3-chon-cong-nghe-va-de-xuat-chu-dong.md
-│  │  ├─ KHOI-TAO-du-an-moi.md         ← runbook (gồm cấu hình hàng rào + checklist dự án thật)
-│  │  ├─ AP-DUNG-vao-du-an-co-san.md   ← áp khung lên dự án có sẵn (brownfield)
-│  │  └─ BO-SUNG-chat-luong.md         ← Nhóm 1 + Nhóm 2 + theme + nâng cao
+│  │  ├─ 01-process-and-standards.md
+│  │  ├─ 02-ai-rules-and-project-template.md
+│  │  ├─ 03-tech-selection-and-proactive-advice.md
+│  │  ├─ new-project-runbook.md         ← runbook (gồm cấu hình hàng rào + checklist dự án thật)
+│  │  ├─ existing-project-adoption.md   ← áp khung lên dự án có sẵn (brownfield)
+│  │  └─ quality-supplements.md         ← Nhóm 1 + Nhóm 2 + theme + nâng cao
 │  ├─ ops/                            ← vận hành GĐ 8: incident-response + post-mortem (mẫu)
 │  └─ adr/                            ← các quyết định kỹ thuật
 │     └─ 0000-template.md
@@ -102,7 +102,7 @@ dự-án/
 
 ### Bước 5 — Thêm file bổ sung chất lượng
 - [ ] `lib/env.ts`: đổi tên biến cho khớp dự án; dùng `clientEnv`/`serverEnv` thay cho `process.env` rải rác.
-- [ ] `styles/theme.css`: nối tokens vào Tailwind + script no-flash + nút chuyển (theo `BO-SUNG-chat-luong.md` PHẦN 3). Mặc định **Dark blue**, có **Light**.
+- [ ] `styles/theme.css`: nối tokens vào Tailwind + script no-flash + nút chuyển (theo `quality-supplements.md` PHẦN 3). Mặc định **Dark blue**, có **Light**.
 - [ ] `e2e/smoke.spec.ts`: sửa cho khớp luồng chính thật.
 - [ ] `.github/pull_request_template.md` + `ISSUE_TEMPLATE/` + `CHANGELOG.md` đã ở đúng chỗ.
 - [ ] Thư mục `docs/adr/` sẵn sàng (viết ADR khi có quyết định kỹ thuật lớn).
@@ -156,7 +156,7 @@ dự-án/
 ### Chất lượng
 - Một tính năng chỉ **XONG** khi đạt **Definition of Done** (đối chiếu checklist PR).
 - Một task chỉ **BẮT ĐẦU** khi đạt **Definition of Ready** (có tiêu chí chấp nhận rõ, không còn câu hỏi mở, phạm vi gói trong một PR).
-- **Tối ưu mã nguồn** trước khi đóng mỗi mảng/tính năng: gỡ dead code, giảm trùng lặp & độ phức tạp, tỉa dependency thừa, thu nhỏ bundle — refactor **không đổi hành vi**, có test bảo vệ (playbook: `BO-SUNG-chat-luong.md` Nhóm 2 mục 9).
+- **Tối ưu mã nguồn** trước khi đóng mỗi mảng/tính năng: gỡ dead code, giảm trùng lặp & độ phức tạp, tỉa dependency thừa, thu nhỏ bundle — refactor **không đổi hành vi**, có test bảo vệ (playbook: `quality-supplements.md` Nhóm 2 mục 9).
 
 ### Hành vi AI
 - **Không bịa** hàm/thư viện/API — xác minh tồn tại.
@@ -242,7 +242,7 @@ npm install --save-dev @lhci/cli
 # Xác thực biến môi trường (dùng bởi lib/env.ts)
 npm install zod
 
-# (Tùy chọn — xem BO-SUNG-chat-luong.md PHẦN 4) i18n / PWA / Sentry:
+# (Tùy chọn — xem quality-supplements.md PHẦN 4) i18n / PWA / Sentry:
 # npm install next-intl @serwist/next @sentry/nextjs && npm install --save-dev serwist
 ```
 
@@ -637,7 +637,7 @@ Các phần còn lại (Dependabot, Lighthouse CI...) thêm dần sau.
 - [ ] `npx create-next-app@latest` (TypeScript + Tailwind + ESLint) → sinh `package.json`, `tsconfig.json`, `next.config.ts`.
 - [ ] Cài gói + thêm khối `scripts` + `npx husky init` (rồi copy đè 2 hook `.husky/*`) — chi tiết **Phần D**.
 - [ ] Thêm các cờ TypeScript `strict` (`noUncheckedIndexedAccess`...) — **Phần D** (Bước 5).
-- [ ] Nối theme vào `app/globals.css` + `app/layout.tsx` (script no-flash) — xem `BO-SUNG-chat-luong.md` PHẦN 3.
+- [ ] Nối theme vào `app/globals.css` + `app/layout.tsx` (script no-flash) — xem `quality-supplements.md` PHẦN 3.
 
 > **Mở khóa:** mọi job CI hiện đang *tự bỏ qua khi chưa có `package.json`* (quality/e2e/lighthouse/codeql/release)
 > sẽ tự kích hoạt. Sau bước này, xóa step guard `package.json` nếu muốn CI luôn chạy đầy đủ.
@@ -688,8 +688,8 @@ Các phần còn lại (Dependabot, Lighthouse CI...) thêm dần sau.
 ## 8. Quan sát & ra mắt (GĐ 6–7)
 
 - [ ] **Sentry**: chạy `npx @sentry/wizard@latest -i nextjs`; đặt `SENTRY_DSN` qua env; bật cảnh báo
-      (`BO-SUNG-chat-luong.md` PHẦN 4 — Sentry).
-- [ ] **Analytics**: chọn nhà cung cấp theo nhu cầu (`BO-SUNG-chat-luong.md` PHẦN 4 — Analytics) + đặt khóa qua env.
+      (`quality-supplements.md` PHẦN 4 — Sentry).
+- [ ] **Analytics**: chọn nhà cung cấp theo nhu cầu (`quality-supplements.md` PHẦN 4 — Analytics) + đặt khóa qua env.
 - [ ] **release-please**: lần merge đầu vào `main` sẽ mở "release PR"; merge nó để cắt phiên bản + CHANGELOG.
 - [ ] Checklist ra mắt GĐ 7 (KHUNG 1): privacy/terms, SEO meta/OG, trang lỗi, onboarding, kênh phản hồi.
 
@@ -702,9 +702,9 @@ Các phần còn lại (Dependabot, Lighthouse CI...) thêm dần sau.
 
 - [ ] Thử commit message sai chuẩn → **bị chặn**; thêm code sai kiểu rồi commit → **bị chặn**.
 - [ ] Tạo PR thử → CI chạy; khi đỏ thì **không merge được**.
-- [ ] Đối chiếu **Phần C** của `KHOI-TAO-du-an-moi.md` — đạt đủ mới bắt đầu code tính năng.
+- [ ] Đối chiếu **Phần C** của `new-project-runbook.md` — đạt đủ mới bắt đầu code tính năng.
 
 ---
 
 > Với **dự án đã có sẵn** (brownfield), không làm tuần tự như trên mà áp tăng dần theo
-> `AP-DUNG-vao-du-an-co-san.md` (đo baseline → hạ nợ dần). Checklist này vẫn là danh mục "đích đến".
+> `existing-project-adoption.md` (đo baseline → hạ nợ dần). Checklist này vẫn là danh mục "đích đến".

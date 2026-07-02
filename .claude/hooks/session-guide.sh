@@ -2,8 +2,8 @@
 # session-guide.sh — SessionStart hook.
 # HIỆN cho NGƯỜI DÙNG (systemMessage) gợi ý "nên làm gì tiếp theo" khi mở phiên,
 # CHỈ trong dự án dùng khung/template này. Tự nhận biết trạng thái để gợi ý đúng:
-#   • Chưa có tiến độ  → hướng bắt đầu (mô tả ý tưởng / /tu-van / /khoi-tao / /tu-dong)
-#   • Đang làm dở      → hướng tiếp tục ('tiếp tục' / /tu-dong / /cong)
+#   • Chưa có tiến độ  → hướng bắt đầu (mô tả ý tưởng / /consult / /bootstrap / /auto)
+#   • Đang làm dở      → hướng tiếp tục ('tiếp tục' / /auto / /gate)
 # Đồng thời XÁC NHẬN model phiên (đọc trường "model" từ stdin): ✅ nếu opusplan,
 #   ⚠️ CẢNH BÁO nếu bị picker/UI chọn đè, 🔎 nếu không đọc được → hướng /model opusplan.
 # Khi KHÔNG phải opusplan: còn phát additionalContext để AI CHỦ ĐỘNG nhắc chuyển sang
@@ -15,7 +15,7 @@ ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 command -v jq >/dev/null 2>&1 || exit 0
 
 # Marker: chỉ chạy trong dự án áp dụng khung này.
-[ -d "$ROOT/docs/framework" ] || [ -f "$ROOT/.claude/commands/tu-dong.md" ] || exit 0
+[ -d "$ROOT/docs/framework" ] || [ -f "$ROOT/.claude/commands/auto.md" ] || exit 0
 
 # Trích "Giai đoạn hiện tại" thật (bỏ dòng rỗng và placeholder "(vd").
 phase=""
@@ -44,9 +44,9 @@ if [ -z "$phase" ] && [ -z "$dirty" ]; then
   msg="🧭 Dự án dùng KHUNG (template). Chưa có tiến độ ghi nhận.
 ${mnote}
 Bắt đầu thế nào:
-• Mô tả ý tưởng/yêu cầu dự án — hoặc gõ /tu-van (chọn công nghệ, research-first)
-• /khoi-tao (dựng nền dự án mới)  •  /tu-dong (Opus lập kế hoạch → chạy tự động)
-• Model & chế độ tự động: docs/framework/MODEL-va-TU-DONG.md"
+• Mô tả ý tưởng/yêu cầu dự án — hoặc gõ /consult (chọn công nghệ, research-first)
+• /bootstrap (dựng nền dự án mới)  •  /auto (Opus lập kế hoạch → chạy tự động)
+• Model & chế độ tự động: docs/framework/models-and-automation.md"
 else
   extra=""
   [ -n "$phase" ] && extra=" — GĐ hiện tại: ${phase}"
@@ -55,7 +55,8 @@ else
 ${mnote}
 Tiếp theo nên:
 • Gõ 'tiếp tục' để nối việc dở (PROGRESS.md đã được nạp) — xem mục 'Đang làm'/'Tiếp theo'/'Bàn giao phiên'
-• /tu-dong để tự động điều phối  •  /cong trước khi commit  •  /su-co nếu có sự cố"
+• /auto để tự động điều phối  •  /gate trước khi commit  •  /incident nếu có sự cố
+• /completion để hoàn thiện dự án (audit 12 nhóm → kế hoạch → sửa từng đợt → quét lại đến khi sạch)"
 fi
 
 # Khi KHÔNG phải opusplan → yêu cầu AI chủ động dẫn việc chuyển & xác nhận.

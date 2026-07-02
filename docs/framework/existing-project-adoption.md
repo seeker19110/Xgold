@@ -1,6 +1,6 @@
 # Áp dụng bộ khung vào DỰ ÁN ĐÃ CÓ SẴN (brownfield)
 
-> Runbook `KHOI-TAO-du-an-moi.md` dành cho dự án mới (từ `create-next-app`). File này dành cho
+> Runbook `new-project-runbook.md` dành cho dự án mới (từ `create-next-app`). File này dành cho
 > **dự án đã phát triển** — cách "đắp" khung lên code có sẵn một cách an toàn, **tăng dần, không làm lại từ đầu**.
 
 ## Nguyên tắc cốt lõi
@@ -40,7 +40,7 @@ chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), 
 
 ---
 
-## PHẦN A — Trình tự áp dụng (4 bước)
+## PHẦN A — Trình tự áp dụng (5 bước: 0 → 4)
 
 ### Bước 0 — Hiểu & ghi lại hiện trạng (AI TỰ XÁC ĐỊNH bằng cách đọc repo)
 
@@ -67,6 +67,13 @@ chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), 
 - [ ] **AI tổng hợp "Hồ sơ dự án"**: stack + phiên bản + cấu trúc + những gì *đã có* vs *còn thiếu* so với khung
       (bảng gap). Trình bày để người dùng xác nhận, **không bắt người dùng tự khai stack**.
 - [ ] **Viết `PROJECT.md` ngược** từ những gì đọc được: tính năng đã làm, schema hiện tại, kiến trúc, **nợ kỹ thuật**.
+- [ ] **Lập Bản đồ tính năng `docs/FEATURE-MAP.md`** (mẫu ở `project-completion.md`): mọi tính năng/
+      luồng — điểm vào, dữ liệu đụng tới, trạng thái, test hiện có. Đọc code thật (route, menu,
+      controller) để lập — đây là căn cứ rà **thống nhất chéo tính năng** (Nhóm 12 audit) và lập kế
+      hoạch hoàn thiện.
+- [ ] **Khởi tạo Sổ quy ước `docs/CONVENTIONS.md`** (mẫu ở `project-completion.md`): với mỗi pattern
+      lặp lại (validate, dạng lỗi API, check quyền, trạng thái UI, đặt tên…) ghi nhận cách dự án
+      ĐANG làm; chỗ đang tồn tại nhiều kiểu → đánh dấu "cần hợp nhất".
 - [ ] Viết `PROGRESS.md`: dự án đang ở giai đoạn nào (thường GĐ 4–5 nếu chưa xong, hoặc GĐ 8 nếu đã ra mắt).
 - [ ] Tạo `CLAUDE.md` điền **đúng stack/lệnh thật vừa dò được** (mục 10) — không để `[ĐIỀN]`.
 - [ ] Cài Git hygiene nếu thiếu: `.gitignore` chặn `.env`, nhánh riêng cho mỗi thay đổi.
@@ -92,7 +99,7 @@ Thứ tự tăng dần để không bị "ngộp lỗi":
 - [ ] **Lighthouse:** đo điểm hiện tại làm baseline; đặt budget kiểu "không tệ hơn hiện tại", cải thiện dần (Nhóm 2 mục 2).
 - [ ] **Accessibility:** chạy axe, lập danh sách vi phạm, sửa theo mức nghiêm trọng (Nhóm 2 mục 3).
 - [ ] **Theme/mobile:** nếu đã có UI, **retrofit dần** sang design tokens (`styles/theme.css`) — không viết lại giao diện.
-- [ ] **Observability (Sentry):** thêm sớm để **thấy lỗi production thật** (`BO-SUNG-chat-luong.md` PHẦN 4).
+- [ ] **Observability (Sentry):** thêm sớm để **thấy lỗi production thật** (`quality-supplements.md` PHẦN 4).
 - [ ] **Tối ưu mã nguồn:** đo baseline rác/trùng lặp/dependency thừa/bundle (knip · depcheck · ESLint `complexity` · bundle-analyzer), rồi **hạ dần** theo "đụng đâu dọn đó" — không dọn cả repo một lần; refactor không đổi hành vi, có test bảo vệ (Nhóm 2 mục 9).
 - [ ] **Migration:** nếu áp kỷ luật migration lên CSDL đang chạy → **baseline schema hiện tại thành migration đầu tiên**
       (dump schema), rồi mọi thay đổi sau đi qua migration có phiên bản.
@@ -101,6 +108,15 @@ Thứ tự tăng dần để không bị "ngộp lỗi":
 - [ ] Mọi tính năng mới / sửa lỗi: qua **DoR** (đủ rõ mới làm) → cổng commit → **DoD** → cổng merge → báo cáo xác thực.
 - [ ] Code cũ: **tối ưu dần theo "đụng đâu dọn đó"** (gỡ dead code, trùng lặp, dep thừa — Nhóm 2 mục 9); ghi mọi "làm tạm" vào `PROGRESS.md` (nợ kỹ thuật).
 - [ ] Đổi/thêm công nghệ lớn: chạy **KHUNG 3** (research-first, phiên bản đã xác minh) + ghi **ADR**.
+- [ ] Tính năng mới & mọi lần sửa: **đối chiếu `docs/CONVENTIONS.md`** — làm theo pattern đã chốt,
+      không tự chế kiểu mới (lệch quy ước = phát hiện Nhóm 12 khi audit).
+
+### Bước 4 — (tùy chọn nhưng khuyến nghị) HOÀN THIỆN toàn dự án
+Áp khung xong (Bước 0–3) mới là "có hàng rào + vận hành đúng". Muốn đưa dự án lên trạng thái
+**không còn lỗi logic/cấu trúc/lỗ hổng ĐÃ BIẾT, các tính năng thống nhất, có bằng chứng** →
+chạy **`/completion`** theo `project-completion.md`: audit 12 nhóm → **kế hoạch hoàn thiện chi
+tiết** (duyệt rồi mới sửa) → thực thi từng đợt qua `/gate` → **re-audit hội tụ** → nghiệm thu
+theo **Definition of Complete**.
 
 ---
 
@@ -133,6 +149,7 @@ Dự án bạn đã có i18n → **đừng thay nếu đang chạy tốt.** Đá
 
 ## Cổng "đã áp khung xong cho dự án cũ"
 - [ ] `PROJECT.md` (ngược) + `PROGRESS.md` + `CLAUDE.md` (điền thật) đã có.
+- [ ] `docs/FEATURE-MAP.md` + `docs/CONVENTIONS.md` đã lập (căn cứ rà thống nhất chéo tính năng).
 - [ ] Pre-commit hook + commit-msg hook **chặn được** lỗi trên commit MỚI.
 - [ ] CI chạy trên PR; branch protection bật.
 - [ ] Có baseline (lint/type/test/Lighthouse/a11y) + kế hoạch hạ nợ dần.

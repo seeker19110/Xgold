@@ -11,7 +11,7 @@
 
 > `npx supabase init` sẽ sinh thêm `config.toml` (cấu hình local). Commit nó khi khởi tạo dự án thật.
 
-## Quy trình (tóm tắt — chi tiết: `docs/framework/BO-SUNG-chat-luong.md` Nhóm 1 mục 2)
+## Quy trình (tóm tắt — chi tiết: `docs/framework/quality-supplements.md` Nhóm 1 mục 2)
 
 ```bash
 npx supabase init                       # tạo thư mục supabase/ (lần đầu)

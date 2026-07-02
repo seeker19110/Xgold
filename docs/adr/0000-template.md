@@ -1,6 +1,6 @@
 <!--
 Mẫu ADR (Architecture Decision Record) — bản ghi quyết định kiến trúc.
-Đặt tại: docs/adr/  (ví dụ: docs/adr/0001-chon-supabase.md)
+Đặt tại: docs/adr/  (ví dụ: docs/adr/0002-choose-database.md)
 Mỗi quyết định kỹ thuật quan trọng = một file ADR mới, đánh số tăng dần.
 KHÔNG sửa ADR cũ; nếu đổi ý, viết ADR mới và đánh dấu cái cũ là "Đã thay thế".
 

@@ -8,7 +8,7 @@
  *
  * Mọi cặp màu nền/chữ dưới đây đã nhắm đạt tương phản WCAG AA (≥ 4.5:1 cho chữ thường).
  * Dùng BIẾN, không hard-code màu trong component → đổi theme là toàn app đổi theo.
- * Hợp với Tailwind v4 (xem hướng dẫn nối ở docs/framework/BO-SUNG-chat-luong.md PHẦN 3).
+ * Hợp với Tailwind v4 (xem hướng dẫn nối ở docs/framework/quality-supplements.md PHẦN 3).
  */
 
 /* ──────────────────────────────────────────────

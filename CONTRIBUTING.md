@@ -1,7 +1,7 @@
 # Đóng góp
 
 > Dự án vận hành theo bộ khung trong `docs/framework/`. Đọc `CLAUDE.md` (luật vận hành) và
-> `docs/framework/KHUNG-1-quy-trinh-va-tieu-chuan.md` (quy trình + cổng) trước khi bắt đầu.
+> `docs/framework/01-process-and-standards.md` (quy trình + cổng) trước khi bắt đầu.
 
 ## Trước khi bắt đầu một việc (Definition of Ready)
 

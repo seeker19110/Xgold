@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 /**
  * Nút chuyển theme (Dark blue mặc định ↔ Light).
  * Đi kèm `styles/theme.css` (design tokens) + script no-flash trong app/layout.tsx.
- * Xem docs/framework/BO-SUNG-chat-luong.md PHẦN 3.
+ * Xem docs/framework/quality-supplements.md PHẦN 3.
  *
  * Nguyên tắc: dùng token (bg-background/text-foreground...), không hard-code màu;
  * lựa chọn được nhớ trong localStorage; có aria-label cho accessibility.

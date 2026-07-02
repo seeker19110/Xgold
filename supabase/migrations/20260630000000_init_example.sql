@@ -8,7 +8,7 @@
 --   • id dùng uuid; tiền (nếu có) dùng số nguyên/decimal, KHÔNG float.
 --   • Row Level Security BẬT ngay từ thiết kế + policy theo chủ sở hữu.
 --
--- Vòng đời migration (xem docs/framework/BO-SUNG-chat-luong.md Nhóm 1 mục 2):
+-- Vòng đời migration (xem docs/framework/quality-supplements.md Nhóm 1 mục 2):
 --   Tạo:           npx supabase migration new ten_thay_doi
 --   Áp dụng local: npx supabase db reset
 --   Đẩy prod:      npx supabase db push   (CHỈ sau khi test kỹ local + đã có backup)

@@ -69,7 +69,7 @@ echo ""
 echo "[1/3] Tài liệu khung (Lớp 1 — dùng được ngay, mọi stack):"
 copy_into "docs/framework"
 copy_into "docs/ops"
-copy_into ".claude/commands"                   # slash commands của khung: /audit-toi-uu /audit-toan-dien /tu-van /cong /su-co /adr /khoi-tao
+copy_into ".claude/commands"                   # slash commands của khung: /consult /bootstrap /auto /gate /adr /ui-ux /audit-optimize /audit-full /completion /incident
 copy_if_absent "docs/adr/0000-template.md"
 
 # ── File gốc dự án: chỉ copy nếu chưa có ──
@@ -93,7 +93,7 @@ cp -R "$SRC/.claude/hooks" "$TARGET/.claude/hooks" 2>/dev/null || true
 cp -R "$SRC/.claude/agents" "$TARGET/.claude/agents" 2>/dev/null || true
 echo "  → .claude/settings.json (opusplan; fallback Sonnet 5 → Haiku 4.5)"
 echo "  → .claude/hooks"
-echo "  → .claude/agents (subagent: tra-cuu, kiem-tra-phien-ban [Haiku]; thuc-thi [Sonnet])"
+echo "  → .claude/agents (subagent: lookup, version-check [Haiku]; executor [Sonnet])"
 
 echo ""
 echo "[3/3] File cấu hình khác (Lớp 2 — KHÔNG đè; để bạn tự merge cái khớp stack):"
@@ -122,15 +122,18 @@ cat <<'NEXT'
 
   2) Mở phiên Claude Code NGAY TRONG dự án đích.
      → AI tự đọc CLAUDE.md + .claude/settings.json (opusplan sẵn sàng).
-     → Chạy Bước 0 của docs/framework/AP-DUNG-vao-du-an-co-san.md
+     → Chạy Bước 0 của docs/framework/existing-project-adoption.md
        (tự dò stack bằng cách đọc package.json/config — không cần bạn khai stack).
 
   3) Soát thư mục _framework-dropins/ : merge file cấu hình KHỚP stack vào dự án
      (các file lớp 2 khác: eslint, prettier, playwright, github workflows, etc.).
      Xong thì có thể xóa _framework-dropins/.
 
-  4) Commit, rồi áp khung tăng dần theo AP-DUNG-vao-du-an-co-san.md
+  4) Commit, rồi áp khung tăng dần theo existing-project-adoption.md
      (Prettier → ESLint → TS strict → hook → CI → lấp lỗ hổng test/a11y/hiệu năng).
+
+  5) Muốn hoàn thiện toàn dự án (hết lỗi đã biết, tính năng thống nhất, có bằng chứng):
+     gõ /completion — audit 12 nhóm → kế hoạch chi tiết (duyệt) → sửa từng đợt → quét lại đến khi sạch.
 
   (Tùy chọn) Muốn luật áp cho MỌI dự án trên máy: chép CLAUDE.md vào ~/.claude/CLAUDE.md.
 NEXT

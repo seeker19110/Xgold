@@ -42,11 +42,38 @@
       nguyên tắc chống ảo giác CLAUDE.md §4). Ghi nhận từ phản hồi người dùng: khung này dùng để áp
       lên dự án khác hoặc phát triển tiếp từ đây — audit toàn diện chỉ có ý nghĩa khi đã có dự án cụ thể.
 
+- ✅ **Tái cấu trúc repo — tên file sang TIẾNG ANH** (nội dung vẫn tiếng Việt), người dùng chốt:
+      - `docs/framework/`: KHUNG-1/2/3 → `01-process-and-standards.md` / `02-ai-rules-and-project-template.md`
+        / `03-tech-selection-and-proactive-advice.md`; KHOI-TAO → `new-project-runbook.md`;
+        AP-DUNG → `existing-project-adoption.md`; BO-SUNG → `quality-supplements.md`;
+        MODEL-va-TU-DONG → `models-and-automation.md`. Thêm `docs/framework/README.md` (chỉ mục + bản đồ tên cũ→mới).
+      - `docs/ops/`: audit-toan-dien-prompt → `comprehensive-audit-prompt.md`; audit-toi-uu-prompt →
+        `code-optimization-audit-prompt.md`; file trạng thái sinh tại dự án đích: `COMPREHENSIVE-AUDIT-STATUS.md`.
+      - Slash commands: `/tu-van`→`/consult` · `/cong`→`/gate` · `/khoi-tao`→`/bootstrap` · `/tu-dong`→`/auto`
+        · `/audit-toan-dien`→`/audit-full` · `/audit-toi-uu`→`/audit-optimize` · `/su-co`→`/incident`.
+      - Subagents: `tra-cuu`→`lookup` · `kiem-tra-phien-ban`→`version-check` · `thuc-thi`→`executor`.
+      - ADR: `0001-chon-stack.md` → `0001-stack-selection.md`. Toàn bộ tham chiếu chéo đã cập nhật
+        (đã grep xác minh 0 sót, mọi đường dẫn docs/ được nhắc đều tồn tại).
+- ✅ **Lấp 4 gap "hoàn thiện dự án"** (từ phân tích gap theo yêu cầu người dùng):
+      - **`docs/framework/project-completion.md` + `/completion`** — playbook 5 pha: dò hiện trạng
+        (bản đồ tính năng `docs/FEATURE-MAP.md` + sổ quy ước `docs/CONVENTIONS.md`) → audit 12 nhóm →
+        **kế hoạch hoàn thiện chi tiết** (`docs/ops/COMPLETION-PLAN.md`, truy vết F-xxx→W-xxx→PR→bằng chứng,
+        dừng chờ duyệt) → thực thi từng đợt qua `/gate` (bug có test tái hiện trước khi sửa) →
+        **re-audit hội tụ** (0 phát hiện Cao mở; Trung/Thấp có quyết định ghi nhận) + nghiệm thu theo
+        **Definition of Complete** cấp dự án.
+      - **Nhóm 12 — Thống nhất chéo tính năng** thêm vào `comprehensive-audit-prompt.md` (logic trùng lặp
+        phân kỳ, validation/API/phân quyền/trạng thái UI/quy ước không đồng nhất) + mẫu trạng thái 12 dòng.
+      - `existing-project-adoption.md`: Bước 0 thêm FEATURE-MAP + CONVENTIONS; thêm **Bước 4 — hoàn thiện**
+        (trỏ `/completion`); cổng "áp khung xong" thêm 2 file này.
+      - CLAUDE.md §1 thêm TRIGGER `/completion`; cập nhật session-guide.sh, copy-framework.sh/.ps1,
+        README.md, consult.md, models-and-automation.md (bảng model thêm `/audit-full` + `/completion`).
+
 ## Đang làm
-- (xong)
+- (xong — chờ tạo PR cho nhánh `claude/project-planning-refinement-ujgfiy`)
 
 ## Tiếp theo
-- Theo dõi CI của PR #23, merge khi xanh (đúng CLAUDE.md §8: FIFO, quay về `main` sau merge).
+- Theo dõi CI của PR tái cấu trúc, merge khi xanh (CLAUDE.md §8: FIFO, quay về `main` sau merge).
+- Cân nhắc: dự án đã copy khung bản cũ → dùng bảng ánh xạ trong `docs/framework/README.md` khi cập nhật.
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 - Cấu hình Opusplan được thêm vào `_framework-dropins/` (an toàn, không đè cấu hình cũ)
@@ -60,6 +87,6 @@
 
 ## Bàn giao phiên (điền khi WIND-DOWN gần chạm limit 5h — để phiên sau "tiếp tục")
 > Chế độ tự động ghi ở đây trước khi dừng: việc vừa xong, việc DỞ ở đâu, bước kế tiếp cụ thể.
-- Lần cập nhật: 2026-07-01
-- Việc DỞ / bước tiếp theo: Commit tất cả thay đổi & push lên nhánh `claude/opusplan-shared-config-rm5ru6`
-- Cần lưu ý khi chạy tiếp: Doc model/tự động nay gộp ở `docs/framework/MODEL-va-TU-DONG.md` (thay 3 file cũ). Subagent Sonnet: `.claude/agents/thuc-thi.md`.
+- Lần cập nhật: 2026-07-02
+- Việc DỞ / bước tiếp theo: PR tái cấu trúc (nhánh `claude/project-planning-refinement-ujgfiy`) — theo dõi CI, merge khi xanh.
+- Cần lưu ý khi chạy tiếp: TOÀN BỘ tên file/lệnh đã sang tiếng Anh — tra bản đồ tên cũ→mới ở `docs/framework/README.md`. Doc model/tự động: `docs/framework/models-and-automation.md`. Subagent Sonnet: `.claude/agents/executor.md`.

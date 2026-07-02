@@ -1,5 +1,5 @@
 // Trang 404 thân thiện (GĐ 7). Server Component.
-// Dùng token theme (yêu cầu đã nối styles/theme.css — xem BO-SUNG-chat-luong.md PHẦN 3).
+// Dùng token theme (yêu cầu đã nối styles/theme.css — xem quality-supplements.md PHẦN 3).
 import Link from 'next/link';
 
 export default function NotFound() {

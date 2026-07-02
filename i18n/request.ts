@@ -1,5 +1,5 @@
 // next-intl (App Router, KHÔNG dùng i18n routing) — chọn locale theo cookie.
-// Xem docs/framework/BO-SUNG-chat-luong.md PHẦN 4 (i18n).
+// Xem docs/framework/quality-supplements.md PHẦN 4 (i18n).
 import { getRequestConfig } from 'next-intl/server';
 import { cookies } from 'next/headers';
 

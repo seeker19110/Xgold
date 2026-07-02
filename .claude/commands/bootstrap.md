@@ -2,9 +2,9 @@
 description: Khởi tạo dự án mới (greenfield) — chạy runbook KHOI-TAO theo trình tự, dựng hàng rào chống lỗi đến cổng "Sẵn sàng phát triển"
 ---
 
-Dẫn dắt **khởi tạo một dự án mới** theo runbook `docs/framework/KHOI-TAO-du-an-moi.md`. Mục tiêu cuối: đạt **cổng "Sẵn sàng phát triển"** (Phần C) — ba tầng phòng thủ (AI kỷ luật + hook cục bộ + CI) đã bật — rồi mới code tính năng (GĐ 4).
+Dẫn dắt **khởi tạo một dự án mới** theo runbook `docs/framework/new-project-runbook.md`. Mục tiêu cuối: đạt **cổng "Sẵn sàng phát triển"** (Phần C) — ba tầng phòng thủ (AI kỷ luật + hook cục bộ + CI) đã bật — rồi mới code tính năng (GĐ 4).
 
-> Nối tiếp `/tu-van`: `/tu-van` lo **chọn công nghệ** (GĐ 0–2, research-first); `/khoi-tao` lo **dựng nền** (GĐ 2–3). Nếu chưa chốt stack → chạy `/tu-van` trước. **Đọc đúng phần cần của runbook, không nạp toàn bộ.**
+> Nối tiếp `/consult`: `/consult` lo **chọn công nghệ** (GĐ 0–2, research-first); `/bootstrap` lo **dựng nền** (GĐ 2–3). Nếu chưa chốt stack → chạy `/consult` trước. **Đọc đúng phần cần của runbook, không nạp toàn bộ.**
 
 ## Trình tự (bám Phần A của runbook — 0 → 9)
 - **Bước 0:** đưa khung vào repo (hoặc đã có sẵn) — đối chiếu cấu trúc chuẩn ở Phần 0.
@@ -26,4 +26,4 @@ Hook cục bộ chặn được lỗi · CI xanh trên PR mẫu · branch protec
 
 > Đây là chuỗi nhiều bước, có việc đụng dịch vụ ngoài (GitHub/hosting/CSDL) và **không thể hoàn tác** — đi **từng bước**, **xin xác nhận trước** các bước tạo tài nguyên/đổi cấu hình từ xa (CLAUDE.md §9).
 
-Bắt đầu: xác nhận đã chốt stack chưa (nếu chưa → `/tu-van`), rồi vào **Bước 0**.
+Bắt đầu: xác nhận đã chốt stack chưa (nếu chưa → `/consult`), rồi vào **Bước 0**.

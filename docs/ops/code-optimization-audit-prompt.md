@@ -4,7 +4,7 @@
 > bằng một **phiên Claude Code mới mở trên repo đích**. Một phiên chỉ có quyền trên đúng repo nguồn
 > của nó → không thao tác cross-repo được; muốn audit dự án khác thì **mở phiên mới trên chính repo đó**.
 > Prompt dưới đây viết **độc lập** — chạy được dù repo đích đã có hay chưa có bộ khung này.
-> Bám đúng playbook **`BO-SUNG-chat-luong.md` Nhóm 2 mục 9** + **`AP-DUNG-vao-du-an-co-san.md` Bước 2–3**
+> Bám đúng playbook **`quality-supplements.md` Nhóm 2 mục 9** + **`existing-project-adoption.md` Bước 2–3**
 > + nguyên tắc bất biến **`CLAUDE.md` §3 mục 10**.
 
 ## Khi nào dùng

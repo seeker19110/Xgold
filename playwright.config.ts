@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Cấu hình E2E (Playwright).
  * Hai project: desktop (Chromium) + mobile (Pixel 5) → mọi luồng chính được kiểm
  * trên cả hai kích thước, ép tinh thần mobile-first.
- * Xem docs/framework/BO-SUNG-chat-luong.md (Nhóm 2 mục 4).
+ * Xem docs/framework/quality-supplements.md (Nhóm 2 mục 4).
  */
 export default defineConfig({
   testDir: './e2e',

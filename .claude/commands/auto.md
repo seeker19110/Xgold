@@ -4,14 +4,14 @@ description: Chạy tự động — Opus lên kế hoạch TOÀN BỘ (plan mod
 
 Bạn vận hành ở chế độ **"Opus lên kế hoạch — chạy tự động"**. Áp dụng khi: người dùng **mô tả một dự án/tính năng mới**, hoặc bắt đầu **làm việc trên một repo có sẵn**.
 
-> Nền model: repo đặt mặc định `opusplan` (`.claude/settings.json`) → **Plan Mode dùng Opus** (lý luận/kiến trúc), **thực thi tự chuyển Sonnet 5** (viết code). Việc tra cứu/xác minh phiên bản giao **subagent Haiku** (`tra-cuu`, `kiem-tra-phien-ban`). Đây là lý do "Opus cao nhất lên kế hoạch rồi chạy tự động" hoạt động mà không phải đổi model tay.
+> Nền model: repo đặt mặc định `opusplan` (`.claude/settings.json`) → **Plan Mode dùng Opus** (lý luận/kiến trúc), **thực thi tự chuyển Sonnet 5** (viết code). Việc tra cứu/xác minh phiên bản giao **subagent Haiku** (`lookup`, `version-check`). Đây là lý do "Opus cao nhất lên kế hoạch rồi chạy tự động" hoạt động mà không phải đổi model tay.
 
-> 💡 **Model/effort:** Plan Mode đã tự dùng **Opus** (không cần đổi tay). Chỉ khi quyết định kiến trúc **cực khó / nhiều đánh đổi khó đảo**, cân nhắc nâng thêm `/model claude-fable-5` + `/effort xhigh` cho riêng pha lập kế hoạch; xong quay lại `opusplan` + `/effort medium` để pha thực thi (Sonnet/Haiku) khỏi phí token. Chi tiết: `docs/framework/MODEL-va-TU-DONG.md` §4 (Effort & thinking).
+> 💡 **Model/effort:** Plan Mode đã tự dùng **Opus** (không cần đổi tay). Chỉ khi quyết định kiến trúc **cực khó / nhiều đánh đổi khó đảo**, cân nhắc nâng thêm `/model claude-fable-5` + `/effort xhigh` cho riêng pha lập kế hoạch; xong quay lại `opusplan` + `/effort medium` để pha thực thi (Sonnet/Haiku) khỏi phí token. Chi tiết: `docs/framework/models-and-automation.md` §4 (Effort & thinking).
 
 ## Bước 1 — LẬP KẾ HOẠCH TOÀN BỘ bằng Opus (trong Plan Mode)
 Vào **plan mode** (Opus). Trước khi lập kế hoạch, **nghiên cứu thật** (không bịa):
-- **Dự án MỚI (greenfield):** theo `/tu-van` + KHUNG-3 — phân loại loại dự án → chọn hồ sơ → **xác minh phiên bản bằng nguồn sống** (giao subagent `kiem-tra-phien-ban`) → đề xuất stack. Bám 9 giai đoạn KHUNG-1.
-- **Dự án CÓ SẴN (brownfield):** theo `AP-DUNG-vao-du-an-co-san.md` — **đọc repo để biết stack thật** (giao subagent `tra-cuu`), KHÔNG áp stack mặc định; đề xuất nâng cấp tăng dần.
+- **Dự án MỚI (greenfield):** theo `/consult` + KHUNG-3 — phân loại loại dự án → chọn hồ sơ → **xác minh phiên bản bằng nguồn sống** (giao subagent `version-check`) → đề xuất stack. Bám 9 giai đoạn KHUNG-1.
+- **Dự án CÓ SẴN (brownfield):** theo `existing-project-adoption.md` — **đọc repo để biết stack thật** (giao subagent `lookup`), KHÔNG áp stack mặc định; đề xuất nâng cấp tăng dần.
 
 Kế hoạch phải bao trùm: mục tiêu & phạm vi (DoR), các giai đoạn/cột mốc, việc chia nhỏ kiểm tra được, rủi ro + cách giảm, tiêu chí chấp nhận + DoD, điểm cần "dừng và hỏi" (CLAUDE.md §9), và **các cổng** giữa giai đoạn.
 
@@ -21,8 +21,8 @@ Trình kế hoạch đầy đủ để người dùng duyệt (ExitPlanMode). Đ
 ## Bước 3 — THỰC THI TỰ ĐỘNG (Sonnet + Haiku)
 Sau khi duyệt, chạy **tự động** theo kế hoạch, không hỏi lại từng bước:
 - **Sonnet 5** viết code theo từng phần nhỏ, hoàn chỉnh, kiểm tra được.
-- Giao **subagent Haiku** các việc cơ học: tìm file/định vị (`tra-cuu`), xác minh phiên bản (`kiem-tra-phien-ban`).
-- Giao **subagent Sonnet `thuc-thi`** các việc RÕ PHẠM VI đã bóc tách (viết test theo spec, sinh boilerplate, cập nhật docs, sửa cơ học nhiều file) → cô lập ngữ cảnh + chạy song song, rút tải khỏi phiên chính. Việc kiến trúc/bảo mật/breaking change vẫn giữ ở phiên chính.
+- Giao **subagent Haiku** các việc cơ học: tìm file/định vị (`lookup`), xác minh phiên bản (`version-check`).
+- Giao **subagent Sonnet `executor`** các việc RÕ PHẠM VI đã bóc tách (viết test theo spec, sinh boilerplate, cập nhật docs, sửa cơ học nhiều file) → cô lập ngữ cảnh + chạy song song, rút tải khỏi phiên chính. Việc kiến trúc/bảo mật/breaking change vẫn giữ ở phiên chính.
 - **Tự động chất lượng đã bật:** auto-format khi sửa file, **cổng chặn `git commit` khi đỏ** (`.claude/hooks/`), qua `scripts/dev-task.sh`. Điền `.claude/project-commands.sh` (copy từ `.example.sh`) nếu dự án có lệnh riêng.
 - Cập nhật `PROGRESS.md` sau mỗi mốc; commit theo conventional commits.
 
