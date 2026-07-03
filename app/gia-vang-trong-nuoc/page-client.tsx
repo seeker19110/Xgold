@@ -6,6 +6,21 @@ import { PriceTable } from '@/components/domestic-gold/price-table';
 import { useDomesticGold } from '@/components/domestic-gold/use-domestic-gold';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { latestTimestamp } from '@/lib/domestic-gold/freshness';
+import type { DomesticGoldPrice } from '@/lib/providers-domestic/types';
+
+// Nhãn hiển thị cho `source` của TỪNG DÒNG giá (tên provider ingest, khác `source` toàn response ở
+// useDomesticGold — xem app/api/domestic-gold/route.ts). vang.today chỉ dùng khi BTMC lỗi (ADR-0006)
+// nên nhãn phải phản ánh ĐÚNG provider thực tế đã ghi dữ liệu, không hard-code cứng "BTMC".
+const PROVIDER_LABELS: Readonly<Record<string, string>> = {
+  btmc: 'Bảo Tín Minh Châu (BTMC)',
+  'vang-today': 'vang.today (dự phòng)',
+  sample: 'dữ liệu mẫu (demo)',
+};
+
+function sourceLabel(prices: readonly DomesticGoldPrice[]): string {
+  const providers = [...new Set(prices.map((p) => p.source))];
+  return providers.map((p) => PROVIDER_LABELS[p] ?? p).join(', ');
+}
 
 export function DomesticGoldPageClient() {
   const { status, prices, source, error } = useDomesticGold();
@@ -64,8 +79,7 @@ export function DomesticGoldPageClient() {
           <FreshnessBadge latestTs={latestTimestamp(prices)} />
           <PriceTable prices={prices} />
           <p className="text-muted-foreground text-xs">
-            Nguồn: Bảo Tín Minh Châu (BTMC). Giá chỉ mang tính tham khảo, không phải lời khuyên đầu
-            tư.
+            Nguồn: {sourceLabel(prices)}. Giá chỉ mang tính tham khảo, không phải lời khuyên đầu tư.
           </p>
         </>
       )}
