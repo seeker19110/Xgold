@@ -36,10 +36,14 @@ export function ChartPageClient() {
       )}
 
       {status === 'loading' && (
+        // min-h khớp xấp xỉ chiều cao chart (560px) + IndicatorPanel (~320px, xem gold-chart.tsx +
+        // indicator-panel.tsx) — thiếu bước này, chuyển từ trạng thái tải sang thành công làm cả
+        // trang giãn ra đột ngột, đo thật bằng Lighthouse ra CLS 0.324 (ngưỡng 0.1), xem F-010
+        // (docs/ops/COMPLETION-PLAN.md).
         <div
           role="status"
           aria-live="polite"
-          className="text-muted-foreground flex h-[420px] items-center justify-center"
+          className="text-muted-foreground flex min-h-[900px] items-center justify-center"
         >
           Đang tải dữ liệu…
         </div>
@@ -48,7 +52,7 @@ export function ChartPageClient() {
       {status === 'error' && (
         <div
           role="alert"
-          className="border-danger text-danger flex h-[420px] items-center justify-center rounded-lg border"
+          className="border-danger text-danger flex min-h-[900px] items-center justify-center rounded-lg border"
         >
           Không tải được dữ liệu: {error}
         </div>
@@ -57,7 +61,7 @@ export function ChartPageClient() {
       {status === 'success' && candles.length === 0 && (
         <div
           role="status"
-          className="text-muted-foreground border-border flex h-[420px] items-center justify-center rounded-lg border border-dashed"
+          className="text-muted-foreground border-border flex min-h-[900px] items-center justify-center rounded-lg border border-dashed"
         >
           Chưa có dữ liệu cho khung thời gian này.
         </div>
