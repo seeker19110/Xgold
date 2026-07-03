@@ -205,12 +205,16 @@
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
   local trước, nối DB thật sau.
 - Backlog sau Đợt 5: Sentry (cần DSN), vang.today multi-source (xác minh JSON schema), SJC thêm adapter riêng, i18n/PWA nếu cần.
-- **2 việc cần chủ repo tự bật trong GitHub Settings (không sửa được bằng code):**
-  1. "Code scanning" (Settings → Code security and analysis) — thiếu thì job CodeQL luôn đỏ.
-  2. "Allow GitHub Actions to create and approve pull requests" (Settings → Actions → General →
-     Workflow permissions) — thiếu thì job `Release` (release-please) luôn đỏ với lỗi "GitHub Actions
-     is not permitted to create or approve pull requests" (phát hiện 2026-07-03 khi kiểm tra CI trên
-     `main` sau khi merge PR #2).
+- ✅ **CodeQL đã xử lý (2026-07-03):** nguyên nhân thật là repo **private + tài khoản cá nhân** —
+  GitHub Advanced Security (bắt buộc để upload kết quả code scanning cho repo private) chỉ có ở
+  organization/Enterprise trả phí, không bật được qua Settings dù làm đúng hướng dẫn. Người dùng đã
+  quyết định **chuyển repo sang public** (Settings → Danger Zone → Change visibility) — code scanning
+  public repo miễn phí cho mọi loại tài khoản. Đang xác minh CodeQL pass thật ở lần push này.
+- **Còn 1 việc cần chủ repo tự bật trong GitHub Settings (không sửa được bằng code):**
+  - "Allow GitHub Actions to create and approve pull requests" (Settings → Actions → General →
+    Workflow permissions) — thiếu thì job `Release` (release-please) luôn đỏ với lỗi "GitHub Actions
+    is not permitted to create or approve pull requests" (phát hiện 2026-07-03 khi kiểm tra CI trên
+    `main` sau khi merge PR #2).
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 
