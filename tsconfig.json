@@ -35,5 +35,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "_framework-dropins", "app/sw.ts", "i18n"]
+  "exclude": ["node_modules", "_framework-dropins", "app/sw.ts", "i18n", "supabase/functions"]
 }

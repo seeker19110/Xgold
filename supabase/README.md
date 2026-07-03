@@ -5,9 +5,11 @@
 
 ## File trong đây
 
-- `migrations/20260630000000_init_example.sql` — **migration MẪU đã điền** (bảng `tasks` +
-  ràng buộc + index + trigger `updated_at` + **RLS bật + policy theo chủ sở hữu**). Đây chỉ là
-  ví dụ tham chiếu minh họa nguyên tắc — **thay bằng schema thật của dự án**, giữ đúng các nguyên tắc.
+- `migrations/20260703083820_xgold_schema.sql` — schema thật của Xgold: `instruments` (symbol theo
+  dõi), `candles` (nến OHLC, khóa chính `(instrument_id, timeframe, ts)`, giá `numeric`), `ingest_runs`
+  (log mỗi lần thu thập). RLS bật: `instruments`/`candles` đọc công khai (anon+authenticated), ghi chỉ
+  qua `service_role`; `ingest_runs` không có policy đọc cho client (chỉ nội bộ vận hành). Chi tiết
+  quyết định: `docs/adr/0003-gold-price-data-sources.md`, `docs/adr/0004-time-series-storage-postgres.md`.
 
 > `npx supabase init` sẽ sinh thêm `config.toml` (cấu hình local). Commit nó khi khởi tạo dự án thật.
 

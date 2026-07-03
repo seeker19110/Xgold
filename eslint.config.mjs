@@ -31,6 +31,14 @@ const eslintConfig = defineConfig([
     },
   },
 
+  {
+    // CLI script vận hành tay — console.log là đầu ra chính cho người chạy, không phải debug sót.
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   globalIgnores([
     '.next/**',
     'coverage/**',
@@ -43,6 +51,9 @@ const eslintConfig = defineConfig([
     // (xem docs/plans/xgold-mvp-plan.md mục "Could have"). tsconfig.json cũng loại 2 đường dẫn này.
     'app/sw.ts',
     'i18n/**',
+    // Supabase Edge Functions chạy Deno (global `Deno`, import `npm:`/URL) — khác hẳn môi trường
+    // Node/Next của ESLint config này; lint bằng Deno tooling riêng lúc deploy, không ở đây.
+    'supabase/functions/**',
   ]),
 ]);
 

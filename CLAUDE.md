@@ -128,4 +128,4 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
 - Cấu trúc thư mục chính: `app/` (route Next App Router) · `components/` (UI, `components/chart/` cho chart) · `lib/indicators/` (SMA/EMA/RSI thuần TS) · `lib/providers/` (adapter nguồn dữ liệu: Twelve Data, Stooq) · `lib/candles/` (resample timeframe) · `supabase/migrations/` + `supabase/functions/` (schema + Edge Function ingest) · `e2e/` (Playwright).
 - Quy ước đặt tên file/component: component React `PascalCase.tsx`; route/file đặc biệt Next theo quy ước framework (`page.tsx`, `layout.tsx`...); hàm/biến `camelCase`; hằng số `UPPER_SNAKE_CASE`; bảng/cột CSDL `snake_case`.
 - Thư viện chính & lý do dùng: xem bảng đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 4 (ma trận chọn thư viện chart + nguồn dữ liệu, đã xác minh phiên bản).
-- Giai đoạn hiện tại: GĐ 4 (Phát triển) — Đợt 0 (Bootstrap) đã xong; đang triển khai Đợt 1 (Nền dữ liệu). Xem `PROGRESS.md`.
+- Giai đoạn hiện tại: GĐ 4 (Phát triển) — Đợt 0 (Bootstrap) + Đợt 1 (Nền dữ liệu) đã xong; đang triển khai Đợt 2 (Chart cơ bản). Xem `PROGRESS.md`.

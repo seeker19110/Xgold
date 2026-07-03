@@ -19,6 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "lhci": "lhci autorun",
+    "backfill": "tsx scripts/backfill.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -50,6 +51,7 @@
     "prettier": "3.9.4",
     "prettier-plugin-tailwindcss": "0.8.0",
     "tailwindcss": "4.3.2",
+    "tsx": "4.22.5",
     "typescript": "6.0.3",
     "vitest": "4.1.9",
     "@tailwindcss/postcss": "4.3.2"

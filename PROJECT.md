@@ -90,8 +90,8 @@
 
 ## 9. Lộ trình & Mốc thời gian
 
-- **Đợt 0 — Bootstrap:** khởi tạo Next.js app, hàng rào CI/hook, điền PROJECT.md/CLAUDE.md, ADR 0002–0004. _(đang triển khai)_
-- **Đợt 1 — Nền dữ liệu:** migration + RLS, provider adapter (Twelve Data/Stooq), resample, Edge Function `ingest-gold`.
+- **Đợt 0 — Bootstrap:** khởi tạo Next.js app, hàng rào CI/hook, điền PROJECT.md/CLAUDE.md, ADR 0002–0004. ✅ _(xong)_
+- **Đợt 1 — Nền dữ liệu:** migration + RLS, provider adapter (Twelve Data/Stooq), resample, Edge Function `ingest-gold`. ✅ _(xong — chưa test thật với API/DB thật, xem PROGRESS.md "Nợ kỹ thuật")_
 - **Đợt 2 — Chart cơ bản:** trang chart nến + đổi khung + 4 trạng thái UI + theme.
 - **Đợt 3 — Chỉ báo:** `lib/indicators` (SMA/EMA/RSI) + Multi-MA overlay + Multi-RSI pane + panel cấu hình.
 - **Đợt 4 — Hoàn thiện MVP:** E2E đầy đủ, a11y, Sentry, docs, tối ưu mã nguồn.
