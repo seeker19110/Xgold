@@ -209,12 +209,13 @@
   GitHub Advanced Security (bắt buộc để upload kết quả code scanning cho repo private) chỉ có ở
   organization/Enterprise trả phí, không bật được qua Settings dù làm đúng hướng dẫn. Người dùng đã
   quyết định **chuyển repo sang public** (Settings → Danger Zone → Change visibility) — code scanning
-  public repo miễn phí cho mọi loại tài khoản. Đang xác minh CodeQL pass thật ở lần push này.
-- **Còn 1 việc cần chủ repo tự bật trong GitHub Settings (không sửa được bằng code):**
-  - "Allow GitHub Actions to create and approve pull requests" (Settings → Actions → General →
-    Workflow permissions) — thiếu thì job `Release` (release-please) luôn đỏ với lỗi "GitHub Actions
-    is not permitted to create or approve pull requests" (phát hiện 2026-07-03 khi kiểm tra CI trên
-    `main` sau khi merge PR #2).
+  public repo miễn phí cho mọi loại tài khoản. Đã xác minh CodeQL pass thật trên PR #4 sau khi đổi
+  visibility (không còn lỗi "Code scanning is not enabled").
+- ✅ **Release (release-please) đã xử lý (2026-07-03):** người dùng đã bật "Allow GitHub Actions to
+  create and approve pull requests" (Settings → Actions → General → Workflow permissions). Đã xác
+  nhận qua `gh api repos/.../actions/permissions/workflow` → `can_approve_pull_request_reviews: true`.
+  Đang xác minh job `Release` pass thật ở lần push này (trước đó luôn đỏ với lỗi "GitHub Actions is
+  not permitted to create or approve pull requests").
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 
