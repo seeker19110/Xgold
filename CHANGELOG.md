@@ -8,6 +8,13 @@ và dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 > Vì commit theo _conventional commits_, phần "Unreleased" có thể được sinh tự động sau
 > (ví dụ `standard-version` / `changesets`). Trước mắt cập nhật tay khi có thay đổi đáng kể.
 
+## [1.1.0](https://github.com/seeker19110/Xgold/compare/v1.0.1...v1.1.0) (2026-07-03)
+
+
+### Features
+
+* **domestic-gold:** thêm vang.today làm nguồn dự phòng khi BTMC lỗi ([#13](https://github.com/seeker19110/Xgold/issues/13)) ([96119f4](https://github.com/seeker19110/Xgold/commit/96119f4d791528fea2c67b55e5923311fff9a823))
+
 ## [1.0.1](https://github.com/seeker19110/Xgold/compare/v1.0.0...v1.0.1) (2026-07-03)
 
 
