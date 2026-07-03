@@ -191,16 +191,26 @@
 
 ## Đang làm
 
-- (không có — Đợt 0–5 của kế hoạch đã xong; tiếp theo: chạy cổng gate + commit/push/PR)
+- (không có — PR #1 và PR #2 (Đợt 5) đã merge vào `main`. Đã xác nhận chạy thật local: `npm run dev`
+  qua trình duyệt (trang chủ, `/chart/xauusd`, `/gia-vang-trong-nuoc` đều đúng với dữ liệu mẫu, không
+  lỗi console) + đủ 5 cổng xanh (`build`/`type-check`/`lint`/`test` 71/71; `format:check` báo lỗi
+  139 file nhưng là **false positive môi trường Windows** — `core.autocrlf=true` checkout ra CRLF,
+  Prettier kỳ vọng LF; đã xác minh nội dung thật trong Git qua `git show HEAD:<file> | prettier
+--check` sạch, không ảnh hưởng CI Linux).
 
 ## Tiếp theo
 
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
-  README riêng), chạy `npm run backfill`, bật `pg_cron`, bật "Code scanning" trong GitHub Settings.
+  README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
+  local trước, nối DB thật sau.
 - Backlog sau Đợt 5: Sentry (cần DSN), vang.today multi-source (xác minh JSON schema), SJC thêm adapter riêng, i18n/PWA nếu cần.
-- Theo dõi CI của PR #1 (nhánh `claude/financial-data-trading-indicators-cwbvf6`), merge khi xanh
-  (CLAUDE.md §8) — lưu ý CodeQL sẽ vẫn đỏ cho tới khi chủ repo bật "Code scanning" trong Settings.
+- **2 việc cần chủ repo tự bật trong GitHub Settings (không sửa được bằng code):**
+  1. "Code scanning" (Settings → Code security and analysis) — thiếu thì job CodeQL luôn đỏ.
+  2. "Allow GitHub Actions to create and approve pull requests" (Settings → Actions → General →
+     Workflow permissions) — thiếu thì job `Release` (release-please) luôn đỏ với lỗi "GitHub Actions
+     is not permitted to create or approve pull requests" (phát hiện 2026-07-03 khi kiểm tra CI trên
+     `main` sau khi merge PR #2).
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 
