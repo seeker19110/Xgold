@@ -191,12 +191,13 @@
 
 ## Đang làm
 
-- (không có — PR #1 và PR #2 (Đợt 5) đã merge vào `main`. Đã xác nhận chạy thật local: `npm run dev`
-  qua trình duyệt (trang chủ, `/chart/xauusd`, `/gia-vang-trong-nuoc` đều đúng với dữ liệu mẫu, không
-  lỗi console) + đủ 5 cổng xanh (`build`/`type-check`/`lint`/`test` 71/71; `format:check` báo lỗi
-  139 file nhưng là **false positive môi trường Windows** — `core.autocrlf=true` checkout ra CRLF,
-  Prettier kỳ vọng LF; đã xác minh nội dung thật trong Git qua `git show HEAD:<file> | prettier
---check` sạch, không ảnh hưởng CI Linux).
+- (không có — PR #1–#7 đều đã merge vào `main` (squash), bao gồm release 1.0.0 (`xgold-v1.0.0`).
+  Toàn bộ CI trên `main` (`8b19187`) xanh: `CI`, `CodeQL`, `Secret scan`, `Release` đều `success`.
+  Đã xác nhận chạy thật local trước đó: `npm run dev` qua trình duyệt (trang chủ, `/chart/xauusd`,
+  `/gia-vang-trong-nuoc` đều đúng với dữ liệu mẫu, không lỗi console) + đủ 5 cổng xanh (`build`/
+  `type-check`/`lint`/`test` 71/71; `format:check` báo lỗi 139 file nhưng là **false positive môi
+  trường Windows** — `core.autocrlf=true` checkout ra CRLF, Prettier kỳ vọng LF; đã xác minh nội dung
+  thật trong Git qua `git show HEAD:<file> | prettier --check` sạch, không ảnh hưởng CI Linux).
 
 ## Tiếp theo
 
@@ -214,8 +215,9 @@
 - ✅ **Release (release-please) đã xử lý (2026-07-03):** người dùng đã bật "Allow GitHub Actions to
   create and approve pull requests" (Settings → Actions → General → Workflow permissions). Đã xác
   nhận qua `gh api repos/.../actions/permissions/workflow` → `can_approve_pull_request_reviews: true`.
-  Đang xác minh job `Release` pass thật ở lần push này (trước đó luôn đỏ với lỗi "GitHub Actions is
-  not permitted to create or approve pull requests").
+  **Đã xác nhận job `Release` pass thật** trên commit mới nhất của `main` (`8b19187`, PR #5 "chore(main):
+  release 1.0.0" — squash merge, tag `xgold-v1.0.0`): cả 4 workflow (`Release`, `CI`, `CodeQL`,
+  `Secret scan`) đều `completed`/`success` qua GitHub Actions API. Không còn mục CI nào đỏ trên `main`.
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 
