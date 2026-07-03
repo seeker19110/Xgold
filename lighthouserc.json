@@ -2,9 +2,13 @@
   "//": "Cấu hình Lighthouse CI — ngân sách hiệu năng (performance budget). Xem docs/framework/quality-supplements.md (Nhóm 2).",
   "ci": {
     "collect": {
-      "//": "Đổi danh sách URL cho khớp các trang quan trọng của dự án. startServerCommand dựng app từ bản build production.",
+      "//": "3 trang chính của Xgold (F-004, docs/ops/COMPLETION-PLAN.md W-202): trang chủ (nhẹ) + chart XAU/USD (nặng nhất — lightweight-charts, nhiều re-render Multi-MA/Multi-RSI) + giá vàng trong nước (polling 60s). startServerCommand dựng app từ bản build production.",
       "startServerCommand": "npm run start",
-      "url": ["http://localhost:3000/"],
+      "url": [
+        "http://localhost:3000/",
+        "http://localhost:3000/chart/xauusd",
+        "http://localhost:3000/gia-vang-trong-nuoc"
+      ],
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
