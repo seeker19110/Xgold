@@ -12,6 +12,20 @@ const QuerySchema = z.object({
   timeframe: z.enum(TIMEFRAMES).default('1h'),
 });
 
+// PostgREST serialize cột `numeric` của Postgres thành STRING trong JSON (tránh mất độ chính xác
+// thập phân) — không phải `number` như `database.types.ts` khai. Coerce tường minh ở ranh giới API
+// (CLAUDE.md §3: dữ liệu từ CSDL phải validate lúc chạy) — thiếu bước này thì toán học ở
+// lib/indicators/{sma,ema,rsi}.ts (`sum += candle.close`) làm string concat, ra NaN. Xem F-009/W-102
+// (docs/ops/COMPLETION-PLAN.md), tái hiện bằng test ở route.test.ts.
+const SupabaseCandleRowSchema = z.object({
+  ts: z.string(),
+  open: z.coerce.number(),
+  high: z.coerce.number(),
+  low: z.coerce.number(),
+  close: z.coerce.number(),
+  volume: z.coerce.number().nullable(),
+});
+
 /** Khung hiển thị nào tính từ khung cơ sở nào (khớp lib/candles/resample.ts). */
 function baseTimeframeOf(timeframe: Timeframe): BaseTimeframe {
   return timeframe === '4h' ? '1h' : timeframe === '1W' ? '1D' : timeframe;
@@ -61,7 +75,14 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    baseCandles = data ?? [];
+    const rowsParsed = z.array(SupabaseCandleRowSchema).safeParse(data ?? []);
+    if (!rowsParsed.success) {
+      return NextResponse.json(
+        { error: `Dữ liệu candles không hợp lệ: ${rowsParsed.error.message}` },
+        { status: 500 },
+      );
+    }
+    baseCandles = rowsParsed.data;
     source = 'supabase';
   } else {
     baseCandles = sampleBaseCandles(symbol, base);

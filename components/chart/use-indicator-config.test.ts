@@ -1,0 +1,65 @@
+import { describe, expect, it, beforeEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
+import { DEFAULT_CHART_CONFIG, encodeChartConfig, type ChartConfig } from '@/lib/indicators/config';
+
+function setUrl(search: string) {
+  window.history.replaceState(null, '', `/chart/xauusd${search}`);
+}
+
+describe('useIndicatorConfig', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    setUrl('');
+  });
+
+  it('bắt đầu bằng DEFAULT_CHART_CONFIG (khớp SSR) trước khi effect chạy', () => {
+    const { result } = renderHook(() => useIndicatorConfig());
+    expect(result.current[0]).toEqual(DEFAULT_CHART_CONFIG);
+  });
+
+  it('khôi phục cấu hình đã lưu ở localStorage sau mount', async () => {
+    const saved: ChartConfig = {
+      maLines: [{ id: 'ma-1', type: 'EMA', period: 9, color: '#ffffff', visible: true }],
+      rsiLines: [],
+    };
+    localStorage.setItem('xgold:chart-config', encodeChartConfig(saved));
+
+    const { result } = renderHook(() => useIndicatorConfig());
+    await waitFor(() => expect(result.current[0]).toEqual(saved));
+  });
+
+  it('ưu tiên cấu hình từ URL `?cfg=` hơn localStorage khi cả hai đều có', async () => {
+    const fromUrl: ChartConfig = { maLines: [], rsiLines: [] };
+    const fromStorage: ChartConfig = {
+      maLines: [{ id: 'ma-x', type: 'SMA', period: 5, color: '#000000', visible: true }],
+      rsiLines: [],
+    };
+    localStorage.setItem('xgold:chart-config', encodeChartConfig(fromStorage));
+    setUrl(`?cfg=${encodeChartConfig(fromUrl)}`);
+
+    const { result } = renderHook(() => useIndicatorConfig());
+    await waitFor(() => expect(result.current[0]).toEqual(fromUrl));
+  });
+
+  it('cfg hỏng trong URL (bị sửa tay) rơi về localStorage rồi về DEFAULT, không crash', async () => {
+    setUrl('?cfg=%%%khong-hop-le%%%');
+
+    const { result } = renderHook(() => useIndicatorConfig());
+    await waitFor(() => expect(result.current[0]).toEqual(DEFAULT_CHART_CONFIG));
+  });
+
+  it('setConfig cập nhật state + ghi lại localStorage và URL để chia sẻ được', async () => {
+    const { result } = renderHook(() => useIndicatorConfig());
+    await waitFor(() => expect(result.current[0]).toEqual(DEFAULT_CHART_CONFIG));
+
+    const next: ChartConfig = { maLines: [], rsiLines: [] };
+    act(() => result.current[1](next));
+
+    await waitFor(() => {
+      const stored = localStorage.getItem('xgold:chart-config');
+      expect(stored).toBe(encodeChartConfig(next));
+    });
+    expect(new URL(window.location.href).searchParams.get('cfg')).toBe(encodeChartConfig(next));
+  });
+});

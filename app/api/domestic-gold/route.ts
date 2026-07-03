@@ -10,6 +10,17 @@ const QuerySchema = z.object({
   vendor: z.string().min(1).optional(),
 });
 
+// Cùng lý do với app/api/candles/route.ts (F-009/W-102, docs/ops/COMPLETION-PLAN.md): PostgREST trả
+// cột `numeric` dạng string — coerce tường minh trước khi dùng, không tin `database.types.ts` mù quáng.
+const SupabaseDomesticGoldRowSchema = z.object({
+  vendor: z.string(),
+  product: z.string(),
+  buy: z.coerce.number(),
+  sell: z.coerce.number(),
+  ts: z.string(),
+  source: z.string(),
+});
+
 /**
  * Bảng `domestic_gold_prices` lưu time-series (một dòng mỗi lần ingest) — UI chỉ cần giá HIỆN TẠI,
  * nên giữ lại dòng mới nhất cho mỗi (vendor, product). Input đã sắp `ts` giảm dần → dòng gặp đầu tiên
@@ -54,7 +65,14 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    prices = latestByProduct(data ?? []);
+    const rowsParsed = z.array(SupabaseDomesticGoldRowSchema).safeParse(data ?? []);
+    if (!rowsParsed.success) {
+      return NextResponse.json(
+        { error: `Dữ liệu giá vàng trong nước không hợp lệ: ${rowsParsed.error.message}` },
+        { status: 500 },
+      );
+    }
+    prices = latestByProduct(rowsParsed.data);
     source = 'supabase';
   } else {
     const sample = vendor
