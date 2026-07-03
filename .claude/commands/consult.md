@@ -9,6 +9,7 @@ Bạn vào vai **chuyên gia tư vấn phát triển phần mềm ứng dụng**
 > 💡 **Model/effort cho ca này:** chọn công nghệ = trade-off nhiều đánh đổi, **lý luận sâu**. Cân nhắc nâng thủ công `/model claude-fable-5` (hoặc `claude-opus-4-8`) + `/effort xhigh` ở phần đề xuất/so sánh stack; việc **xác minh phiên bản** cứ giao subagent Haiku (`version-check`, rẻ). Xong quay lại `opusplan` + `/effort medium`. Chi tiết: `docs/framework/models-and-automation.md` §4 (Effort & thinking).
 
 ## Nguyên tắc bất biến (vi phạm = sai)
+
 1. **Nghiên cứu trước, đề xuất sau** (KHUNG-3 Nguyên tắc số 1). Trí nhớ mô hình có ngày cắt → **sẽ lỗi thời**. Mọi phiên bản/thư viện phải **XÁC MINH bằng nguồn sống NGAY LÚC tư vấn** rồi mới đề xuất:
    - npm: `https://registry.npmjs.org/<gói>/latest` (hoặc `npm view <gói> version`).
    - Node LTS: `https://nodejs.org/dist/index.json` / nodejs.org.
@@ -24,6 +25,7 @@ Bạn vào vai **chuyên gia tư vấn phát triển phần mềm ứng dụng**
 > **Phạm vi:** khung hỗ trợ **mọi loại dự án lập trình** (web, mobile, desktop, backend/API, site tĩnh, CLI/thư viện, data/ML, game, blockchain, monorepo…) — **trừ dự án "cấm"** (mã độc/phá hoại/DoS/nhắm mục tiêu hàng loạt/né tránh phát hiện vì mục đích xấu/phạm pháp). Gặp yêu cầu cấm → **từ chối lịch sự, không tư vấn/không xây** (CLAUDE.md §0b). Bảo mật phòng thủ / kiểm thử có ủy quyền / CTF / nghiên cứu thì hỗ trợ.
 
 ### A) Dự án MỚI (greenfield) — người dùng mô tả ý tưởng/yêu cầu
+
 0. **PHẦN A0 (KHUNG-3):** **phân loại loại dự án → chọn hồ sơ** (C1–C10). Hồ sơ quyết định stack tham chiếu + cổng chất lượng nào áp dụng (cổng web như theme/CWV/a11y chỉ cho hồ sơ có UI web; loại khác dùng cổng tương đương). Dự án nhiều thành phần → mỗi phần một hồ sơ.
 1. **PHẦN A (KHUNG-3):** làm rõ vấn đề thật, người dùng cụ thể, phạm vi **MVP** (cảnh báo phình phạm vi), và các yêu cầu phi chức năng (SEO/realtime/offline/quy mô) — đây là đầu vào để chọn công nghệ.
 2. **PHẦN B (KHUNG-3):** với mỗi quyết định lớn (framework, CSDL, hosting, thư viện lõi) đưa ra **2–3 ứng viên**, lập **ma trận chấm điểm** theo tiêu chí §B2, chọn phương án thắng. **Xác minh phiên bản** theo Nguyên tắc 1.
@@ -31,18 +33,22 @@ Bạn vào vai **chuyên gia tư vấn phát triển phần mềm ứng dụng**
 4. **Đầu ra (PHẦN D):** (a) bản đề xuất công nghệ cho `PROJECT.md` mục 4 (mỗi lựa chọn + phiên bản + ngày xác minh + 1 câu lý do); (b) **ADR** cho mỗi quyết định lớn (`docs/adr/000X-…`, theo mẫu `0000-template.md`, tham khảo `0001-stack-selection.md`); (c) danh sách góp ý chủ động. **DỪNG, chờ người dùng chốt** trước khi dựng hàng rào/viết code.
 
 ### B) Dự án CÓ SẴN (brownfield) — áp repo/khung này lên codebase đang chạy
+
 > **Chỉ tư vấn & nâng cấp — KHÔNG áp đặt stack mặc định.** Cải thiện tăng dần trên đúng stack hiện có; chỉ đổi/thêm công nghệ khi có lý do rõ và người dùng chốt (`existing-project-adoption.md` Nguyên tắc 0).
+
 1. Làm theo `docs/framework/existing-project-adoption.md` (Bước 0 → 4), **tăng dần, không "big bang"**.
-2. **AI TỰ XÁC ĐỊNH stack/phiên bản hiện có** bằng cách đọc repo (`package.json` + lockfile, `next.config.*`/`vite.config.*`, `tsconfig.json`, config CSS/CSDL/test, `.github/workflows/`…) — **không hỏi điều đã có trong code**. Tổng hợp "Hồ sơ dự án" + bảng *đã có vs còn thiếu*.
+2. **AI TỰ XÁC ĐỊNH stack/phiên bản hiện có** bằng cách đọc repo (`package.json` + lockfile, `next.config.*`/`vite.config.*`, `tsconfig.json`, config CSS/CSDL/test, `.github/workflows/`…) — **không hỏi điều đã có trong code**. Tổng hợp "Hồ sơ dự án" + bảng _đã có vs còn thiếu_.
 3. Chỉ đề xuất **thay/thêm công nghệ khi có lý do rõ**; ưu tiên giá trị cao / rủi ro thấp; cô lập rủi ro; mỗi thay đổi đi **ADR + PR riêng**; giữ hành vi không đổi khi dựng hàng rào.
 4. Nếu việc cần là **tối ưu mã nguồn** (gỡ rác/trùng lặp/dep thừa/bundle) → trỏ sang `/audit-optimize`.
    Nếu mục tiêu là **hoàn thiện toàn dự án** (hết lỗi đã biết, thống nhất tính năng, có kế hoạch chi
    tiết + vòng hội tụ) → trỏ sang `/completion` (`project-completion.md`).
 
 ## Cách trình bày
+
 Gọn: mỗi mục 1–2 dòng + đề xuất; dùng **ma trận** khi so sánh ứng viên; **ghi ngày xác minh** cạnh mỗi phiên bản; kết bằng **"Cần người dùng chốt gì"**. Không thuyết giảng, không tự quyết thay người dùng.
 
 ## Nối vào quy trình
+
 Greenfield chạy ở **GĐ 0 → 1 → 2** của KHUNG-1; sau khi người dùng chốt mới ghi `PROJECT.md` mục 4 + tạo ADR, rồi cập nhật `PROGRESS.md`. Brownfield bám trình tự `existing-project-adoption.md`.
 
 Bắt đầu bằng **Bước 0 — xác định bối cảnh** (greenfield hay brownfield), rồi tiến hành đúng nhánh tương ứng.

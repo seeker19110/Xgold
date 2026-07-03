@@ -5,9 +5,11 @@
 > của nó → không thao tác cross-repo được; muốn audit dự án khác thì **mở phiên mới trên chính repo đó**.
 > Prompt dưới đây viết **độc lập** — chạy được dù repo đích đã có hay chưa có bộ khung này.
 > Bám đúng playbook **`quality-supplements.md` Nhóm 2 mục 9** + **`existing-project-adoption.md` Bước 2–3**
-> + nguyên tắc bất biến **`CLAUDE.md` §3 mục 7 (Tối ưu mã nguồn)**.
+>
+> - nguyên tắc bất biến **`CLAUDE.md` §3 mục 7 (Tối ưu mã nguồn)**.
 
 ## Khi nào dùng
+
 - Có một dự án cần rà & tối ưu: gỡ dead code, giảm trùng lặp/độ phức tạp, tỉa dependency thừa, thu nhỏ bundle.
 - Đặc biệt hợp với dự án đã chạy lâu, tích nhiều "nợ kỹ thuật".
 - Nếu người dùng chỉ nói ngắn gọn **"tối ưu"** (không rõ phạm vi) — đây có thể là tối ưu mã nguồn
@@ -16,6 +18,7 @@
   thẳng "gỡ dead code"/"code thừa"/"bundle to quá").
 
 ## Chuẩn bị
+
 1. Mở **phiên Claude Code mới** với **repo cần audit làm nguồn**.
 2. Chọn **network policy** cho phép outbound (để cài tạm `knip`/`depcheck`… qua `npx`).
 3. (Tùy chọn) Mang khung sang repo đích trước, từ repo template:
@@ -60,6 +63,7 @@ Bắt đầu GIAI ĐOẠN 1 và đưa tôi báo cáo audit trước khi đụng 
 ```
 
 ## Sau khi có báo cáo audit
+
 - **Duyệt thứ tự ưu tiên** trước khi cho sửa — giá trị cao / rủi ro thấp làm trước.
 - Có thể mang báo cáo về phiên/khung gốc để **review & phản biện kế hoạch** (việc này không cần quyền truy cập repo đích).
 - Mỗi đợt tối ưu đi qua đúng cổng commit/merge của khung (`CLAUDE.md` §5–§7).

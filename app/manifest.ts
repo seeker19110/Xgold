@@ -4,9 +4,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '[Tên ứng dụng]',
-    short_name: '[Tên ngắn]',
-    description: '[Mô tả ngắn ứng dụng]',
+    name: 'Xgold — Giá vàng & chỉ báo kỹ thuật',
+    short_name: 'Xgold',
+    description: 'Theo dõi giá vàng thế giới (XAU/USD) với chart nến, Multi-MA và Multi-RSI.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0b1220',

@@ -29,10 +29,10 @@ assignees: ''
 
 ## Dòng thời gian
 
-| Thời điểm (UTC) | Sự kiện |
-|-----------------|---------|
-| | Phát hiện |
-| | |
+| Thời điểm (UTC) | Sự kiện   |
+| --------------- | --------- |
+|                 | Phát hiện |
+|                 |           |
 
 ## Người điều phối
 

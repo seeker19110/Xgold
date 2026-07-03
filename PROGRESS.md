@@ -1,171 +1,224 @@
-# PROGRESS.md — Trạng thái dự án
+# PROGRESS.md — Trạng thái dự án Xgold
 
 > Cập nhật sau mỗi mốc đáng kể. AI đọc file này để biết đang ở đâu.
+> (Repo trước đây là khung/template trống; đợt này bootstrap thành dự án Xgold thật —
+> nhật ký phát triển khung cũ không còn liên quan, xem lịch sử Git nếu cần tra lại.)
 
 ## Giai đoạn hiện tại
-- GĐ 7 — Hoàn thiện công cụ/khung (tối ưu cấu hình, hướng dẫn tích hợp)
+
+- GĐ 4 — Phát triển. MVP Đợt 0–4 đã xong (bootstrap, nền dữ liệu, chart, Multi-MA/Multi-RSI, hoàn
+  thiện). Còn lại là việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion)
+  — xem "Tiếp theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9.
 
 ## Đã xong
-- ✅ Tạo cấu hình Opusplan tiêu chuẩn (`.claude/settings-shared-opusplan.json`) — dùng chung cho mọi dự án
-- ✅ Cập nhật `copy-framework.sh` để copy cấu hình Opusplan vào `_framework-dropins/`
-- ✅ Cập nhật `copy-framework.ps1` tương tự cho Windows
-- ✅ Viết hướng dẫn chi tiết (`CONG-CU-OPUSPLAN-CHO-DU-AN.md`) về cách sử dụng & tuỳ chỉnh cấu hình
-- ✅ **Copy thẳng:** Cấu hình tự động copy vào `.claude/settings.json` (không cần chọn merge)
-- ✅ **Chốt chiến lược tối ưu token:** giữ **opusplan** (Opus lập kế hoạch, Sonnet code, Haiku phụ)
-      — KHÔNG dùng Fable 5 thuần (đắt, "dao mổ trâu"); Fable/Opus chỉ nâng có chọn lọc lúc cần
-- ✅ Push lên nhánh `claude/opusplan-shared-config-rm5ru6`, PR #19
-- ✅ **Thêm subagent Sonnet `thuc-thi`** (`.claude/agents/thuc-thi.md`) — nhận việc RÕ PHẠM VI đã bóc tách
-      (viết test theo spec, boilerplate, cập nhật docs, sửa cơ học nhiều file) để rút tải khỏi main Opus.
-      Đồng bộ mô tả trong CHON-MODEL, TU-DONG-tong-quan, CONG-CU-OPUSPLAN, copy-framework.sh/.ps1, /tu-dong.
 
-- ✅ **Gộp 3 doc model/tự động → 1** (`docs/framework/MODEL-va-TU-DONG.md`): gộp CHON-MODEL +
-      CONG-CU-OPUSPLAN + TU-DONG-tong-quan, khử trùng lặp (594→~360 dòng, −2 file). Cập nhật mọi
-      tham chiếu: CLAUDE.md, `/adr` `/su-co` `/tu-van` `/tu-dong`, session-guide.sh.
-- ✅ **Quyết định giữ scaffold web** (Next.js+Supabase) làm hồ sơ mặc định — không tách/xóa.
-- ✅ PR #21 đã merge vào `main` (`main` = branch, 0/0).
-- ✅ **Codify quy trình PR → merge tự động** vào CLAUDE.md §8: sau khi tạo PR thì đăng ký theo dõi + đặt lịch 3 phút, CI xanh thì squash-merge vào `main`, luôn quay về `main`, **FIFO không nhảy cóc** (PR tạo trước merge trước).
-- ✅ **Thêm tính năng audit toàn diện** (`/audit-toan-dien`, khác `/audit-toi-uu` chỉ tối ưu mã nguồn):
-      - `docs/ops/audit-toan-dien-prompt.md` — playbook 11 nhóm (kiến trúc, bảo mật, chất lượng mã/
-        chống lỗi logic, test/coverage, hiệu năng, a11y/UI-UX, dependency, CI/CD/vận hành, tài liệu
-        đồng bộ, dữ liệu/migration, cấu hình & bí mật), quy trình 2 giai đoạn (quét → dừng chờ duyệt
-        → xử lý qua `/cong`).
-      - `.claude/commands/audit-toan-dien.md` — slash command, có bước bắt buộc hỏi người dùng
-        "quét lại từ đầu hay tiếp tục" dựa vào `docs/ops/AUDIT-TOAN-DIEN-TRANG-THAI.md` (file trạng
-        thái tạo tại dự án đích, cập nhật ngay sau mỗi nhóm để resume được qua nhiều phiên).
-      - Cập nhật `CLAUDE.md` §1 (TRIGGER mới), `copy-framework.sh`/`.ps1` (liệt kê lệnh mới khi copy khung).
-- ✅ PR #23 tạo (draft) cho nhánh `claude/project-audit-feature-2jyw07`.
-- ✅ **Bổ sung "Bước -1" vào `audit-toan-dien-prompt.md` + slash command:** trước khi quét, AI phải
-      xác nhận đây là **dự án cụ thể đã phát triển** (tính năng + công nghệ đã chọn/triển khai thật),
-      không phải bộ khung/template còn trống — repo `project-template` này hiện chính là khung trống
-      (PROJECT.md chưa điền, `app/` chỉ có file scaffold hệ thống). Nếu vẫn là khung trống → AI phải
-      DỪNG và giải thích rõ, không bịa kế hoạch/phát hiện audit cho tính năng chưa tồn tại (đúng
-      nguyên tắc chống ảo giác CLAUDE.md §4). Ghi nhận từ phản hồi người dùng: khung này dùng để áp
-      lên dự án khác hoặc phát triển tiếp từ đây — audit toàn diện chỉ có ý nghĩa khi đã có dự án cụ thể.
+- ✅ **Tư vấn research-first** (`/consult`): kế hoạch MVP đầy đủ ở `docs/plans/xgold-mvp-plan.md` — phân loại
+  hồ sơ C1+C4, MVP MoSCoW, ma trận chọn chart lib (lightweight-charts 5.2.0) + nguồn dữ liệu (Twelve Data +
+  Stooq), kiến trúc ingestion (Supabase Edge Function + pg_cron). PR #1 (draft).
+- ✅ **Chốt kế hoạch qua `/auto`**: người dùng duyệt kế hoạch triển khai (plan mode), thêm yêu cầu **Multi-MA**
+  (nhiều đường SMA/EMA trên pane giá, song song Multi-RSI). 6 điểm mục 9 của kế hoạch tư vấn đã chốt.
+- ✅ **Đợt 0 — Bootstrap:**
+  - `package.json` + cài đặt: Next 16.2.10, React 19.2.7, TypeScript 6.0.3 (strict + `noUncheckedIndexedAccess`),
+    Tailwind 4.3.2, `@supabase/supabase-js` 2.110.0, `lightweight-charts` 5.2.0, Zod 4.4.3, Vitest 4.1.9,
+    `@playwright/test` 1.61.1 (phiên bản đã xác minh nguồn sống 2026-07-03).
+  - `tsconfig.json`, `next.config.ts`, `app/layout.tsx` (+ script no-flash theme), `app/page.tsx`,
+    `app/globals.css` (nối `styles/theme.css` vào Tailwind v4 qua `@theme inline`).
+  - **Phát hiện & vá 2 lỗi tương thích thật** (chạy thật, không đoán):
+    1. ESLint 10.6.0 mới nhất crash khi lint (`eslint-plugin-react` 7.37.5 bundled trong
+       `eslint-config-next` gọi API `context.getFilename()` đã bị ESLint 10 gỡ bỏ) → hạ về **ESLint 9.39.4**
+       (bản 9.x mới nhất, vẫn trong peer range `>=9.0.0` của `eslint-config-next`).
+    2. `npm audit --audit-level=high` sẽ đỏ vì lỗ hổng `tmp`/`inquirer` **chỉ nằm trong devDependency**
+       `@lhci/cli` (không lộ ra runtime người dùng) → sửa `ci.yml` dùng `npm audit --omit=dev --audit-level=high`.
+  - Sửa 1 lỗi lint thật trong scaffold kế thừa: `components/theme-toggle.tsx` vi phạm rule mới
+    `react-hooks/set-state-in-effect`; giữ nguyên pattern an toàn cho SSR/hydration (đọc localStorage sau
+    mount), thêm `eslint-disable-next-line` có chú thích lý do + viết unit test bảo vệ hành vi
+    (`components/theme-toggle.test.tsx`, 3 test).
+  - Hoãn i18n (next-intl) và PWA (Serwist) — scaffold sẵn (`i18n/`, `app/sw.ts`) nhưng ngoài phạm vi MVP; loại
+    khỏi `tsconfig.json`/`eslint.config.mjs` để không chặn cổng, giữ file lại cho khi thật sự áp dụng.
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (3/3) · `build` ✅.
+  - Điền đầy đủ `PROJECT.md` (mục 0–10) và `CLAUDE.md` mục 10 (hết `[ĐIỀN]`).
+  - **ADR mới:** `0002-chart-library.md` (lightweight-charts), `0003-gold-price-data-sources.md`
+    (Twelve Data + Stooq, adapter pattern), `0004-time-series-storage-postgres.md` (Postgres thuần, không
+    TimescaleDB — đã deprecated trên Supabase PG17).
+  - **Xác minh ràng buộc môi trường quan trọng:** sandbox hiện tại **chặn outbound** tới Twelve Data/Stooq/
+    SJC/BTMC (403 qua agent proxy) — npm registry/nodejs.org vẫn truy cập được. → thiết kế ingestion tách
+    fetch (deploy-time) khỏi hiển thị (fixture-time, Đợt 1–2).
 
-- ✅ **Tái cấu trúc repo — tên file sang TIẾNG ANH** (nội dung vẫn tiếng Việt), người dùng chốt:
-      - `docs/framework/`: KHUNG-1/2/3 → `01-process-and-standards.md` / `02-ai-rules-and-project-template.md`
-        / `03-tech-selection-and-proactive-advice.md`; KHOI-TAO → `new-project-runbook.md`;
-        AP-DUNG → `existing-project-adoption.md`; BO-SUNG → `quality-supplements.md`;
-        MODEL-va-TU-DONG → `models-and-automation.md`. Thêm `docs/framework/README.md` (chỉ mục + bản đồ tên cũ→mới).
-      - `docs/ops/`: audit-toan-dien-prompt → `comprehensive-audit-prompt.md`; audit-toi-uu-prompt →
-        `code-optimization-audit-prompt.md`; file trạng thái sinh tại dự án đích: `COMPREHENSIVE-AUDIT-STATUS.md`.
-      - Slash commands: `/tu-van`→`/consult` · `/cong`→`/gate` · `/khoi-tao`→`/bootstrap` · `/tu-dong`→`/auto`
-        · `/audit-toan-dien`→`/audit-full` · `/audit-toi-uu`→`/audit-optimize` · `/su-co`→`/incident`.
-      - Subagents: `tra-cuu`→`lookup` · `kiem-tra-phien-ban`→`version-check` · `thuc-thi`→`executor`.
-      - ADR: `0001-chon-stack.md` → `0001-stack-selection.md`. Toàn bộ tham chiếu chéo đã cập nhật
-        (đã grep xác minh 0 sót, mọi đường dẫn docs/ được nhắc đều tồn tại).
-- ✅ **Lấp 4 gap "hoàn thiện dự án"** (từ phân tích gap theo yêu cầu người dùng):
-      - **`docs/framework/project-completion.md` + `/completion`** — playbook 5 pha: dò hiện trạng
-        (bản đồ tính năng `docs/FEATURE-MAP.md` + sổ quy ước `docs/CONVENTIONS.md`) → audit 12 nhóm →
-        **kế hoạch hoàn thiện chi tiết** (`docs/ops/COMPLETION-PLAN.md`, truy vết F-xxx→W-xxx→PR→bằng chứng,
-        dừng chờ duyệt) → thực thi từng đợt qua `/gate` (bug có test tái hiện trước khi sửa) →
-        **re-audit hội tụ** (0 phát hiện Cao mở; Trung/Thấp có quyết định ghi nhận) + nghiệm thu theo
-        **Definition of Complete** cấp dự án.
-      - **Nhóm 12 — Thống nhất chéo tính năng** thêm vào `comprehensive-audit-prompt.md` (logic trùng lặp
-        phân kỳ, validation/API/phân quyền/trạng thái UI/quy ước không đồng nhất) + mẫu trạng thái 12 dòng.
-      - `existing-project-adoption.md`: Bước 0 thêm FEATURE-MAP + CONVENTIONS; thêm **Bước 4 — hoàn thiện**
-        (trỏ `/completion`); cổng "áp khung xong" thêm 2 file này.
-      - CLAUDE.md §1 thêm TRIGGER `/completion`; cập nhật session-guide.sh, copy-framework.sh/.ps1,
-        README.md, consult.md, models-and-automation.md (bảng model thêm `/audit-full` + `/completion`).
-- ✅ **Rà toàn diện template + sửa & bổ sung** (nhánh `claude/template-review-k4lpfy`):
-      - **Fix copy-framework.sh/.ps1:** copy kèm `scripts/` (dev-task, usage-estimate) + 2 file
-        `.example.sh` — trước đây hook sang dự án đích bị no-op âm thầm (mất auto-format/gate/quota).
-        Bản `.sh` sửa thêm lỗi copy thư mục LỒNG khi chạy lại lần 2 (`docs/framework/framework`…);
-        đã test đầu-cuối 2 lần chạy trên thư mục scratch.
-      - **PROGRESS.template.md (mới):** dự án đích nhận bản mẫu SẠCH, không nhận nhật ký của khung.
-      - **Sửa 4 tham chiếu lỗi thời:** "CLAUDE.md §3 mục 10/nguyên tắc 10" → mục 7 (3 chỗ);
-        "HUONG-DAN Bước 11" → "Phần D Bước 11" (runbook).
-      - **Đồng bộ:** `settings.json` thêm `effortLevel: medium` (khớp bản shared); cả 2 settings
-        deny thêm `git push --force-with-lease`; KHUNG-2 Phần B thêm mục "0. Loại dự án & Hồ sơ"
-        (khớp PROJECT.md); KHUNG-1 GĐ 1 thêm khối **DoR** cạnh DoD (trả lời ghi chú cũ ở
-        quality-supplements Nhóm 1 mục 7); runbook Phần 0 thêm `.claude/` + `scripts/` vào cây.
-      - **CI cho chính khung (mới):** job `framework-lint` trong `ci.yml` chạy CẢ khi chưa có app —
-        bash -n + shellcheck (error) + jq validate settings/config JSON + `scripts/check-docs-links.sh`
-        (script mới: mọi đường dẫn nhắc trong *.md phải tồn tại; allowlist file sinh tại dự án đích;
-        bỏ qua PROGRESS/CHANGELOG/bảng ánh xạ tên cũ).
-      - models-and-automation.md: ghi chú hook cần Git Bash trên Windows; cập nhật mô tả copy.
+- ✅ **Sửa 2 lỗi CI thật phát hiện trên PR #1** (job `quality` + `docs-consistency`): dòng hướng dẫn
+  đầu `CLAUDE.md` chứa literal `[ĐIỀN: ...]` làm ví dụ, bị chính cổng quét placeholder hiểu nhầm — diễn
+  đạt lại không dùng chuỗi khớp mẫu; `PROGRESS.md`/`docs/plans/xgold-mvp-plan.md` từng trỏ tới đường dẫn
+  plan-mode cục bộ (`/root/.claude/plans/...`, chỉ tồn tại trong sandbox phiên bootstrap) — thay bằng mô
+  tả không phụ thuộc đường dẫn ngoài repo.
+  - **Ghi nhận (không tự sửa được):** job CodeQL đỏ vì "Code scanning is not enabled for this
+    repository" — đây là **cài đặt GitHub repo** (Settings → Code security and analysis → Code
+    scanning), không phải lỗi code; cần chủ repo tự bật.
+- ✅ **Đợt 1 — Nền dữ liệu:**
+  - Migration `supabase/migrations/20260703083820_xgold_schema.sql`: bảng `instruments`/`candles`
+    (khóa chính `(instrument_id, timeframe, ts)`, CHECK high/low/open/close, `numeric`)/`ingest_runs`;
+    RLS bật + policy đọc công khai cho `anon`/`authenticated`, không policy ghi (chỉ `service_role`);
+    seed instrument XAU/USD. Xóa migration mẫu `tasks` (không còn liên quan).
+  - **Xác minh migration THẬT** bằng Postgres 16 cài sẵn trong sandbox (không có Docker nên không
+    dùng được `supabase db reset`, nhưng có `psql` — khởi động cluster, tạo DB thử, stub 3 role
+    `anon`/`authenticated`/`service_role`, áp migration, rồi test tay: CHECK constraint chặn đúng
+    high<low; upsert đúng khóa chính giữ nguyên 1 dòng (idempotent); `anon` đọc được nhưng **không**
+    ghi được (RLS + GRANT đúng như thiết kế). **Phát hiện 1 lỗi thật:** RLS chỉ lọc hàng, không tự cấp
+    quyền — thiếu `GRANT SELECT` tường minh thì `anon` bị "permission denied" dù có policy SELECT; đã
+    thêm `grant usage on schema public` + `grant select on instruments, candles to anon, authenticated`
+    vào migration (không dựa vào default privileges ngầm định của Supabase). Dọn DB/role thử sau khi
+    xong.
+  - `lib/candles/types.ts` (Candle + Timeframe dùng chung), `lib/candles/resample.ts` (1h→4h, 1D→1W,
+    tính lúc đọc — không lưu lại; 4h theo khối UTC, 1W theo tuần ISO bắt đầu Thứ Hai) + 5 unit test
+    (ranh giới giờ/tuần bằng dữ liệu mẫu cố định, đã tính tay ngày trong tuần trước khi viết test).
+  - `lib/providers/` (adapter pattern): `TwelveDataProvider` + `StooqProvider`, Zod validate response,
+    `ProviderError` có ngữ cảnh; 13 unit test (mock `fetch` qua fixture, gồm ca lỗi: response sai định
+    dạng, symbol không hỗ trợ, HTTP lỗi, OHLC vi phạm ràng buộc, "N/D" của Stooq).
+  - `lib/fixtures/xauusd.ts`: dữ liệu MẪU (random walk seed cố định, gắn nhãn rõ `SAMPLE_` — không
+    phải giá thật) cho dev/demo trước khi có DB thật; test xác nhận mọi nến hợp lệ theo `CandleSchema`.
+  - `lib/supabase/database.types.ts`: kiểu `Database` viết tay khớp migration. **Phát hiện 1 lỗi
+    tương thích thật:** thiếu trường bắt buộc `Relationships`/`Views`/`Functions` theo kiểu
+    `GenericSchema` của `@supabase/postgrest-js` khiến mọi bảng ngầm suy luận thành kiểu `never`
+    (lỗi rất khó đọc) — xác nhận nguyên nhân bằng cách đọc thẳng `.d.mts` của gói đã cài, không đoán.
+  - `scripts/backfill.ts` (chạy tay qua `npm run backfill`, dùng `tsx`): backfill Stooq (`1D`, toàn bộ
+    lịch sử) + Twelve Data (`1h`, tối đa 5.000 nến), tái dùng adapter đã test, ghi `ingest_runs`. Dry-run
+    xác nhận import/path alias `@/*` resolve đúng qua `tsx`; dừng đúng chỗ khi thiếu biến môi trường.
+  - `supabase/functions/ingest-gold/index.ts` (Deno, tự chứa — không import được path alias Next.js):
+    thu thập nến mới nhất (1h: 10 nến, 1D: 2 nến) theo lịch pg_cron, upsert idempotent, ghi `ingest_runs`.
+    **CHƯA kiểm chứng được** (không có Deno/Docker trong sandbox, mạng chặn Twelve Data) — kèm README
+    hướng dẫn deploy + test thật + bật `pg_cron` (bắt buộc chạy thử 1 lần trước khi bật lịch).
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (28/28, 5 file) ·
+    `build` ✅.
 
-- ✅ PR #24 (tái cấu trúc tên file) và PR #25 (hỏi rõ phạm vi "tối ưu"/"kiểm tra lỗi") đã merge vào `main`.
-- ✅ **Rà hoàn thiện chính bộ khung (đợt 2026-07-02):** sửa 1 tham chiếu mồ côi "HUONG-DAN Bước 11"
-      (không khớp file nào hiện có) trong `new-project-runbook.md`; cập nhật lại mục Đang làm/Tiếp theo
-      của chính PROGRESS.md cho khớp thực tế (trước đó bị stale so với PR đã merge — vi phạm CLAUDE.md §2).
+- ✅ **Đợt 2 — Chart cơ bản:**
+  - `lib/env.ts`: nới `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` thành OPTIONAL
+    (quyết định thiết kế: app chạy được ở chế độ "chưa cấu hình Supabase" bằng dữ liệu mẫu — nơi thật
+    sự cần Supabase tự kiểm tra `null`, xem `lib/supabase/client.ts`). **Phát hiện 1 lỗi build thật:**
+    ban đầu chỉ nới biến CLIENT, quên biến SERVER — `next build` chết ngay ở bước "Collecting page
+    data" vì `lib/env.ts` validate `serverEnv` NGAY khi import module (kể cả từ route chỉ cần
+    `clientEnv`), đã sửa.
+  - `app/api/candles/route.ts`: đọc Supabase (anon key, RLS cho phép) nếu có cấu hình; else dùng
+    `lib/fixtures/xauusd.ts`; luôn trả `source: 'supabase' | 'sample'` để UI gắn nhãn đúng; Zod
+    validate query param `symbol`/`timeframe`.
+  - `components/chart/`: `gold-chart.tsx` (lightweight-charts v5, nến + đồng bộ màu theo
+    Dark blue/Light qua `MutationObserver` trên `data-theme`), `timeframe-switcher.tsx`,
+    `use-candles.ts` (hook fetch + hủy kết quả cũ khi đổi tham số). `app/chart/xauusd/`: trang chart
+    với 4 trạng thái UI (tải/rỗng/lỗi/thành công) + banner "dữ liệu mẫu" khi chưa có Supabase.
+  - **Kiểm chứng THẬT bằng trình duyệt** (Playwright headless thật, không chỉ đọc code): chụp màn
+    hình chart hiển thị nến đúng ở cả Dark blue và Light, đổi khung 1h→4h cập nhật đúng số nến
+    (336 nến 1h → 84 nến 4h khớp phép chia 4), test qua mobile viewport (375px) responsive tốt.
+  - **Chạy axe thật, phát hiện & vá 2 lỗi a11y thật:** (1) banner "dữ liệu mẫu" `text-warning` trên
+    `bg-warning/10` chỉ đạt contrast 4.15:1 (cần ≥4.5:1) — đổi sang `text-foreground` + viền
+    `border-warning/40` (giữ ý nghĩa cảnh báo bằng viền, chữ đủ tương phản); (2) `role="img"` trên
+    container chart vi phạm `nested-interactive` vì lightweight-charts tự thêm phần tử con focus
+    được (điều hướng bàn phím) — đổi sang `role="group"`. Xác nhận lại: axe 0 vi phạm ở cả 2 theme.
+  - `e2e/chart.spec.ts` (3 test: hiển thị chart, đổi khung, axe) — **chạy thật** bằng Chromium cài sẵn
+    trong sandbox (`/opt/pw-browsers`, cấu hình tạm cục bộ do version browser khác bản
+    `@playwright/test` cài — không đổi `playwright.config.ts` gốc), cả desktop lẫn mobile project:
+    10/10 test xanh.
+  - **Chạy Lighthouse thật** (không chỉ tin cấu hình) — vá 2 giới hạn môi trường cục bộ (Chrome cần
+    `--no-sandbox` khi chạy root; thiếu `CHROME_PATH`), riêng bước upload lên
+    `temporary-public-storage` thất bại vì mạng sandbox chặn (không ảnh hưởng kết quả assertion).
+    Kết quả thật cả trang chủ lẫn `/chart/xauusd`: performance 1.0, accessibility 1.0, seo 1.0,
+    best-practices 0.96, LCP ~614–661ms, CLS 0 — vượt xa ngưỡng `lighthouserc.json`.
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (28/28) · `build` ✅.
 
-- ✅ **`scripts/check-docs-consistency.sh`** + job `docs-consistency` trong `ci.yml` (luôn chạy, không cần
-      `package.json`): quét link gãy trong backtick + tên file/lệnh cũ còn sót ngoài bảng ánh xạ.
-- ✅ **`scripts/test-copy-framework.sh`** + job `copy-framework-smoke` trong `ci.yml`: chạy THẬT
-      `copy-framework.sh`/`.ps1` vào thư mục scratch, xác nhận cấu trúc copy đúng + KHÔNG đè file đã có.
-      Bắt được **lỗi thật**: bước "[2/3] Cấu hình Claude Code" của cả 2 script ghi đè không điều kiện
-      `.claude/settings.json`/`hooks`/`agents` — trái cam kết "KHÔNG đè" của chính script. Đã vá theo
-      đúng mẫu `copy_if_absent` (như `CLAUDE.md`); có test hồi quy bảo vệ.
-- ✅ **Case-study chạy thật đầu-cuối** (`docs/framework/case-study-greenfield-dry-run.md`): scaffold
-      `create-next-app@latest` thật (Next 16.2.10) → `copy-framework.sh` → cài đủ gói → chạy 5 cổng
-      (lint/type-check/format:check/test/build) → thử hook pre-commit + commit-msg thật. Tìm thêm 2 lỗi
-      thật:
-      - **`eslint.config.mjs` crash hoàn toàn** trên `eslint-config-next` hiện tại (dùng `FlatCompat` cũ,
-        lỗi "Converting circular structure to JSON") — đã vá sang import subpath flat-config trực tiếp
-        (khớp cách `create-next-app@latest` tự sinh), có kiểm chứng lại `npx eslint . --max-warnings 0` = 0 lỗi.
-      - Thiếu bước bắt buộc "chạy `npm run format` một lần" sau khi cài Prettier → `format:check` đỏ ngay
-        từ commit đầu dù không có lỗi thật — đã thêm vào cuối Bước 3 runbook.
-      - Phát hiện cấu trúc: `_framework-dropins/` tự chứa bản sao `.lintstagedrc.json` của chính nó →
-        vá glob từng công cụ (eslint ignore/tsconfig exclude/lint-staged pattern) không triệt để, còn gây
-        crash thật ("Task killed") khi commit. Vá đúng gốc: bắt buộc xoá `_framework-dropins/` trước gate/
-        commit đầu tiên (thêm vào Bước 0 runbook) — xác nhận lại: xoá xong thì toàn bộ chuỗi hook chạy đúng.
+- ✅ **Sửa 1 lỗi CI thật khác phát hiện trên PR #1** (job `e2e` + `lighthouse`): `next build` chết ở
+  "Collecting page data" vì `ci.yml` đặt `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` qua
+  `${{ secrets.X }}` — khi secret CHƯA cấu hình, GitHub Actions nội suy ra **chuỗi rỗng `""`**,
+  không phải unset; Zod `.optional()` chỉ chấp nhận `undefined`, không chấp nhận `""`. Thêm
+  `z.preprocess` coi `""` như `undefined` cho mọi biến Supabase optional (client + server). Tái
+  hiện lỗi cục bộ bằng `NEXT_PUBLIC_SUPABASE_URL="" npm run build` trước khi sửa, xác nhận xanh
+  sau khi sửa — không đoán.
 
-- ✅ **Reconcile PR #27 với `main` sau khi PR #26 merge song song** (cùng đợt rà template, 2 phiên làm
-      độc lập trùng phạm vi): merge `origin/main` vào nhánh `claude/template-review-k4lpfy`, hợp nhất
-      5 file xung đột thay vì chọn một bên:
-      - `ci.yml`: giữ cả 3 job — `framework-lint` (bash -n/shellcheck/jq — thu hẹp lại, bỏ bước kiểm
-        tham chiếu tài liệu vì trùng việc), `docs-consistency` (từ #26, kỹ hơn: còn bắt tên file cũ sót
-        ngoài bảng ánh xạ), `copy-framework-smoke` (từ #26, chạy thật copy script vào scratch dir).
-      - Xoá `scripts/check-docs-links.sh` (của #27) — thừa so với `scripts/check-docs-consistency.sh`
-        (của #26, đã bao phủ + kỹ hơn). Tránh đúng lỗi "logic trùng lặp phân kỳ" mà Nhóm 12 audit-full
-        của chính khung này cảnh báo.
-      - `copy-framework.sh`/`.ps1`: hợp nhất fix "không đè `.claude/settings.json`/hooks/agents có sẵn"
-        (#26) với fix "copy kèm `scripts/dev-task.sh`+`usage-estimate.sh`+2 file `.example.sh`" (#27) —
-        dùng chung helper `copy_if_absent`/`Copy-IfAbsent` sẵn có cho toàn bộ nhóm file cấu hình Claude
-        Code, thay vì hard-code từng nhánh if/else.
-      - `new-project-runbook.md`: giữ bản tham chiếu đủ cả "Phần A Bước 6 / Phần D Bước 11" (đủ thông
-        tin hơn bản chỉ ghi "Bước 6 ở trên" của #26 — cả 2 đều sửa đúng cùng một tham chiếu mồ côi).
-      - `PROGRESS.md`: hợp nhất nhật ký cả 2 nhánh, viết lại mục Đang làm/Tiếp theo cho khớp thực tế.
+- ✅ **Đợt 3 — Indicators (trọng tâm yêu cầu ban đầu):**
+  - `lib/indicators/`: `sma.ts`, `ema.ts` (seed bằng SMA, khớp TradingView), `rsi.ts` (Wilder
+    smoothing/RMA — không phải trung bình cộng đơn giản). 23 unit test, **giá trị tính TAY** (không
+    chỉ chạy code rồi dán kết quả): SMA(3)/EMA(3) trên chuỗi tuyến tính [1..5] (chứng minh bằng toán
+    học lý do 2 kết quả trùng nhau — cùng "lag" (period-1)/2); EMA(2) trên [10,20,10,20,10] bằng phân
+    số chính xác (35/3, 155/9, 335/27); RSI(2) trên [44,44.25,44.5,43.75] tính tay Wilder từng bước
+    ra [null,null,100,25]; ca biên toàn tăng→100, toàn giảm→0, đứng yên→50 (quy ước), ngắn hơn chu
+    kỳ→toàn null.
+  - `lib/indicators/config.ts`: `ChartConfig` (Multi-MA + Multi-RSI) với Zod schema, mã hóa
+    base64+URI cho URL query `?cfg=`, giải mã có validate (chuỗi hỏng/bị sửa tay → `null`, không
+    crash trang) — 5 unit test gồm round-trip qua `URLSearchParams` thật.
+  - `components/chart/use-indicator-config.ts`: state cấu hình bắt đầu bằng default (khớp SSR),
+    đọc URL/localStorage THẬT sau mount (tránh lệch hydrate — cùng pattern đã dùng ở
+    `theme-toggle`/`use-candles`), rồi tự đồng bộ lại cả hai mỗi khi đổi.
+  - `components/chart/indicator-panel.tsx`: UI thêm/xóa/sửa (loại SMA|EMA, chu kỳ, màu, ẩn/hiện)
+    cho từng đường MA và RSI riêng, đủ nhãn `aria-label`/`sr-only`, vùng chạm ≥44px.
+  - `components/chart/gold-chart.tsx`: mở rộng — Multi-MA vẽ chồng lên pane giá (pane 0); Multi-RSI
+    ở pane phụ (pane 1, tự tạo/tự xóa theo `chart.addSeries(LineSeries, opts, 1)`) kèm 2 vạch ngưỡng
+    30/70 nét đứt; đồng bộ thêm/xóa/đổi màu từng đường theo cấu hình, không tạo lại toàn bộ chart.
+  - **Kiểm chứng THẬT bằng trình duyệt** (không chỉ đọc code): chụp màn hình xác nhận Multi-MA
+    (3 đường mặc định + 1 đường thêm mới, đổi màu theo từng đường) và Multi-RSI (pane riêng, 2 đường)
+    vẽ đúng, thời gian thực khi bấm nút trong panel; test round-trip URL chia sẻ (mở tab mới bằng URL
+    có `cfg=`, cấu hình khôi phục đúng số đường); axe 0 vi phạm trên toàn trang gồm panel.
+  - `e2e/indicators.spec.ts` (5 test: mặc định 3 MA+1 RSI, thêm/xóa MA, thêm RSI, URL chia sẻ giữ
+    cấu hình, axe) — chạy thật, 20/20 test xanh (chart.spec + indicators.spec + smoke.spec, cả
+    desktop lẫn mobile).
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (51/51, 9 file) ·
+    `build` ✅.
 
-- ✅ PR #27 (`claude/template-review-k4lpfy`) đã merge vào `main` (CI 3 job mới xanh).
-- ✅ **Xác minh opusplan đúng tài liệu nền (đợt 2026-07-02, nhánh `claude/opusplan-token-optimization-ihrkd6`):**
-      `settings.json` ≡ `settings-shared-opusplan.json` (diff trống); hooks/agents/scripts/copy-framework/
-      mọi chỗ nhắc opusplan đều khớp `models-and-automation.md`; đối chiếu nguồn sống docs chính thức
-      Claude Code — alias `opusplan` (Opus plan → Sonnet execution; API Anthropic: Opus 4.8/Sonnet 5),
-      `fallbackModel` dạng MẢNG, `effortLevel` đều chuẩn. **Không có drift — không sửa config.**
-- ✅ **Thêm §5 "Kỷ luật vận hành" vào `models-and-automation.md`** (tối ưu token thứ 3, theo yêu cầu người dùng):
-      plan MỘT LẦN cho cả khối việc (tránh re-plan lắt nhắt; ghi kết quả suy nghĩ ra PROGRESS/ADR làm
-      "cache chất lượng"), ngữ cảnh gọn (subagent gánh output dài; đóng mảng việc → `/gate` → commit →
-      phiên mới), checklist một phiên chuẩn, bảng 2 lỗi ngược nhau về plan mode. Đánh lại số mục cũ
-      §5–§8 → §6–§9 (tham chiếu ngoài chỉ trỏ §4 — không gãy; đã grep xác minh). Cập nhật mô tả file ở
-      CLAUDE.md §1 + `docs/framework/README.md`.
+- ✅ **Đợt 4 — Hoàn thiện MVP:**
+  - **README.md viết lại hoàn toàn** — trước đó vẫn 100% nội dung mô tả bộ khung template ("Bộ khung
+    phát triển dự án (drop-in)"), không nhắc gì đến Xgold. Giờ mô tả đúng sản phẩm: tính năng, stack,
+    cách chạy, cấu trúc thư mục, lệnh hay dùng.
+  - **Phát hiện & vá 1 lỗi UX thật:** `ThemeToggle` chỉ có ở trang chủ, KHÔNG có trên `/chart/xauusd`
+    — người dùng không đổi được theme khi đang xem chart (phải rời trang), trái với luồng chính đã
+    cam kết ở `PROJECT.md` mục 7 bước 6. Thêm `ThemeToggle` + link "← Xgold" về trang chủ vào header
+    trang chart.
+  - `e2e/chart.spec.ts` thêm 1 test: chuyển theme ngay trên trang chart, xác nhận `data-theme` đổi,
+    nhãn nút đổi, chart không vỡ (canvas vẫn còn) — chạy thật, xanh.
+  - Rà tối ưu mã nguồn: gỡ 1 chỗ dead code (`lib/indicators/config.ts` re-export `MaLine`/`RsiLine`
+    không ai dùng — xác nhận bằng grep toàn repo trước khi xóa). `npm run test:coverage`: 95.34%
+    statements / 100% functions / 96.56% lines trên các module có unit test — vượt xa ngưỡng sàn 70%.
+  - **Sentry hoãn sang backlog** (không cắm mù): cần DSN thật từ tài khoản Sentry để cấu hình +
+    kiểm chứng — cài `@sentry/nextjs` mà không có DSN để test thì không xác nhận được gì, đi ngược
+    nguyên tắc chống ảo giác. Ghi vào "Nợ kỹ thuật" bên dưới.
+  - 22/22 E2E xanh (chart 4 + indicators 5 + smoke 2, × 2 project desktop/mobile). 5 cổng local đều
+    đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (51/51) · `build` ✅.
 
 ## Đang làm
-- (xong đợt §5 kỷ luật vận hành — chờ CI + merge PR của nhánh `claude/opusplan-token-optimization-ihrkd6`)
+
+- (không có — Đợt 0–4 của kế hoạch MVP đã xong; xem "Tiếp theo" bên dưới cho việc còn lại)
 
 ## Tiếp theo
-- Theo dõi CI của PR nhánh `claude/opusplan-token-optimization-ihrkd6`, merge khi xanh
-  (CLAUDE.md §8: squash, quay về `main` sau merge).
-- Case-study mới chạy phần D (hàng rào cục bộ). Phần Bước 6–8 (branch protection, Supabase, Vercel) cần
-  tài khoản thật, chưa kiểm chứng được — nếu có dịp áp khung vào dự án thật, nên kiểm nốt phần này.
-- Dự án đã copy khung bản cũ → dùng bảng ánh xạ trong `docs/framework/README.md` khi cập nhật; chạy lại
-  `copy-framework.sh` bản mới để nhận `scripts/` + hook hoạt động thật + fix không-đè-cấu-hình-có-sẵn.
+
+- **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
+  migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
+  README riêng), chạy `npm run backfill`, bật `pg_cron`, bật "Code scanning" trong GitHub Settings.
+- Backlog sau MVP: Sentry (cần DSN), Đợt 5 (vàng trong nước SJC/BTMC + realtime), i18n/PWA nếu cần.
+- Theo dõi CI của PR #1 (nhánh `claude/financial-data-trading-indicators-cwbvf6`), merge khi xanh
+  (CLAUDE.md §8) — lưu ý CodeQL sẽ vẫn đỏ cho tới khi chủ repo bật "Code scanning" trong Settings.
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
-- Cấu hình Opusplan được thêm vào `_framework-dropins/` (an toàn, không đè cấu hình cũ)
-- `.claude/` (hooks + agents) cũng được copy vào `_framework-dropins/` để dự án cũ tự merge nếu cần
-- **opusplan là điểm ngọt, không đổi**; tối ưu token thêm bằng CHIA VIỆC (subagent) chứ không "route theo độ khó"
-  (Claude Code không có bộ định tuyến model per-query). `thuc-thi` cùng Sonnet với pha-code opusplan —
-  lợi ích là **cô lập ngữ cảnh + song song**, không phải model rẻ hơn.
+
+- Chart: lightweight-charts 5.2.0 (ADR-0002). Nguồn dữ liệu: Twelve Data + Stooq, adapter pattern (ADR-0003).
+  CSDL time-series: Postgres thuần, không TimescaleDB (ADR-0004). Stack nền: ADR-0001 (đã có từ khung).
+- Node runtime: **22.x LTS "Jod"** (không phải 24.x như bản tư vấn ban đầu) — khớp `.nvmrc` sẵn có của repo
+  và môi trường build thực tế; đã ghi rõ lý do đối chiếu lại trong `PROJECT.md` mục 4.
+- ESLint ghim ở **9.39.4** (không dùng bản 10.x mới nhất) do lỗi tương thích thật với
+  `eslint-plugin-react` bundled trong `eslint-config-next` — xem "Đã xong" ở trên.
+- i18n/PWA hoãn tới khi thật sự áp dụng (ngoài phạm vi MVP đã duyệt).
 
 ## Nợ kỹ thuật (chỗ "làm tạm" cần quay lại)
-- (không có)
+
+- `app/manifest.ts` tham chiếu icon `/icon-192.png`, `/icon-512.png` chưa có file thật — không chặn cổng
+  (không phải lỗi build/lint), nhưng cần bổ sung ảnh icon thật trước khi PWA/manifest được dùng nghiêm túc.
+- **Chưa test thật được với Supabase/Twelve Data/Stooq thật** (mạng sandbox chặn + không có Docker/Deno):
+  `lib/providers/*` chỉ kiểm bằng fixture (đã unit test kỹ); `supabase/functions/ingest-gold/index.ts`
+  hoàn toàn chưa chạy thử — làm theo README cùng thư mục (test bằng `curl` thật) NGAY sau khi deploy,
+  trước khi bật lịch `pg_cron`; `scripts/backfill.ts` mới dry-run được phần import/env, chưa gọi API thật.
+- `lib/supabase/database.types.ts` viết tay — khi có project Supabase thật, chạy
+  `supabase gen types typescript` và đối chiếu lại (không tự động, không sinh migration mới).
+- Migration đã test bằng Postgres 16 thuần + role giả lập `anon`/`authenticated`/`service_role` — nên
+  test lại một lần trên Supabase project thật (`supabase db push` tới project staging) vì nền tảng thật
+  có thể có default privileges/extension khác với môi trường giả lập.
+- **Sentry chưa cấu hình** — hoãn có chủ đích (cần DSN thật để kiểm chứng, không cắm mù). Khi có tài
+  khoản Sentry: `npm install @sentry/nextjs`, làm theo `docs/framework/quality-supplements.md` PHẦN 4,
+  set `SENTRY_DSN` (đã có sẵn field optional trong `lib/env.ts`).
+- Đợt 5 (Should, sau MVP, chưa làm): giá vàng trong nước SJC/BTMC + cập nhật gần realtime — xem
+  `PROJECT.md` mục 2 "Should have" và `docs/plans/xgold-mvp-plan.md`.
 
 ## Bàn giao phiên (điền khi WIND-DOWN gần chạm limit 5h — để phiên sau "tiếp tục")
-> Chế độ tự động ghi ở đây trước khi dừng: việc vừa xong, việc DỞ ở đâu, bước kế tiếp cụ thể.
-- Lần cập nhật: 2026-07-02 (đợt 2 — sau khi PR #27 đã merge)
-- Việc DỞ / bước tiếp theo: nhánh `claude/opusplan-token-optimization-ihrkd6` thêm §5 "Kỷ luật vận hành"
-  vào `models-and-automation.md` (+ đồng bộ CLAUDE.md §1, framework/README.md, PROGRESS.md) — cần theo dõi
-  CI của PR, squash-merge khi xanh, quay về `main`.
-- Cần lưu ý khi chạy tiếp: TOÀN BỘ tên file/lệnh đã sang tiếng Anh — tra bản đồ tên cũ→mới ở `docs/framework/README.md`. Doc model/tự động: `docs/framework/models-and-automation.md`. Subagent Sonnet: `.claude/agents/executor.md`. Copy-framework giờ copy kèm `scripts/` + `PROGRESS.template.md` + KHÔNG đè `.claude/settings.json`/hooks/agents có sẵn (dùng `copy_if_absent`).
+
+- (chưa cần — MVP Đợt 0–4 đã xong trong phiên này, chưa tới ngưỡng wind-down)

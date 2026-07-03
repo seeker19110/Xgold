@@ -31,6 +31,14 @@ const eslintConfig = defineConfig([
     },
   },
 
+  {
+    // CLI script vận hành tay — console.log là đầu ra chính cho người chạy, không phải debug sót.
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   globalIgnores([
     '.next/**',
     'coverage/**',
@@ -39,6 +47,13 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     // Chưa merge/xoá dropins thì đừng để ESLint quét — xem new-project-runbook.md Bước 0/3.
     '_framework-dropins/**',
+    // i18n (next-intl) và PWA (Serwist) hoãn tới khi thật sự áp dụng — MVP chưa cài 2 gói này
+    // (xem docs/plans/xgold-mvp-plan.md mục "Could have"). tsconfig.json cũng loại 2 đường dẫn này.
+    'app/sw.ts',
+    'i18n/**',
+    // Supabase Edge Functions chạy Deno (global `Deno`, import `npm:`/URL) — khác hẳn môi trường
+    // Node/Next của ESLint config này; lint bằng Deno tooling riêng lúc deploy, không ở đây.
+    'supabase/functions/**',
   ]),
 ]);
 
