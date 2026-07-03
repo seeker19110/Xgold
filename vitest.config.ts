@@ -13,10 +13,45 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
+      // `include` tường minh (F-003, docs/ops/COMPLETION-PLAN.md): thiếu `include` thì v8 chỉ tính %
+      // trên các file ĐÃ được test import — file 0-test (route API, hook, component) vắng mặt khỏi
+      // báo cáo, khiến % nhìn cao giả tạo và ngưỡng dưới không thực sự chặn được việc thiếu test.
+      // Vitest 4 không còn cờ `all` riêng — khai `include` là đủ để quét cả file chưa có test nào
+      // import tới (đã xác nhận bằng cách chạy thử: thiếu include thì % không đổi so với trước).
+      include: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}'],
       // Sàn an toàn tối thiểu (KHÔNG phải mục tiêu) — bắt việc "quên viết test".
       // Ưu tiên chất lượng test ở đường đi quan trọng + ca biên hơn con số %.
       thresholds: { lines: 70, functions: 70, branches: 70, statements: 70 },
-      exclude: ['e2e/**', '**/*.config.*', '**/*.d.ts', 'vitest.setup.ts'],
+      exclude: [
+        'e2e/**',
+        '**/*.config.*',
+        '**/*.d.ts',
+        'vitest.setup.ts',
+        // Boilerplate framework Next.js không có logic nghiệp vụ (không phải "né test khó viết").
+        'app/error.tsx',
+        'app/global-error.tsx',
+        'app/not-found.tsx',
+        'app/manifest.ts',
+        'app/robots.ts',
+        'app/sitemap.ts',
+        'app/sw.ts',
+        'app/layout.tsx',
+        // Canvas API mệnh lệnh (lightweight-charts) — không unit test theo dòng có ý nghĩa được,
+        // che bằng E2E thật (e2e/chart.spec.ts, e2e/indicators.spec.ts) thay vì mock canvas giả.
+        'components/chart/gold-chart.tsx',
+        // Trang route (App Router) chỉ export metadata/gọi *-client — logic thật nằm ở nơi khác,
+        // che bằng E2E: e2e/smoke.spec.ts (/), e2e/chart.spec.ts (/chart/xauusd),
+        // e2e/domestic-gold.spec.ts (/gia-vang-trong-nuoc).
+        'app/page.tsx',
+        'app/chart/xauusd/page.tsx',
+        'app/gia-vang-trong-nuoc/page.tsx',
+        // Component thuần trình bày/tổ hợp (không có nhánh logic riêng đáng unit test) — che bằng
+        // cùng bộ E2E ở trên (indicators.spec.ts test trực tiếp thao tác trên indicator-panel.tsx).
+        'components/chart/indicator-panel.tsx',
+        'components/chart/timeframe-switcher.tsx',
+        'components/domestic-gold/price-table.tsx',
+        'components/domestic-gold/freshness-badge.tsx',
+      ],
     },
   },
   resolve: {
