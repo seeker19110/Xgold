@@ -95,7 +95,7 @@
 - **Đợt 2 — Chart cơ bản:** trang chart nến + đổi khung + 4 trạng thái UI + theme. ✅ _(xong — Lighthouse/axe/E2E đã chạy thật, xem PROGRESS.md)_
 - **Đợt 3 — Chỉ báo:** `lib/indicators` (SMA/EMA/RSI) + Multi-MA overlay + Multi-RSI pane + panel cấu hình. ✅ _(xong — kiểm chứng thật bằng trình duyệt, 20/20 E2E xanh)_
 - **Đợt 4 — Hoàn thiện MVP:** E2E đầy đủ, a11y, docs, tối ưu mã nguồn. ✅ _(xong — Sentry hoãn sang backlog: cần DSN thật để cấu hình + kiểm chứng, không cắm mù; xem PROGRESS.md)_
-- **Đợt 5 (Should, sau MVP):** giá vàng trong nước (SJC/BTMC) + cập nhật gần realtime.
+- **Đợt 5 — Should (Domestic gold):** giá vàng trong nước (BTMC) + cập nhật gần realtime (60s polling). ✅ _(xong — trang `/gia-vang-trong-nuoc`, table mua/bán/badge tươi dữ liệu, E2E 10/10 xanh)_
 
 ## 10. Rủi ro & Giả định
 

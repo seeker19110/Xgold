@@ -87,6 +87,52 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ingest_runs']['Insert']>;
         Relationships: [];
       };
+      domestic_gold_prices: {
+        Row: {
+          vendor: string;
+          product: string;
+          buy: number;
+          sell: number;
+          ts: string;
+          source: string;
+          created_at: string;
+        };
+        Insert: {
+          vendor: string;
+          product: string;
+          buy: number;
+          sell: number;
+          ts: string;
+          source: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['domestic_gold_prices']['Insert']>;
+        Relationships: [];
+      };
+      domestic_gold_ingest_runs: {
+        Row: {
+          id: string;
+          vendor: string;
+          provider: string;
+          started_at: string;
+          finished_at: string | null;
+          status: string;
+          rows_upserted: number;
+          error: string | null;
+        };
+        Insert: {
+          id?: string;
+          vendor: string;
+          provider: string;
+          started_at?: string;
+          finished_at?: string | null;
+          status?: string;
+          rows_upserted?: number;
+          error?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['domestic_gold_ingest_runs']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

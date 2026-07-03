@@ -177,16 +177,28 @@
   - 22/22 E2E xanh (chart 4 + indicators 5 + smoke 2, × 2 project desktop/mobile). 5 cổng local đều
     đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (51/51) · `build` ✅.
 
+- ✅ **Đợt 5 — Domestic gold (Should, sau MVP):**
+  - **Schema & Migration:** bảng `domestic_gold_prices(vendor, product, buy, sell, ts, source, created_at, PRIMARY KEY(vendor, product, ts))` + `domestic_gold_ingest_runs` (tương tự XAU/USD pattern). RLS SELECT-only cho anon/authenticated. CHECK (sell >= buy). Xác minh trên Postgres 16 thật.
+  - **Adapter BTMC:** XML parser (extracting `n_1`/`pb_1`/`ps_1`/`d_1` từ response), VN datetime UTC+7→UTC conversion ("03/07/2026 08:00" → "2026-07-03T01:00:00Z"), parse-defensive (skip malformed rows, throw chỉ nếu ALL rows lỗi). 8 unit test (success, timezone boundary, skip invalid, constraint, HTTP error).
+  - **Edge Function:** `supabase/functions/ingest-domestic-gold/index.ts` (Deno, tự chứa, independent implementation từ Next.js adapter để tránh path alias), README.md với 4-step deployment + **bắt buộc test curl + FIELD VERIFICATION** (XML format chưa xác nhận bằng response thật per ADR-0005).
+  - **API Route:** `app/api/domestic-gold/route.ts` (Supabase fallback mẫu, trả source rõ ràng).
+  - **Freshness Lib:** `lib/domestic-gold/freshness.ts` (30-min stale threshold = 2× 15-min pg_cron).
+  - **UI Components:** freshness-badge (● fresh / ▲ stale / ? unknown), price-table (tabular-nums, VND formatting), 4 UI states.
+  - **Page:** `app/gia-vang-trong-nuoc/page.tsx` (server) + `page-client.tsx` (client, 60s polling). Link từ trang chủ.
+  - **ADR-0005:** Định lựa chọn BTMC primary (XML), vang.today postponed (JSON schema không xác minh được từ authoritative source). Rủi ro cao được ghi rõ ràng.
+  - **E2E:** `e2e/domestic-gold.spec.ts` (5 test: hiển thị/buy≤sell/axe/theme toggle/nav từ home) — **chạy thật**, 10/10 xanh (desktop × 2 + mobile × 2 mỗi test).
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (32/32) · `build` ✅.
+
 ## Đang làm
 
-- (không có — Đợt 0–4 của kế hoạch MVP đã xong; xem "Tiếp theo" bên dưới cho việc còn lại)
+- (không có — Đợt 0–5 của kế hoạch đã xong; tiếp theo: chạy cổng gate + commit/push/PR)
 
 ## Tiếp theo
 
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`, bật "Code scanning" trong GitHub Settings.
-- Backlog sau MVP: Sentry (cần DSN), Đợt 5 (vàng trong nước SJC/BTMC + realtime), i18n/PWA nếu cần.
+- Backlog sau Đợt 5: Sentry (cần DSN), vang.today multi-source (xác minh JSON schema), SJC thêm adapter riêng, i18n/PWA nếu cần.
 - Theo dõi CI của PR #1 (nhánh `claude/financial-data-trading-indicators-cwbvf6`), merge khi xanh
   (CLAUDE.md §8) — lưu ý CodeQL sẽ vẫn đỏ cho tới khi chủ repo bật "Code scanning" trong Settings.
 
@@ -216,8 +228,7 @@
 - **Sentry chưa cấu hình** — hoãn có chủ đích (cần DSN thật để kiểm chứng, không cắm mù). Khi có tài
   khoản Sentry: `npm install @sentry/nextjs`, làm theo `docs/framework/quality-supplements.md` PHẦN 4,
   set `SENTRY_DSN` (đã có sẵn field optional trong `lib/env.ts`).
-- Đợt 5 (Should, sau MVP, chưa làm): giá vàng trong nước SJC/BTMC + cập nhật gần realtime — xem
-  `PROJECT.md` mục 2 "Should have" và `docs/plans/xgold-mvp-plan.md`.
+- **Đợt 5 Field verification pending** (ưu tiên sau merge): BTMC XML endpoint phải test curl + đối chiếu field thật, xem `supabase/functions/ingest-domestic-gold/README.md` Bước 3. Chưa chạy được trong sandbox (không có Deno, mạng chặn BTMC). Khi deploy thật: test bắt buộc NGAY trước khi bật pg_cron.
 
 ## Bàn giao phiên (điền khi WIND-DOWN gần chạm limit 5h — để phiên sau "tiếp tục")
 

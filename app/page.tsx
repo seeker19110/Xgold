@@ -12,12 +12,20 @@ export default function HomePage() {
         Theo dõi giá vàng thế giới (XAU/USD) với chart nến kiểu TradingView, đường trung bình động
         (Multi-MA) và RSI (Multi-RSI).
       </p>
-      <Link
-        href="/chart/xauusd"
-        className="bg-primary text-primary-foreground w-fit rounded-lg px-4 py-2 font-medium"
-      >
-        Xem chart XAU/USD
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/chart/xauusd"
+          className="bg-primary text-primary-foreground w-fit rounded-lg px-4 py-2 font-medium"
+        >
+          Xem chart XAU/USD
+        </Link>
+        <Link
+          href="/gia-vang-trong-nuoc"
+          className="border-border text-foreground w-fit rounded-lg border px-4 py-2 font-medium"
+        >
+          Giá vàng trong nước
+        </Link>
+      </div>
     </main>
   );
 }
