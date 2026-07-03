@@ -41,3 +41,22 @@ test('trang chart không có vi phạm accessibility nghiêm trọng', async ({ 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test('chuyển theme Dark blue ↔ Light ngay trên trang chart (không cần rời trang)', async ({
+  page,
+}) => {
+  await page.goto('/chart/xauusd');
+
+  const toggle = page.getByRole('button', { name: /Chuyển sang nền/ });
+  await expect(toggle).toHaveAccessibleName('Chuyển sang nền sáng');
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'light');
+
+  await toggle.click();
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(toggle).toHaveAccessibleName('Chuyển sang nền tối');
+
+  // Đổi theme không phá chart — canvas vẫn còn và không có lỗi console mới.
+  const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+});

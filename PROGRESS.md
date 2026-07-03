@@ -6,9 +6,9 @@
 
 ## Giai đoạn hiện tại
 
-- GĐ 4 — Phát triển. Chạy `/auto` theo kế hoạch đã duyệt (kế hoạch triển khai chi tiết được trình bày
-  và duyệt qua Plan Mode trong phiên bootstrap, không lưu trong repo), triển khai từng đợt qua `/gate`.
-  Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9.
+- GĐ 4 — Phát triển. MVP Đợt 0–4 đã xong (bootstrap, nền dữ liệu, chart, Multi-MA/Multi-RSI, hoàn
+  thiện). Còn lại là việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion)
+  — xem "Tiếp theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9.
 
 ## Đã xong
 
@@ -158,15 +158,35 @@
   - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (51/51, 9 file) ·
     `build` ✅.
 
+- ✅ **Đợt 4 — Hoàn thiện MVP:**
+  - **README.md viết lại hoàn toàn** — trước đó vẫn 100% nội dung mô tả bộ khung template ("Bộ khung
+    phát triển dự án (drop-in)"), không nhắc gì đến Xgold. Giờ mô tả đúng sản phẩm: tính năng, stack,
+    cách chạy, cấu trúc thư mục, lệnh hay dùng.
+  - **Phát hiện & vá 1 lỗi UX thật:** `ThemeToggle` chỉ có ở trang chủ, KHÔNG có trên `/chart/xauusd`
+    — người dùng không đổi được theme khi đang xem chart (phải rời trang), trái với luồng chính đã
+    cam kết ở `PROJECT.md` mục 7 bước 6. Thêm `ThemeToggle` + link "← Xgold" về trang chủ vào header
+    trang chart.
+  - `e2e/chart.spec.ts` thêm 1 test: chuyển theme ngay trên trang chart, xác nhận `data-theme` đổi,
+    nhãn nút đổi, chart không vỡ (canvas vẫn còn) — chạy thật, xanh.
+  - Rà tối ưu mã nguồn: gỡ 1 chỗ dead code (`lib/indicators/config.ts` re-export `MaLine`/`RsiLine`
+    không ai dùng — xác nhận bằng grep toàn repo trước khi xóa). `npm run test:coverage`: 95.34%
+    statements / 100% functions / 96.56% lines trên các module có unit test — vượt xa ngưỡng sàn 70%.
+  - **Sentry hoãn sang backlog** (không cắm mù): cần DSN thật từ tài khoản Sentry để cấu hình +
+    kiểm chứng — cài `@sentry/nextjs` mà không có DSN để test thì không xác nhận được gì, đi ngược
+    nguyên tắc chống ảo giác. Ghi vào "Nợ kỹ thuật" bên dưới.
+  - 22/22 E2E xanh (chart 4 + indicators 5 + smoke 2, × 2 project desktop/mobile). 5 cổng local đều
+    đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (51/51) · `build` ✅.
+
 ## Đang làm
 
-- Chuẩn bị Đợt 4 — Hoàn thiện MVP: E2E đầy đủ luồng chính còn lại, Sentry, README/runbook, rà tối ưu
-  mã nguồn, báo cáo xác thực cổng merge.
+- (không có — Đợt 0–4 của kế hoạch MVP đã xong; xem "Tiếp theo" bên dưới cho việc còn lại)
 
 ## Tiếp theo
 
-- Đợt 4 (hoàn thiện MVP: Sentry, docs, tối ưu mã nguồn, báo cáo xác thực).
-  Chi tiết: `docs/plans/xgold-mvp-plan.md` mục 6.
+- **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
+  migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
+  README riêng), chạy `npm run backfill`, bật `pg_cron`, bật "Code scanning" trong GitHub Settings.
+- Backlog sau MVP: Sentry (cần DSN), Đợt 5 (vàng trong nước SJC/BTMC + realtime), i18n/PWA nếu cần.
 - Theo dõi CI của PR #1 (nhánh `claude/financial-data-trading-indicators-cwbvf6`), merge khi xanh
   (CLAUDE.md §8) — lưu ý CodeQL sẽ vẫn đỏ cho tới khi chủ repo bật "Code scanning" trong Settings.
 
@@ -193,7 +213,12 @@
 - Migration đã test bằng Postgres 16 thuần + role giả lập `anon`/`authenticated`/`service_role` — nên
   test lại một lần trên Supabase project thật (`supabase db push` tới project staging) vì nền tảng thật
   có thể có default privileges/extension khác với môi trường giả lập.
+- **Sentry chưa cấu hình** — hoãn có chủ đích (cần DSN thật để kiểm chứng, không cắm mù). Khi có tài
+  khoản Sentry: `npm install @sentry/nextjs`, làm theo `docs/framework/quality-supplements.md` PHẦN 4,
+  set `SENTRY_DSN` (đã có sẵn field optional trong `lib/env.ts`).
+- Đợt 5 (Should, sau MVP, chưa làm): giá vàng trong nước SJC/BTMC + cập nhật gần realtime — xem
+  `PROJECT.md` mục 2 "Should have" và `docs/plans/xgold-mvp-plan.md`.
 
 ## Bàn giao phiên (điền khi WIND-DOWN gần chạm limit 5h — để phiên sau "tiếp tục")
 
-- (chưa cần — phiên đang trong Đợt 3, chưa tới ngưỡng wind-down)
+- (chưa cần — MVP Đợt 0–4 đã xong trong phiên này, chưa tới ngưỡng wind-down)

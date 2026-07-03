@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { MaLine, RsiLine } from '@/lib/indicators/types';
 
 const MaLineSchema = z.object({
   id: z.string(),
@@ -47,5 +46,3 @@ export function decodeChartConfig(raw: string): ChartConfig | null {
     return null;
   }
 }
-
-export type { MaLine, RsiLine };

@@ -1,126 +1,84 @@
-# Bộ khung phát triển dự án (drop-in)
+# Xgold
 
-## Phạm vi: hỗ trợ MỌI loại dự án lập trình (trừ dự án "cấm")
+Web app theo dõi giá vàng thế giới (XAU/USD) với chart nến kiểu TradingView — thu thập dữ liệu vào
+Postgres (Supabase), hiển thị bằng [lightweight-charts](https://tradingview.github.io/lightweight-charts/)
+kèm bộ chỉ báo kỹ thuật: **Multi-MA** (nhiều đường SMA/EMA) và **Multi-RSI** (nhiều đường RSI cùng
+pane), tự chọn chu kỳ/màu, cấu hình lưu localStorage + chia sẻ được qua URL.
 
-Khung này hỗ trợ **phát triển mọi loại dự án phần mềm từ ý tưởng đến ra mắt** — không chỉ web app:
-**web, mobile native, desktop, backend/API/dịch vụ, site nội dung tĩnh, CLI/thư viện/SDK, data/ML/AI, game,
-blockchain, monorepo** (và loại chưa liệt kê). Cách hoạt động:
+> Đặc tả đầy đủ (vấn đề, MVP, schema, kiến trúc, DoD): [`PROJECT.md`](./PROJECT.md).
+> Quyết định kỹ thuật lớn: [`docs/adr/`](./docs/adr/) (chart lib, nguồn dữ liệu, lưu trữ time-series...).
+> Trạng thái/tiến độ hiện tại: [`PROGRESS.md`](./PROGRESS.md).
 
-- **Phương pháp là phổ quát:** quy trình 9 giai đoạn + cổng, research-first, đề xuất chủ động mọi mặt, ADR,
-  chống ảo giác, báo cáo xác thực — áp cho **mọi loại dự án, mọi ngôn ngữ/stack** (`docs/framework/KHUNG-1/2/3`).
-- **Công nghệ chọn theo "hồ sơ loại dự án":** từ ý tưởng, AI **phân loại → chọn hồ sơ → chọn stack** (research-first,
-  phiên bản đã xác minh). Bảng hồ sơ C1–C10 + cổng tương đương: `KHUNG-3 PHẦN A0 + PHẦN C`.
-- **Các file cấu hình kèm theo là hồ sơ Web app (mặc định)** — Next.js + TS + Tailwind + Supabase + Vercel. Với loại
-  khác, giữ phương pháp + thay công cụ tương đương (test/đóng gói/CI của loại đó).
-- **Dự án có sẵn (brownfield):** khung **chỉ tư vấn & nâng cấp** trên stack hiện có, **không áp đặt** stack mặc định
-  (`docs/framework/existing-project-adoption.md`).
-- **Ngoại lệ — dự án "cấm" (không hỗ trợ):** mã độc, phá hoại, DoS, nhắm mục tiêu hàng loạt, tấn công chuỗi cung ứng,
-  né tránh phát hiện vì mục đích xấu, hay việc phạm pháp/xâm phạm quyền riêng tư. Bảo mật **phòng thủ** / kiểm thử
-  **có ủy quyền** / CTF / nghiên cứu thì hỗ trợ (xem `CLAUDE.md` §0b).
+## Tính năng
 
-> **Hồ sơ Web app — drop-in nhanh:** giải nén bộ này vào **gốc repo** của một dự án Next.js mới (đã tạo bằng
-> `create-next-app` với TypeScript + Tailwind + ESLint). Phần lớn file đã ở đúng chỗ;
-> phần cài gói + sửa `package.json`/`tsconfig` làm theo runbook (Phần D).
+- Chart nến XAU/USD, khung 1h/4h/1D/1W (4h và 1W tính từ 1h/1D lúc đọc, không lưu trùng lặp).
+- **Multi-MA:** nhiều đường trung bình động (SMA hoặc EMA), mỗi đường tự chọn chu kỳ + màu, chồng
+  lên nến.
+- **Multi-RSI:** nhiều đường RSI (Wilder smoothing) chu kỳ khác nhau trên cùng một pane phụ, kèm 2
+  vạch ngưỡng 30/70.
+- Cấu hình chỉ báo lưu `localStorage` + đồng bộ URL (`?cfg=...`) — chia sẻ được, không cần tài khoản.
+- Theme **Dark blue** mặc định + **Light**, mobile-first, WCAG AA cả hai chế độ.
+- Chạy được ngay cả khi **chưa cấu hình Supabase** — tự chuyển sang dữ liệu mẫu có gắn nhãn rõ ràng
+  trên UI (không bao giờ giả là dữ liệu thật).
 
-## Bắt đầu từ đâu
+## Tech stack
 
-Đọc **`docs/framework/new-project-runbook.md`** — runbook chỉ rõ làm gì theo thứ tự và
-phải tuân thủ gì. Đó là kim chỉ nam chính.
+Next.js 16 (App Router) · React 19 · TypeScript `strict` 6 · Tailwind CSS 4 · Supabase (Postgres +
+RLS + Edge Functions) · lightweight-charts 5 · Zod 4. Nguồn dữ liệu: Twelve Data (chính) + Stooq
+(backfill lịch sử). Chi tiết lựa chọn + lý do: `docs/plans/xgold-mvp-plan.md`, `docs/adr/0001`–`0004`.
 
-## File đã sẵn sàng (chỉ cần giải nén)
-
-- `CLAUDE.md` — luật cho AI (Claude Code tự đọc). **Nhớ điền các chỗ `[ĐIỀN: ...]`.**
-- `PROJECT.md` — mẫu đặc tả dự án (điền trước khi code).
-- `PROGRESS.template.md` — mẫu theo dõi trạng thái (script copy tự tạo thành `PROGRESS.md` sạch ở dự án đích;
-  `PROGRESS.md` trong repo này là nhật ký phát triển của chính bộ khung, không copy sang).
-- `lib/env.ts` — xác thực biến môi trường (đổi tên biến cho khớp dự án).
-- `styles/theme.css` — design tokens: nền **Dark blue** mặc định + chế độ **Light**.
-- `playwright.config.ts`, `e2e/smoke.spec.ts` — E2E (desktop + mobile) + quét a11y axe.
-- `lighthouserc.json` — ngân sách hiệu năng (Lighthouse CI).
-- `CHANGELOG.md` — lịch sử thay đổi (Keep a Changelog).
-- `eslint.config.mjs` — ESLint **flat config** (ESLint 9/10, Next 16; thay `.eslintrc.json` cũ).
-- `postcss.config.mjs` — Tailwind v4 (`@tailwindcss/postcss`).
-- `.nvmrc` (Node 22), `.editorconfig`, `.env.example` — đồng bộ môi trường/biến.
-- `app/` — starter: `not-found.tsx`, `error.tsx`, `global-error.tsx` (trang lỗi), `robots.ts`,
-  `sitemap.ts` (SEO), `manifest.ts` + `sw.ts` (PWA).
-- `i18n/request.ts`, `messages/{vi,en}.json` — đa ngôn ngữ (next-intl).
-- `.prettierrc`, `.prettierignore`, `commitlint.config.cjs`,
-  `.lintstagedrc.json`, `vitest.config.ts`, `vitest.setup.ts`, `.gitignore`
-- `.husky/pre-commit`, `.husky/commit-msg` — hook (cần chạy `npx husky init` trước, xem dưới).
-- `components/theme-toggle.tsx` — nút chuyển theme (Dark blue ↔ Light) dùng ngay.
-- `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/` (gồm mẫu **sự cố**),
-  `.github/dependabot.yml`, `.github/CODEOWNERS`, và các workflow:
-  `ci.yml` (lint/type/format/test+coverage/build/audit + **E2E** + chặn `[ĐIỀN]`),
-  `lighthouse-ci.yml`, `codeql.yml` (SAST), `secret-scan.yml` (gitleaks), `release.yml` (release-please).
-- `supabase/migrations/` — **migration MẪU** (bảng + ràng buộc + index + **RLS + policy**); `supabase/README.md`.
-- `LICENSE` (MIT — đổi chủ sở hữu/giấy phép theo dự án), `SECURITY.md`, `CONTRIBUTING.md`.
-- `docs/framework/` — tài liệu khung: **01/02/03** (quy trình · luật AI · chọn công nghệ research-first);
-  **new-project-runbook** (runbook: trình tự + cấu hình hàng rào _Phần D_ + checklist dự án thật _Phần E_);
-  **existing-project-adoption** (brownfield); **project-completion** (kế hoạch hoàn thiện + vòng hội tụ);
-  **quality-supplements** (Nhóm 1+2 + theme + nâng cao i18n/PWA/Sentry/SEO/analytics).
-- `docs/ops/incident-response.md` — vận hành GĐ 8: xử lý sự cố + **mẫu post-mortem**.
-- `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật (ví dụ đã điền: `0001-stack-selection.md`).
-
-## Đã có repo khung này — giờ làm gì?
-
-Bạn đã clone/tải repo khung về máy. Chọn đúng một nhánh:
-
-- **Dự án MỚI (greenfield):** dựng dự án từ khung → theo `docs/framework/new-project-runbook.md` (runbook 0→9).
-- **Dự án ĐÃ CÓ (brownfield):** mang khung sang dự án đích rồi mở Claude Code trong đó — các bước bên dưới.
-
-### Bước 1 — Mang khung sang dự án đích (một lệnh)
-
-Đứng **trong repo khung này**, trỏ tới thư mục gốc của dự án đích. Script **không đè** file đang chạy:
-tài liệu khung + `.claude/` (commands, settings opusplan, hooks, agents) + `scripts/` (dev-task, usage-estimate —
-hook tự động cần 2 file này) copy thẳng; file gốc (`CLAUDE.md`, `PROJECT.md`…) chỉ copy nếu **chưa có**
-(đã có thì để bản `.framework-new` cạnh bên để tự so); file cấu hình/stack đưa vào `_framework-dropins/` để tự merge.
-
-**macOS / Linux (bash):**
+## Chạy dự án
 
 ```bash
-bash copy-framework.sh /đường-dẫn/tới/dự-án
+npm install
+npm run dev        # http://localhost:3000 — chạy được ngay, chưa cần cấu hình gì (dùng dữ liệu mẫu)
 ```
 
-**Windows (PowerShell)** — bản `.ps1` hành vi **giống hệt** bản `.sh`:
+Muốn dùng dữ liệu thật, tạo `.env.local` (xem `.env.example`) với:
 
-```powershell
-# Windows PowerShell 5.1 có sẵn trên mọi máy Windows — không cần cài gì thêm:
-powershell -ExecutionPolicy Bypass -File .\copy-framework.ps1 C:\đường-dẫn\tới\dự-án
-
-# Nếu đã cài PowerShell 7 (lệnh pwsh):
-pwsh ./copy-framework.ps1 C:\đường-dẫn\tới\dự-án
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-> **Vì sao có `-ExecutionPolicy Bypass`:** Windows mặc định chặn chạy script `.ps1` chưa ký. Cờ này chỉ nới
-> cho đúng lần chạy đó (không đổi cấu hình máy). Nếu muốn nới sẵn cho user hiện tại:
-> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+Sau đó: áp migration (`supabase/migrations/`) lên project Supabase, backfill lịch sử
+(`npm run backfill` — cần thêm `SUPABASE_SERVICE_ROLE_KEY` + `TWELVEDATA_API_KEY`), và deploy Edge
+Function `supabase/functions/ingest-gold/` để cập nhật định kỳ (xem README trong thư mục đó).
 
-### Bước 2 — Merge phần cấu hình
+## Lệnh hay dùng
 
-Soát thư mục `_framework-dropins/` trong dự án đích: chỉ merge file **khớp stack hiện có** (đừng đè cấu hình đang
-chạy). Xong thì xóa `_framework-dropins/`. Với file `*.framework-new`: so với bản gốc rồi gộp phần cần, sau đó xóa.
+| Lệnh                                                     | Việc gì                                                  |
+| -------------------------------------------------------- | -------------------------------------------------------- |
+| `npm run dev`                                            | Dev server (Turbopack)                                   |
+| `npm run build` / `npm run start`                        | Build & chạy bản production                              |
+| `npm run lint` / `npm run type-check` / `npm run format` | Cổng chất lượng (0 cảnh báo)                             |
+| `npm run test` / `npm run test:coverage`                 | Unit test (Vitest)                                       |
+| `npm run test:e2e`                                       | E2E (Playwright + axe)                                   |
+| `npm run backfill`                                       | Backfill lịch sử giá từ Twelve Data + Stooq vào Supabase |
 
-### Bước 3 — Mở Claude Code trong dự án đích
+## Cấu trúc thư mục
 
-AI tự đọc `CLAUDE.md` và chạy **Bước 0** của `docs/framework/existing-project-adoption.md` (tự dò stack qua
-`package.json`/config — không cần bạn khai). Từ đó áp khung **tăng dần**: Prettier → ESLint → TS strict → hook →
-CI → lấp lỗ hổng test/a11y/hiệu năng. Muốn **hoàn thiện toàn dự án** (hết lỗi đã biết, tính năng thống nhất,
-có bằng chứng) → gõ `/completion` (`docs/framework/project-completion.md`).
+```
+app/                    Route Next.js (App Router) — trang chủ, /chart/xauusd, /api/candles
+components/chart/       GoldChart (lightweight-charts), IndicatorPanel, TimeframeSwitcher, hooks
+lib/indicators/         SMA, EMA, RSI (pure TS, unit test đối chiếu giá trị tính tay) + cấu hình Multi-MA/Multi-RSI
+lib/providers/          Adapter nguồn dữ liệu (Twelve Data, Stooq) — pattern chung, dễ thêm nguồn
+lib/candles/            Kiểu dữ liệu nến dùng chung + resample (1h→4h, 1D→1W)
+lib/fixtures/           Dữ liệu mẫu (dev/demo khi chưa cấu hình Supabase)
+lib/supabase/           Client Supabase (chỉ đọc) + kiểu Database viết tay khớp migration
+supabase/migrations/    Schema CSDL có phiên bản (instruments, candles, ingest_runs — RLS bật)
+supabase/functions/     Edge Function ingest-gold (Deno) — thu thập định kỳ qua pg_cron
+scripts/backfill.ts     Script backfill lịch sử chạy tay (npm run backfill)
+e2e/                    Playwright E2E (chart, indicators, smoke) + quét a11y axe
+docs/                   PROJECT.md liên quan, ADR, kế hoạch MVP, tài liệu khung phát triển (docs/framework/)
+```
 
-> _Vì sao phải copy chứ không "đưa link": một phiên Claude Code chỉ tự nạp luật từ chính repo của nó
-> (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link._ Chi tiết brownfield: `docs/framework/existing-project-adoption.md`.
+## Quy ước phát triển
 
-## Việc phải làm tay (không đè được file của create-next-app)
+Dự án này dùng khung quản lý dự án bằng AI (Claude Code) — quy trình giai đoạn, cổng commit/merge,
+ADR, chống ảo giác... xem [`CLAUDE.md`](./CLAUDE.md). Tài liệu khung chi tiết ở `docs/framework/`
+(tham khảo khi cần, không bắt buộc đọc để chạy dự án).
 
-Theo **`docs/framework/new-project-runbook.md` Phần D**: cài gói + thêm khối `scripts` + `npx husky init`;
-thêm các cờ TypeScript `strict` vào `tsconfig.json`.
+## Giấy phép
 
-> Sau đó làm tiếp theo runbook: bật branch protection + Code scanning trên GitHub, kết nối Supabase,
-> deploy thử Vercel, rồi **kiểm chứng hàng rào** (thử commit sai phải bị chặn) trước khi code tính năng.
-> Danh mục đầy đủ việc-dự-án-thật: Phần E của runbook.
-
-## Lưu ý
-
-- ESLint dùng **flat config** (`eslint.config.mjs`) cho ESLint 9/10 + Next 16. Nếu phiên bản Next/ESLint
-  của bạn khác, đối chiếu lại cách `eslint-config-next` xuất config (FlatCompat vs flat gốc).
-- README này KHÔNG cần commit vào dự án thật — xóa sau khi setup xong nếu muốn.
+Xem [`LICENSE`](./LICENSE).

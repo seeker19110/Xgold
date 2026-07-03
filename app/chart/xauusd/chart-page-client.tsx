@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
 import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
 import { useCandles } from '@/components/chart/use-candles';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { Timeframe } from '@/lib/candles/types';
 
 const SYMBOL = 'XAUUSD';
@@ -18,8 +20,16 @@ export function ChartPageClient() {
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">XAU/USD</h1>
-        <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
+            ← Xgold
+          </Link>
+          <h1 className="text-2xl font-semibold">XAU/USD</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
+          <ThemeToggle />
+        </div>
       </div>
 
       {source === 'sample' && (
