@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import { DEFAULT_CHART_CONFIG, encodeChartConfig, type ChartConfig } from '@/lib/indicators/config';
@@ -47,6 +47,26 @@ describe('useIndicatorConfig', () => {
 
     const { result } = renderHook(() => useIndicatorConfig());
     await waitFor(() => expect(result.current[0]).toEqual(DEFAULT_CHART_CONFIG));
+  });
+
+  it('không ghi đè localStorage bằng DEFAULT_CHART_CONFIG trước khi cấu hình đã lưu kịp áp dụng (F-005)', async () => {
+    const saved: ChartConfig = {
+      maLines: [{ id: 'ma-saved', type: 'EMA', period: 21, color: '#123456', visible: true }],
+      rsiLines: [],
+    };
+    localStorage.setItem('xgold:chart-config', encodeChartConfig(saved));
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    const { result } = renderHook(() => useIndicatorConfig());
+    await waitFor(() => expect(result.current[0]).toEqual(saved));
+
+    const defaultEncoded = encodeChartConfig(DEFAULT_CHART_CONFIG);
+    const wroteDefault = setItemSpy.mock.calls.some(
+      ([key, value]) => key === 'xgold:chart-config' && value === defaultEncoded,
+    );
+    expect(wroteDefault).toBe(false);
+
+    setItemSpy.mockRestore();
   });
 
   it('setConfig cập nhật state + ghi lại localStorage và URL để chia sẻ được', async () => {

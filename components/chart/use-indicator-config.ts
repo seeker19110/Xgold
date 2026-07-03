@@ -35,20 +35,28 @@ function readPersistedConfig(): ChartConfig {
  */
 export function useIndicatorConfig(): readonly [ChartConfig, (config: ChartConfig) => void] {
   const [config, setConfig] = useState<ChartConfig>(DEFAULT_CHART_CONFIG);
+  // Chặn effect ghi localStorage/URL chạy TRƯỚC KHI effect đọc cấu hình đã lưu kịp áp dụng — thiếu
+  // cờ này, lần mount đầu ghi đè tạm thời DEFAULT_CHART_CONFIG lên localStorage/URL (tự sửa lại
+  // ngay trong cùng tick nên không thấy được, nhưng vẫn là 1 lần ghi thừa/logic dễ vỡ). F-005,
+  // docs/ops/COMPLETION-PLAN.md W-301.
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfig(readPersistedConfig());
+    setIsHydrated(true);
   }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     const encoded = encodeChartConfig(config);
     window.localStorage.setItem(STORAGE_KEY, encoded);
 
     const url = new URL(window.location.href);
     url.searchParams.set(URL_PARAM, encoded);
     window.history.replaceState(null, '', url.toString());
-  }, [config]);
+  }, [config, isHydrated]);
 
   return [config, setConfig] as const;
 }

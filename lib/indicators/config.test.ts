@@ -39,4 +39,34 @@ describe('encodeChartConfig / decodeChartConfig', () => {
     );
     expect(decodeChartConfig(bad)).toBeNull();
   });
+
+  it('id trùng nhau trong maLines (URL bị sửa tay) → trả null (F-006)', () => {
+    const bad = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [
+            { id: 'ma-1', type: 'SMA', period: 20, color: '#fff', visible: true },
+            { id: 'ma-1', type: 'EMA', period: 50, color: '#000', visible: true },
+          ],
+          rsiLines: [],
+        }),
+      ),
+    );
+    expect(decodeChartConfig(bad)).toBeNull();
+  });
+
+  it('id trùng nhau trong rsiLines (URL bị sửa tay) → trả null (F-006)', () => {
+    const bad = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [],
+          rsiLines: [
+            { id: 'rsi-1', period: 14, color: '#fff', visible: true },
+            { id: 'rsi-1', period: 21, color: '#000', visible: true },
+          ],
+        }),
+      ),
+    );
+    expect(decodeChartConfig(bad)).toBeNull();
+  });
 });

@@ -15,10 +15,20 @@ const RsiLineSchema = z.object({
   visible: z.boolean(),
 });
 
-export const ChartConfigSchema = z.object({
-  maLines: z.array(MaLineSchema),
-  rsiLines: z.array(RsiLineSchema),
-});
+function hasUniqueIds(lines: readonly { id: string }[]): boolean {
+  return new Set(lines.map((l) => l.id)).size === lines.length;
+}
+
+// `id` trùng trong cùng 1 mảng khiến updateMaLine/updateRsiLine (khớp theo id, xem
+// indicator-panel.tsx) áp nhầm thay đổi lên nhiều dòng cùng lúc — chặn ngay từ khi giải mã cấu
+// hình từ URL/localStorage (F-006, docs/ops/COMPLETION-PLAN.md W-302).
+export const ChartConfigSchema = z
+  .object({
+    maLines: z.array(MaLineSchema),
+    rsiLines: z.array(RsiLineSchema),
+  })
+  .refine((c) => hasUniqueIds(c.maLines), { message: 'maLines có id trùng nhau' })
+  .refine((c) => hasUniqueIds(c.rsiLines), { message: 'rsiLines có id trùng nhau' });
 
 export type ChartConfig = z.infer<typeof ChartConfigSchema>;
 
