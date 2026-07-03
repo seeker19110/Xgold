@@ -1,7 +1,8 @@
 /**
- * Kiểu TypeScript khớp schema Supabase (`supabase/migrations/20260703083820_xgold_schema.sql`),
- * viết tay — chưa chạy được `supabase gen types typescript` (cần project Supabase thật/local
- * Docker, không có trong sandbox này). Khi có project thật, sinh lại bằng CLI và đối chiếu.
+ * Kiểu TypeScript khớp schema Supabase (`supabase/migrations/20260703083820_xgold_schema.sql` +
+ * `20260703142239_domestic_gold_prices.sql`), viết tay — chưa chạy được
+ * `supabase gen types typescript` (cần project Supabase thật/local Docker, không có trong sandbox
+ * này). Khi có project thật, sinh lại bằng CLI và đối chiếu.
  *
  * `Relationships: []`/`Views`/`Functions` là các trường BẮT BUỘC theo kiểu `GenericSchema` của
  * `@supabase/postgrest-js` (không tự suy luận được nếu thiếu — bản thân client sẽ ngầm rơi về
