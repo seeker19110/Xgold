@@ -189,6 +189,32 @@
   - **E2E:** `e2e/domestic-gold.spec.ts` (5 test: hiển thị/buy≤sell/axe/theme toggle/nav từ home) — **chạy thật**, 10/10 xanh (desktop × 2 + mobile × 2 mỗi test).
   - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (32/32) · `build` ✅.
 
+- ✅ **Backlog: vang.today làm nguồn dự phòng domestic-gold (2026-07-04):**
+  - **Xác minh thật** (khác ADR-0005, lúc đó `WebFetch` bị chặn 403 tới domain tài chính): `WebFetch`
+    trực tiếp `GET https://www.vang.today/api/prices` phiên này gọi được — nhận JSON sống thật
+    (không cần key), 12 mã sản phẩm với `name`/`buy`/`sell`/`currency`. Ghi lại đầy đủ ở **ADR-0006**.
+  - **`VangTodayProvider`** (`lib/providers-domestic/vang-today.ts` + test, 9 test) — dùng làm nguồn
+    **dự phòng** khi `BtmcProvider` lỗi, KHÔNG thay BTMC. Whitelist tường minh 11 mã → vendor
+    (`sjc`/`doji`/`pnj`/`vietinbank`/`vn-gold`/`bao-tin`), loại `XAUUSD` (khác đơn vị tiền, đã có
+    nguồn riêng ADR-0003), KHÔNG suy đoán vendor từ chuỗi `name` — mã lạ bị bỏ qua (parse phòng thủ,
+    cùng pattern BTMC). `ts` dùng `timestamp` (Unix epoch giây) của response, không parse chuỗi
+    ngày/giờ (tránh mơ hồ múi giờ).
+  - **Edge Function `ingest-domestic-gold`** cập nhật: thử BTMC trước, tự động fallback sang
+    vang.today nếu BTMC lỗi (mạng/parse), ghi rõ `provider` đã dùng vào response +
+    `domestic_gold_ingest_runs`. README cập nhật bước đối chiếu field cho cả 2 nguồn + cách test
+    nhánh fallback (đổi tạm `BTMC_API_KEY` sai).
+  - **Sửa 1 chỗ UI có thể sai lệch:** `app/gia-vang-trong-nuoc/page-client.tsx` trước đó hard-code
+    "Nguồn: Bảo Tín Minh Châu (BTMC)" bất kể dữ liệu thật đến từ đâu — giờ đọc `source` THẬT của từng
+    dòng giá (đã có sẵn trong response, xem `app/api/domestic-gold/route.ts`), hiển thị đúng nguồn
+    (BTMC / vang.today dự phòng / dữ liệu mẫu).
+  - **SJC vẫn hoãn — xác nhận bằng bằng chứng mạnh hơn ADR-0005:** gọi trực tiếp cả
+    `sjc.com.vn/xml/tygiavang.xml` và `giavang/textContent.php` (có/không `www`) đều trả `403` sống
+    (không phải sandbox chặn — WebFetch gọi vang.today cùng phiên thành công). Xác nhận SJC chủ động
+    chặn truy cập ngoài trình duyệt, không phải "chưa tìm được endpoint" như ADR-0005 ghi — giữ
+    nguyên quyết định hoãn, lý do giờ chắc chắn hơn.
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (105/105, 20 file)
+    · `build` ✅. 32/32 E2E vẫn xanh (không phá gì, kể cả sau khi sửa UI label).
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
@@ -244,7 +270,13 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
   local trước, nối DB thật sau.
-- Backlog sau Đợt 5: Sentry (cần DSN), vang.today multi-source (xác minh JSON schema), SJC thêm adapter riêng, i18n/PWA nếu cần.
+- Backlog sau Đợt 5 — còn lại: Sentry (cần DSN thật), i18n/PWA (quyết định phạm vi còn bỏ ngỏ, xem
+  dưới), SJC (hoãn có chủ đích, xem "Nợ kỹ thuật" — ADR-0005). vang.today (ADR-0006) **đã xong**, xem
+  "Đã xong" ở trên.
+- **i18n/PWA — cần quyết định phạm vi trước khi làm, KHÔNG tự ý mở rộng:** cả hai đều bị đánh dấu
+  "ngoài phạm vi MVP đã duyệt" trong `PROJECT.md`/ADR gốc. Có scaffold `i18n/` sẵn nhưng chưa dùng.
+  Nếu muốn làm, cần chốt lại phạm vi (ngôn ngữ nào, PWA installable tới mức nào) trước khi code —
+  đây là mở rộng scope, không phải "hoàn thiện lỗi đã biết".
 - ✅ **CodeQL đã xử lý (2026-07-03):** nguyên nhân thật là repo **private + tài khoản cá nhân** —
   GitHub Advanced Security (bắt buộc để upload kết quả code scanning cho repo private) chỉ có ở
   organization/Enterprise trả phí, không bật được qua Settings dù làm đúng hướng dẫn. Người dùng đã
