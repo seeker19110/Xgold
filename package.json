@@ -55,5 +55,8 @@
     "typescript": "6.0.3",
     "vitest": "4.1.9",
     "@tailwindcss/postcss": "4.3.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }
