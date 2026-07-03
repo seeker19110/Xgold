@@ -191,13 +191,52 @@
 
 ## Đang làm
 
-- (không có — PR #1–#7 đều đã merge vào `main` (squash), bao gồm release 1.0.0 (`xgold-v1.0.0`).
-  Toàn bộ CI trên `main` (`8b19187`) xanh: `CI`, `CodeQL`, `Secret scan`, `Release` đều `success`.
-  Đã xác nhận chạy thật local trước đó: `npm run dev` qua trình duyệt (trang chủ, `/chart/xauusd`,
-  `/gia-vang-trong-nuoc` đều đúng với dữ liệu mẫu, không lỗi console) + đủ 5 cổng xanh (`build`/
-  `type-check`/`lint`/`test` 71/71; `format:check` báo lỗi 139 file nhưng là **false positive môi
-  trường Windows** — `core.autocrlf=true` checkout ra CRLF, Prettier kỳ vọng LF; đã xác minh nội dung
-  thật trong Git qua `git show HEAD:<file> | prettier --check` sạch, không ảnh hưởng CI Linux).
+- (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
+  CONVENTIONS.md) → Pha 1 (audit 12 nhóm, `COMPREHENSIVE-AUDIT-STATUS.md`) → Pha 2 (kế hoạch
+  `docs/ops/COMPLETION-PLAN.md`, người dùng duyệt) → Pha 3 (Đợt 1–3, PR #8/#10/#11, tất cả đã merge)
+  → Pha 4 (hội tụ, xem mục "Báo cáo hoàn thiện" bên dưới). PR #1–#11 đều đã merge vào `main` (squash),
+  bao gồm release 1.0.0 + 1.0.1. Toàn bộ CI trên `main` (`96bf5e3`) xanh: `CI`, `CodeQL`,
+  `Secret scan`, `Release` đều `success`. Đã xác nhận chạy thật local: `npm run dev` qua trình
+  duyệt + đủ 5 cổng xanh (`build`/`type-check`/`lint`/`format:check`/`test` 95/95, coverage thật
+  89.64%/73.48%/89.47%/91.42%) + 32/32 E2E xanh (desktop+mobile) + Lighthouse thật trên cả 3 trang
+  (performance 1.0, CLS 0, LCP 392–677ms).
+
+### Báo cáo hoàn thiện (Pha 4 — 2026-07-03)
+
+Nguồn: audit 12 nhóm (`docs/ops/COMPREHENSIVE-AUDIT-STATUS.md`) → kế hoạch 3 đợt, 9 việc
+(`docs/ops/COMPLETION-PLAN.md`) → thực thi qua PR #8 (Đợt 1), #10 (Đợt 2), #11 (Đợt 3).
+
+**10 phát hiện (F-001..F-010), kết cục:**
+
+| ID    | Mức độ                                 | Kết cục                                                                                |
+| ----- | -------------------------------------- | -------------------------------------------------------------------------------------- |
+| F-009 | Cao                                    | ✅ Đã vá (coerce Zod dữ liệu numeric từ Supabase, cả 2 API route)                      |
+| F-003 | Cao                                    | ✅ Đã vá (`coverage.include`, viết test thật cho các module lõi từng thiếu)            |
+| F-010 | Cao (phát hiện mới lúc thực thi Đợt 2) | ✅ Đã vá (CLS thật 0.324→0 trên `/chart/xauusd`, sửa min-height placeholder)           |
+| F-001 | Trung                                  | ✅ Đã vá (`overrides.postcss` trong `package.json`, 0 lỗ hổng)                         |
+| F-004 | Trung                                  | ✅ Đã vá (Lighthouse CI đo cả 3 trang thay vì chỉ trang chủ)                           |
+| F-005 | Thấp                                   | ✅ Đã vá (cờ `isHydrated`, test hồi quy xác nhận đỏ→xanh)                              |
+| F-006 | Thấp                                   | ✅ Đã vá (`.refine()` id duy nhất trong `ChartConfigSchema`)                           |
+| F-007 | Thấp                                   | ✅ Đã vá (comment `database.types.ts` cập nhật đủ 2 migration)                         |
+| F-002 | — (báo động giả)                       | ➖ Rút lại — `.env.example` đã tồn tại từ trước, lỗi do quyền sandbox chặn đọc `.env*` |
+| F-008 | Thấp (đã biết)                         | Chưa sửa có chủ đích — cần ảnh icon thật từ người dùng (xem "Nợ kỹ thuật")             |
+
+**Kết quả hội tụ:** 0 phát hiện mức Cao còn mở; F-008 (Thấp) là nợ kỹ thuật có chủ đích, không phải
+bỏ sót. Quét lại toàn bộ 5 cổng + E2E + Lighthouse trên trạng thái cuối của `main` (commit `96bf5e3`)
+sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
+
+**Definition of Complete — đối chiếu:**
+
+- [x] 0 phát hiện Cao còn mở.
+- [x] Mọi luồng chính (FEATURE-MAP.md) có E2E — 32/32 xanh.
+- [x] Coverage phản ánh đúng thực tế (`coverage.include`) — 89.64%/73.48%/89.47%/91.42%, vượt ngưỡng 70%.
+- [x] Mọi bug từng sửa có test hồi quy ở lại (F-005, F-009 x2 route).
+- [x] Nhóm 12 sạch — pattern coerce Supabase đã hợp nhất về 1 cách (`CONVENTIONS.md`).
+- [x] Cổng tự động đang chặn thật (pre-commit hook + CI 4 workflow xanh trên `main`).
+- [x] Bảo mật: `npm audit --omit=dev` 0 lỗ hổng; RLS đã test bằng ca "thử vượt quyền" (Đợt 1 MVP).
+- [x] Tài liệu khớp code thật: `PROJECT.md`/`CLAUDE.md` §10/`FEATURE-MAP`/ADR không còn mục lỗi thời.
+- [x] Hiệu năng đạt ngân sách — Lighthouse thật cả 3 trang, số liệu ghi ở trên.
+- [x] `PROGRESS.md` phản ánh đúng trạng thái + nợ kỹ thuật còn lại đều có chủ đích (mục dưới).
 
 ## Tiếp theo
 
@@ -218,6 +257,14 @@
   **Đã xác nhận job `Release` pass thật** trên commit mới nhất của `main` (`8b19187`, PR #5 "chore(main):
   release 1.0.0" — squash merge, tag `xgold-v1.0.0`): cả 4 workflow (`Release`, `CI`, `CodeQL`,
   `Secret scan`) đều `completed`/`success` qua GitHub Actions API. Không còn mục CI nào đỏ trên `main`.
+
+- ⚠️ **PR #9 (release-please "chore(main): release 1.0.1") đang kẹt `action_required`** (2026-07-03):
+  workflow trên PR này (bot `github-actions[bot]`) cần chủ repo tự bấm "Approve and run" trên tab
+  GitHub Actions — không có API/tool nào ở đây phê duyệt thay được. Release-please đã tự cập nhật
+  PR này 2 lần theo các merge PR #8/#11 nhưng CI vẫn 0 check run (chưa từng chạy). Không chặn việc
+  khác — chỉ ảnh hưởng tới việc tag phiên bản 1.0.1 tự động.
+- **Xem "Báo cáo hoàn thiện" ở mục "Đang làm"** — vòng `/completion` đã đóng hoàn chỉnh (10 phát
+  hiện, 9/10 đã vá hoặc rút lại, 1 nợ kỹ thuật có chủ đích F-008).
 
 ## Quyết định quan trọng (trỏ tới ADR nếu có)
 

@@ -67,10 +67,12 @@ _(F-008 — icon manifest — đã có trong "Nợ kỹ thuật" `PROGRESS.md`, 
 
 ## Nhật ký hội tụ (Pha 4)
 
-| Ngày | Phạm vi quét lại | Kết quả (phát hiện mới? đóng được gì?) |
-| ---- | ---------------- | -------------------------------------- |
-|      |                  |                                        |
+| Ngày       | Phạm vi quét lại                                                                                  | Kết quả (phát hiện mới? đóng được gì?)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-07-03 | Quét lại toàn bộ 12 nhóm trên trạng thái cuối của `main` (`96bf5e3`, sau khi merge PR #8/#10/#11) | **0 phát hiện Cao mới.** Xác nhận lại bằng đo thật (không chỉ đọc code): `npm audit --omit=dev` 0 lỗ hổng (F-001 vẫn vá đúng); `npm run test:coverage` 89.64%/73.48%/89.47%/91.42% (vượt ngưỡng 70%, F-003 vẫn đóng); `lint`/`type-check`/`format:check`/`build` đều xanh; 32/32 E2E xanh (desktop+mobile, F-005/F-006 không phá gì); Lighthouse thật cả 3 trang: performance 1.0, CLS 0, LCP 392–677ms (F-004/F-010 vẫn đóng); CI trên `main` (CI/CodeQL/Secret scan/Release) đều `success`. **Tiêu chí thoát Pha 4 đạt** — đóng kế hoạch hoàn thiện. |
 
 ## Phát hiện chấp nhận rủi ro / dời đợt sau (phải có lý do)
 
-- (chưa có — chờ quyết định ở W-203)
+- F-008 (Thấp, đã biết): icon `/icon-192.png`, `/icon-512.png` cho `app/manifest.ts` chưa tồn tại.
+  Chấp nhận có chủ đích — cần ảnh icon thật từ người dùng, AI không tự tạo ảnh giả. Không chặn cổng
+  build/lint hiện tại. Ghi ở `PROGRESS.md` "Nợ kỹ thuật", làm khi có ảnh thật.
