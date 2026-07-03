@@ -16,7 +16,10 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>('dark'); // mặc định Dark blue
 
   useEffect(() => {
+    // Đọc localStorage phải chạy sau mount (không có ở SSR) — nhận một lần re-render
+    // là đánh đổi chấp nhận được để tránh sai lệch hydrate giữa server/client.
     const saved = localStorage.getItem('theme');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === 'light' || saved === 'dark') setTheme(saved);
   }, []);
 

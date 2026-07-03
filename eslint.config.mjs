@@ -39,6 +39,10 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     // Chưa merge/xoá dropins thì đừng để ESLint quét — xem new-project-runbook.md Bước 0/3.
     '_framework-dropins/**',
+    // i18n (next-intl) và PWA (Serwist) hoãn tới khi thật sự áp dụng — MVP chưa cài 2 gói này
+    // (xem docs/plans/xgold-mvp-plan.md mục "Could have"). tsconfig.json cũng loại 2 đường dẫn này.
+    'app/sw.ts',
+    'i18n/**',
   ]),
 ]);
 

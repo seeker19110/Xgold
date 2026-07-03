@@ -23,10 +23,12 @@ blockchain, monorepo** (và loại chưa liệt kê). Cách hoạt động:
 > phần cài gói + sửa `package.json`/`tsconfig` làm theo runbook (Phần D).
 
 ## Bắt đầu từ đâu
+
 Đọc **`docs/framework/new-project-runbook.md`** — runbook chỉ rõ làm gì theo thứ tự và
 phải tuân thủ gì. Đó là kim chỉ nam chính.
 
 ## File đã sẵn sàng (chỉ cần giải nén)
+
 - `CLAUDE.md` — luật cho AI (Claude Code tự đọc). **Nhớ điền các chỗ `[ĐIỀN: ...]`.**
 - `PROJECT.md` — mẫu đặc tả dự án (điền trước khi code).
 - `PROGRESS.template.md` — mẫu theo dõi trạng thái (script copy tự tạo thành `PROGRESS.md` sạch ở dự án đích;
@@ -53,30 +55,34 @@ phải tuân thủ gì. Đó là kim chỉ nam chính.
 - `supabase/migrations/` — **migration MẪU** (bảng + ràng buộc + index + **RLS + policy**); `supabase/README.md`.
 - `LICENSE` (MIT — đổi chủ sở hữu/giấy phép theo dự án), `SECURITY.md`, `CONTRIBUTING.md`.
 - `docs/framework/` — tài liệu khung: **01/02/03** (quy trình · luật AI · chọn công nghệ research-first);
-  **new-project-runbook** (runbook: trình tự + cấu hình hàng rào *Phần D* + checklist dự án thật *Phần E*);
+  **new-project-runbook** (runbook: trình tự + cấu hình hàng rào _Phần D_ + checklist dự án thật _Phần E_);
   **existing-project-adoption** (brownfield); **project-completion** (kế hoạch hoàn thiện + vòng hội tụ);
   **quality-supplements** (Nhóm 1+2 + theme + nâng cao i18n/PWA/Sentry/SEO/analytics).
 - `docs/ops/incident-response.md` — vận hành GĐ 8: xử lý sự cố + **mẫu post-mortem**.
 - `docs/adr/0000-template.md` — mẫu ghi quyết định kỹ thuật (ví dụ đã điền: `0001-stack-selection.md`).
 
 ## Đã có repo khung này — giờ làm gì?
+
 Bạn đã clone/tải repo khung về máy. Chọn đúng một nhánh:
 
 - **Dự án MỚI (greenfield):** dựng dự án từ khung → theo `docs/framework/new-project-runbook.md` (runbook 0→9).
 - **Dự án ĐÃ CÓ (brownfield):** mang khung sang dự án đích rồi mở Claude Code trong đó — các bước bên dưới.
 
 ### Bước 1 — Mang khung sang dự án đích (một lệnh)
+
 Đứng **trong repo khung này**, trỏ tới thư mục gốc của dự án đích. Script **không đè** file đang chạy:
 tài liệu khung + `.claude/` (commands, settings opusplan, hooks, agents) + `scripts/` (dev-task, usage-estimate —
 hook tự động cần 2 file này) copy thẳng; file gốc (`CLAUDE.md`, `PROJECT.md`…) chỉ copy nếu **chưa có**
 (đã có thì để bản `.framework-new` cạnh bên để tự so); file cấu hình/stack đưa vào `_framework-dropins/` để tự merge.
 
 **macOS / Linux (bash):**
+
 ```bash
 bash copy-framework.sh /đường-dẫn/tới/dự-án
 ```
 
 **Windows (PowerShell)** — bản `.ps1` hành vi **giống hệt** bản `.sh`:
+
 ```powershell
 # Windows PowerShell 5.1 có sẵn trên mọi máy Windows — không cần cài gì thêm:
 powershell -ExecutionPolicy Bypass -File .\copy-framework.ps1 C:\đường-dẫn\tới\dự-án
@@ -84,24 +90,28 @@ powershell -ExecutionPolicy Bypass -File .\copy-framework.ps1 C:\đường-dẫn
 # Nếu đã cài PowerShell 7 (lệnh pwsh):
 pwsh ./copy-framework.ps1 C:\đường-dẫn\tới\dự-án
 ```
+
 > **Vì sao có `-ExecutionPolicy Bypass`:** Windows mặc định chặn chạy script `.ps1` chưa ký. Cờ này chỉ nới
 > cho đúng lần chạy đó (không đổi cấu hình máy). Nếu muốn nới sẵn cho user hiện tại:
 > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 ### Bước 2 — Merge phần cấu hình
+
 Soát thư mục `_framework-dropins/` trong dự án đích: chỉ merge file **khớp stack hiện có** (đừng đè cấu hình đang
 chạy). Xong thì xóa `_framework-dropins/`. Với file `*.framework-new`: so với bản gốc rồi gộp phần cần, sau đó xóa.
 
 ### Bước 3 — Mở Claude Code trong dự án đích
+
 AI tự đọc `CLAUDE.md` và chạy **Bước 0** của `docs/framework/existing-project-adoption.md` (tự dò stack qua
 `package.json`/config — không cần bạn khai). Từ đó áp khung **tăng dần**: Prettier → ESLint → TS strict → hook →
 CI → lấp lỗ hổng test/a11y/hiệu năng. Muốn **hoàn thiện toàn dự án** (hết lỗi đã biết, tính năng thống nhất,
 có bằng chứng) → gõ `/completion` (`docs/framework/project-completion.md`).
 
-> *Vì sao phải copy chứ không "đưa link": một phiên Claude Code chỉ tự nạp luật từ chính repo của nó
-> (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link.* Chi tiết brownfield: `docs/framework/existing-project-adoption.md`.
+> _Vì sao phải copy chứ không "đưa link": một phiên Claude Code chỉ tự nạp luật từ chính repo của nó
+> (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link._ Chi tiết brownfield: `docs/framework/existing-project-adoption.md`.
 
 ## Việc phải làm tay (không đè được file của create-next-app)
+
 Theo **`docs/framework/new-project-runbook.md` Phần D**: cài gói + thêm khối `scripts` + `npx husky init`;
 thêm các cờ TypeScript `strict` vào `tsconfig.json`.
 
@@ -110,6 +120,7 @@ thêm các cờ TypeScript `strict` vào `tsconfig.json`.
 > Danh mục đầy đủ việc-dự-án-thật: Phần E của runbook.
 
 ## Lưu ý
+
 - ESLint dùng **flat config** (`eslint.config.mjs`) cho ESLint 9/10 + Next 16. Nếu phiên bản Next/ESLint
   của bạn khác, đối chiếu lại cách `eslint-config-next` xuất config (FlatCompat vs flat gốc).
 - README này KHÔNG cần commit vào dự án thật — xóa sau khi setup xong nếu muốn.

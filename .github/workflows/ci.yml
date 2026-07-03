@@ -92,9 +92,11 @@ jobs:
         if: steps.app.outputs.exists == 'true'
         run: npm ci
 
+      # --omit=dev: lỗ hổng trong devDependencies (vd @lhci/cli, test tooling) không lộ ra
+      # runtime của người dùng cuối — chỉ chặn CI vì lỗ hổng trong dependencies thật sự chạy production.
       - name: Quét bảo mật phụ thuộc
         if: steps.app.outputs.exists == 'true'
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Lint
         if: steps.app.outputs.exists == 'true'

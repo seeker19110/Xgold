@@ -17,7 +17,7 @@ xác định phụ thuộc · thiết kế/luồng đủ rõ · phạm vi gói g
 - **Mọi merge qua Pull Request** (kể cả làm một mình) · **CI xanh mới merge** · **không push thẳng `main`**.
 - **Ưu tiên squash merge** khi gộp PR: lịch sử `main` tuyến tính, mỗi PR = một commit conventional
   (hợp `release-please`). Đặt tiêu đề squash đúng dạng conventional. Nên cấu hình repo chỉ bật
-  *Allow squash merging* (tắt merge commit) để buộc đúng cách. (Lưu ý: các merge/squash commit do
+  _Allow squash merging_ (tắt merge commit) để buộc đúng cách. (Lưu ý: các merge/squash commit do
   GitHub tạo mang committer `noreply@github.com` nhưng được GitHub ký GPG → hiển thị **Verified**.)
 
 ## Cổng trước khi commit (chạy và đạt hết)

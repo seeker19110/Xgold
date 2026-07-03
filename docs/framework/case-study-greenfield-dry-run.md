@@ -37,12 +37,15 @@ git commit -m "chore: case study dry-run..."                → QUA đúng (pre-
 ## 3 lỗi thật tìm được — đã vá vào repo khung
 
 ### Lỗi #1 (nghiêm trọng) — `eslint.config.mjs` crash hoàn toàn trên Next.js 16 hiện tại
+
 Config gốc dùng `FlatCompat` (`@eslint/eslintrc`) để nạp `next/core-web-vitals` + `next/typescript`.
 Chạy thật cho lỗi:
+
 ```
 TypeError: Converting circular structure to JSON
   ... at @eslint/eslintrc/lib/shared/config-validator.js
 ```
+
 Nguyên nhân: `eslint-config-next` (đi kèm Next 16.2.10) giờ export **flat config gốc** qua subpath riêng
 (`eslint-config-next/core-web-vitals`, `eslint-config-next/typescript`) — không còn tương thích với cách nạp
 qua `FlatCompat` kiểu cũ. Bằng chứng: `create-next-app@latest` tự sinh `eslint.config.mjs` dùng
@@ -51,12 +54,14 @@ qua `FlatCompat` kiểu cũ. Bằng chứng: `create-next-app@latest` tự sinh 
 import subpath trực tiếp. Kiểm chứng lại: `npx eslint . --max-warnings 0` → exit 0.
 
 ### Lỗi #2 (tài liệu) — thiếu bước "chạy `npm run format` một lần"
+
 `create-next-app` xuất mã theo style riêng (dấu nháy đôi, thứ tự class Tailwind mặc định) khác
 `.prettierrc` của khung (`singleQuote: true`, `prettier-plugin-tailwindcss`). Runbook hướng dẫn tạo
 `.prettierrc` nhưng không nói phải chạy `prettier --write .` một lần — nên `format:check`/CI đỏ ngay từ
 commit đầu dù không có lỗi thật. **Đã vá:** thêm ghi chú bắt buộc vào cuối Bước 3.
 
 ### Lỗi #3 (nghiêm trọng, brownfield) — `copy-framework.sh`/`.ps1` ghi đè `.claude/` đang có
+
 Bước "[2/3] Cấu hình Claude Code" copy `settings-shared-opusplan.json` → `.claude/settings.json` và
 `.claude/hooks`, `.claude/agents` **không điều kiện** — trái với chính lời cam kết đầu script
 ("An toàn cho dự án đã có sẵn... KHÔNG đè"). Một dự án brownfield đã dùng Claude Code từ trước (rất có thể,
@@ -69,6 +74,7 @@ Có test hồi quy: `scripts/test-copy-framework.sh` (ca "đích đã có `.clau
 
 `_framework-dropins/` (thư mục staging của Lớp 2) tự nó **chứa một bản sao mọi file dropin**, bao gồm cả
 `.lintstagedrc.json` của chính nó. Nếu người dùng `git add -A` trước khi dọn `_framework-dropins/`:
+
 - `tsc --noEmit` lỗi vì `_framework-dropins/app/sw.ts`, `_framework-dropins/i18n/request.ts` tham chiếu
   gói tuỳ chọn (`serwist`, `next-intl`) chưa cài.
 - Thử vá bằng cách thêm pattern loại trừ `_framework-dropins` vào `.lintstagedrc.json` gốc **không đủ**:

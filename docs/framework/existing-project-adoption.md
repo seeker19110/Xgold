@@ -4,6 +4,7 @@
 > **dự án đã phát triển** — cách "đắp" khung lên code có sẵn một cách an toàn, **tăng dần, không làm lại từ đầu**.
 
 ## Nguyên tắc cốt lõi
+
 0. **CHỈ tư vấn & nâng cấp — KHÔNG áp đặt stack.** Với dự án có sẵn, khung **không** thay/ép stack mặc định
    (Next/Supabase/Vercel) hay "hồ sơ" nào. AI **đọc repo để biết stack thật**, rồi **tư vấn và nâng cấp tăng dần
    trên chính stack đó** — chỉ đề xuất đổi/thêm công nghệ khi có lý do rõ và được người dùng chốt. Giá trị mang lại
@@ -14,29 +15,35 @@
 4. **Hành vi không đổi khi dựng hàng rào.** Thêm lint/format/type không được làm đổi cách app chạy.
 
 ## Khung có HAI lớp — phân biệt khi áp vào dự án cũ
+
 - **Lớp 1 — Quy trình & tiêu chuẩn (áp cho MỌI stack):** KHUNG 1 (giai đoạn + cổng), KHUNG 2 (luật AI, DoR/DoD,
   báo cáo xác thực), KHUNG 3 (research-first khi thêm/đổi công nghệ), CLAUDE.md, PROGRESS.md, ADR, các checklist
   Nhóm 1 & 2 (mobile, hiệu năng, a11y, UI/UX, **chống lỗi logic**). → **Dùng được ngay, bất kể bạn dùng công nghệ gì.**
 - **Lớp 2 — File cấu hình cụ thể (Next/Tailwind/Supabase/Vercel):** `eslint.config.mjs`, `postcss.config.mjs`,
   `playwright.config.ts`, `lighthouserc.json`, `lib/env.ts`, `styles/theme.css`, `app/*`, `i18n/*`, workflows...
-  → **Chỉ áp thẳng nếu trùng stack.** Khác stack thì lấy *ý tưởng* và thay bằng công cụ tương đương (xem PHẦN D).
+  → **Chỉ áp thẳng nếu trùng stack.** Khác stack thì lấy _ý tưởng_ và thay bằng công cụ tương đương (xem PHẦN D).
 
 ---
 
 ## Mang khung sang dự án (một lệnh)
+
 Từ repo khung, chạy `copy-framework.sh` trỏ tới dự án đích:
+
 ```bash
 bash copy-framework.sh /đường-dẫn/tới/dự-án
 ```
+
 Trên **Windows PowerShell** dùng bản `.ps1` tương đương (cùng hành vi 3 lớp):
+
 ```powershell
 pwsh ./copy-framework.ps1 C:\đường-dẫn\tới\dự-án
 # hoặc: powershell -ExecutionPolicy Bypass -File .\copy-framework.ps1 C:\đường-dẫn\tới\dự-án
 ```
+
 Script **không đè** file đang chạy: tài liệu khung + `CLAUDE.md` (nếu chưa có) copy thẳng; file cấu hình
 theo stack được đưa vào `_framework-dropins/` để bạn tự merge. Sau đó **mở phiên Claude Code trong dự án đích**
-→ AI tự đọc `CLAUDE.md` và chạy Bước 0 (tự dò stack). *Vì sao phải copy chứ không "đưa link": một phiên
-chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link.*
+→ AI tự đọc `CLAUDE.md` và chạy Bước 0 (tự dò stack). _Vì sao phải copy chứ không "đưa link": một phiên
+chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), không đọc được repo khác qua link._
 
 ---
 
@@ -49,22 +56,22 @@ chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), 
 
 **Tự dò stack — đọc gì → suy ra gì:**
 
-| Đọc gì (file/dấu hiệu thật) | Suy ra |
-|------------------------------|--------|
-| `package.json` (deps + scripts) + lockfile | framework, thư viện chính, **phiên bản**, lệnh dev/build/test/lint |
-| `next.config.*` / `vite.config.*` / `svelte.config.*` / `astro.config.*` | framework + bundler + plugin đang dùng |
-| Thư mục `app/` vs `pages/` | Next App Router hay Pages Router |
-| `tsconfig.json` | có dùng TS không, đã `strict` chưa, thiếu cờ nào |
-| `tailwind.config.*` / `postcss.config.*` / `@import "tailwindcss"` | cách làm CSS + phiên bản Tailwind |
-| `.eslintrc*` (cũ) vs `eslint.config.*` (flat) / không có | ESLint legacy / flat / chưa có |
-| deps `next-intl`·`react-i18next`·`i18next` + thư mục `messages/`·`locales/`·`i18n/` | **giải pháp đa ngôn ngữ hiện có** (giữ hay đổi) |
-| `supabase/` · `prisma/` · `drizzle*` · deps CSDL | CSDL/ORM + có migration chưa |
-| deps `vitest`·`jest`·`playwright`·`cypress` + config | bộ kiểm thử hiện có (đơn vị/E2E) |
-| `.github/workflows/` | CI hiện có (hay chưa) |
-| `.husky/` · `lint-staged` · `commitlint*` | hook/quy ước commit hiện có |
-| `process.env.*` rải rác · `.env*` · `.gitignore` | biến môi trường: có validate chưa, có lộ bí mật không |
+| Đọc gì (file/dấu hiệu thật)                                                         | Suy ra                                                             |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `package.json` (deps + scripts) + lockfile                                          | framework, thư viện chính, **phiên bản**, lệnh dev/build/test/lint |
+| `next.config.*` / `vite.config.*` / `svelte.config.*` / `astro.config.*`            | framework + bundler + plugin đang dùng                             |
+| Thư mục `app/` vs `pages/`                                                          | Next App Router hay Pages Router                                   |
+| `tsconfig.json`                                                                     | có dùng TS không, đã `strict` chưa, thiếu cờ nào                   |
+| `tailwind.config.*` / `postcss.config.*` / `@import "tailwindcss"`                  | cách làm CSS + phiên bản Tailwind                                  |
+| `.eslintrc*` (cũ) vs `eslint.config.*` (flat) / không có                            | ESLint legacy / flat / chưa có                                     |
+| deps `next-intl`·`react-i18next`·`i18next` + thư mục `messages/`·`locales/`·`i18n/` | **giải pháp đa ngôn ngữ hiện có** (giữ hay đổi)                    |
+| `supabase/` · `prisma/` · `drizzle*` · deps CSDL                                    | CSDL/ORM + có migration chưa                                       |
+| deps `vitest`·`jest`·`playwright`·`cypress` + config                                | bộ kiểm thử hiện có (đơn vị/E2E)                                   |
+| `.github/workflows/`                                                                | CI hiện có (hay chưa)                                              |
+| `.husky/` · `lint-staged` · `commitlint*`                                           | hook/quy ước commit hiện có                                        |
+| `process.env.*` rải rác · `.env*` · `.gitignore`                                    | biến môi trường: có validate chưa, có lộ bí mật không              |
 
-- [ ] **AI tổng hợp "Hồ sơ dự án"**: stack + phiên bản + cấu trúc + những gì *đã có* vs *còn thiếu* so với khung
+- [ ] **AI tổng hợp "Hồ sơ dự án"**: stack + phiên bản + cấu trúc + những gì _đã có_ vs _còn thiếu_ so với khung
       (bảng gap). Trình bày để người dùng xác nhận, **không bắt người dùng tự khai stack**.
 - [ ] **Viết `PROJECT.md` ngược** từ những gì đọc được: tính năng đã làm, schema hiện tại, kiến trúc, **nợ kỹ thuật**.
 - [ ] **Lập Bản đồ tính năng `docs/FEATURE-MAP.md`** (mẫu ở `project-completion.md`): mọi tính năng/
@@ -82,18 +89,21 @@ chỉ tự nạp luật từ chính repo của nó (và `~/.claude/CLAUDE.md`), 
 > ưu tiên/đánh đổi, điểm đau lớn nhất, và xác nhận các giả định AI suy ra khi không chắc.
 
 ### Bước 1 — Dựng hàng rào lên code có sẵn (an toàn, không đổi hành vi)
+
 Thứ tự tăng dần để không bị "ngộp lỗi":
+
 - [ ] **Prettier** — chạy format toàn bộ **trong MỘT commit riêng biệt** (chỉ format), để các diff sau dễ review.
-- [ ] **ESLint** — bật ở mức *cảnh báo* trước; sửa dần; siết lên *error* sau. Đừng bật full strict ngay với repo lớn.
+- [ ] **ESLint** — bật ở mức _cảnh báo_ trước; sửa dần; siết lên _error_ sau. Đừng bật full strict ngay với repo lớn.
 - [ ] **TypeScript strict tăng dần** — nếu chưa `strict`: bật từng cờ một (`strict` → `noUncheckedIndexedAccess`...),
       dùng `tsc --noEmit` đếm lỗi và **giảm dần**; chỗ chưa kịp sửa để `// @ts-expect-error` + ghi nợ.
 - [ ] **Husky + lint-staged** — chỉ lint/format **file đang sửa** (staged) → không phải dọn cả repo mới commit được.
-- [ ] **commitlint** (conventional commits) cho các commit *mới*.
+- [ ] **commitlint** (conventional commits) cho các commit _mới_.
 - [ ] **CI** (lint/type/test/build). Nếu type/lint còn quá nhiều lỗi cũ → cho các bước đó `continue-on-error` tạm thời,
       hạ dần nợ rồi mới bắt buộc.
 - [ ] **Branch protection** trên `main` (PR + CI xanh + nhánh cập nhật).
 
 ### Bước 2 — Lấp lỗ hổng chất lượng (đo baseline → cải thiện dần)
+
 - [ ] **Test** phần **quan trọng nhất / hay đổi nhất trước** (không cố phủ hết code cũ). Mỗi bug đã từng gặp → 1 test hồi quy.
 - [ ] **E2E (Playwright)** cho 1–2 luồng chính (đăng nhập → thao tác lõi). Đặt **coverage threshold** thấp rồi nâng dần.
 - [ ] **Lighthouse:** đo điểm hiện tại làm baseline; đặt budget kiểu "không tệ hơn hiện tại", cải thiện dần (Nhóm 2 mục 2).
@@ -105,6 +115,7 @@ Thứ tự tăng dần để không bị "ngộp lỗi":
       (dump schema), rồi mọi thay đổi sau đi qua migration có phiên bản.
 
 ### Bước 3 — Vận hành theo khung từ đây
+
 - [ ] Mọi tính năng mới / sửa lỗi: qua **DoR** (đủ rõ mới làm) → cổng commit → **DoD** → cổng merge → báo cáo xác thực.
 - [ ] Code cũ: **tối ưu dần theo "đụng đâu dọn đó"** (gỡ dead code, trùng lặp, dep thừa — Nhóm 2 mục 9); ghi mọi "làm tạm" vào `PROGRESS.md` (nợ kỹ thuật).
 - [ ] Đổi/thêm công nghệ lớn: chạy **KHUNG 3** (research-first, phiên bản đã xác minh) + ghi **ADR**.
@@ -112,6 +123,7 @@ Thứ tự tăng dần để không bị "ngộp lỗi":
       không tự chế kiểu mới (lệch quy ước = phát hiện Nhóm 12 khi audit).
 
 ### Bước 4 — (tùy chọn nhưng khuyến nghị) HOÀN THIỆN toàn dự án
+
 Áp khung xong (Bước 0–3) mới là "có hàng rào + vận hành đúng". Muốn đưa dự án lên trạng thái
 **không còn lỗi logic/cấu trúc/lỗ hổng ĐÃ BIẾT, các tính năng thống nhất, có bằng chứng** →
 chạy **`/completion`** theo `project-completion.md`: audit 12 nhóm → **kế hoạch hoàn thiện chi
@@ -121,9 +133,11 @@ theo **Definition of Complete**.
 ---
 
 ## PHẦN B — Riêng cho dự án SONG NGỮ (EN–VI)
+
 Dự án bạn đã có i18n → **đừng thay nếu đang chạy tốt.** Đánh giá rồi quyết:
+
 - [ ] Đang dùng gì? (`next-intl`, `react-i18next`, `next` built-in i18n, hay tự viết). **Giữ nếu ổn**; chỉ cân nhắc
-      `next-intl` (file kèm khung) nếu bạn *đang đau* với giải pháp cũ và đang ở Next App Router.
+      `next-intl` (file kèm khung) nếu bạn _đang đau_ với giải pháp cũ và đang ở Next App Router.
 - [ ] **Độ phủ bản dịch:** có khóa nào thiếu một trong hai ngôn ngữ không? Có cơ chế cảnh báo khóa thiếu khi build không?
 - [ ] **Phát hiện & nhớ ngôn ngữ:** chọn theo URL (`/en`, `/vi`) hay cookie? Có nhớ lựa chọn của người dùng không?
 - [ ] **SEO song ngữ:** có thẻ `hreflang` cho từng phiên bản ngôn ngữ + canonical đúng không? sitemap có cả hai?
@@ -134,13 +148,14 @@ Dự án bạn đã có i18n → **đừng thay nếu đang chạy tốt.** Đá
 ---
 
 ## PHẦN C — Bản đồ "dùng ngay vs cần thay" theo stack
-| Bạn đang dùng | Lớp 1 (quy trình) | Lớp 2 (file cấu hình) |
-|---------------|-------------------|------------------------|
-| **Next.js + Tailwind + Supabase** (trùng stack tham chiếu) | Dùng ngay | Áp thẳng gần hết; chỉ chỉnh tên biến/route |
-| **Next.js nhưng CSDL/CSS khác** | Dùng ngay | ESLint/Playwright/theme dùng được; thay phần Supabase/Tailwind |
-| **React SPA (Vite/CRA)** | Dùng ngay | ESLint/Prettier/Vitest/Playwright/theme tokens dùng được; bỏ phần Next (app/*, next-intl plugin) |
-| **Vue/Svelte/khác** | Dùng ngay | Lấy *ý tưởng* (lint/format/hook/CI/budget/a11y) + thay công cụ tương đương của hệ đó |
-| **Không phải web** | Dùng phần lớn (cổng, DoR/DoD, ADR, logic) | Bỏ phần web (Lighthouse/theme/PWA) |
+
+| Bạn đang dùng                                              | Lớp 1 (quy trình)                         | Lớp 2 (file cấu hình)                                                                            |
+| ---------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Next.js + Tailwind + Supabase** (trùng stack tham chiếu) | Dùng ngay                                 | Áp thẳng gần hết; chỉ chỉnh tên biến/route                                                       |
+| **Next.js nhưng CSDL/CSS khác**                            | Dùng ngay                                 | ESLint/Playwright/theme dùng được; thay phần Supabase/Tailwind                                   |
+| **React SPA (Vite/CRA)**                                   | Dùng ngay                                 | ESLint/Prettier/Vitest/Playwright/theme tokens dùng được; bỏ phần Next (app/*, next-intl plugin) |
+| **Vue/Svelte/khác**                                        | Dùng ngay                                 | Lấy _ý tưởng_ (lint/format/hook/CI/budget/a11y) + thay công cụ tương đương của hệ đó             |
+| **Không phải web**                                         | Dùng phần lớn (cổng, DoR/DoD, ADR, logic) | Bỏ phần web (Lighthouse/theme/PWA)                                                               |
 
 > Điểm mấu chốt: **giá trị lớn nhất của khung là Lớp 1 (kỷ luật + cổng + chống lỗi logic) — áp được ngay
 > cho dự án của bạn dù dùng công nghệ gì.** Lớp 2 là tiện ích đi kèm cho stack tham chiếu.
@@ -148,6 +163,7 @@ Dự án bạn đã có i18n → **đừng thay nếu đang chạy tốt.** Đá
 ---
 
 ## Cổng "đã áp khung xong cho dự án cũ"
+
 - [ ] `PROJECT.md` (ngược) + `PROGRESS.md` + `CLAUDE.md` (điền thật) đã có.
 - [ ] `docs/FEATURE-MAP.md` + `docs/CONVENTIONS.md` đã lập (căn cứ rà thống nhất chéo tính năng).
 - [ ] Pre-commit hook + commit-msg hook **chặn được** lỗi trên commit MỚI.

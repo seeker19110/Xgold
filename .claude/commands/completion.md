@@ -23,7 +23,7 @@ Ràng buộc bắt buộc (chi tiết nằm ở file trên — bám `CLAUDE.md` 
     lập `docs/FEATURE-MAP.md` + `docs/CONVENTIONS.md` bằng cách **đọc code thật** (chống ảo giác).
   - **Pha 1** quét: chạy `/audit-full` (12 nhóm, gồm Nhóm 12 thống nhất chéo tính năng). KHÔNG sửa gì.
   - **Pha 2** lập `docs/ops/COMPLETION-PLAN.md` (đợt + việc + tiêu chí nghiệm thu + truy vết F-xxx→W-xxx
-    + Definition of Complete) → **DỪNG, chờ người dùng duyệt kế hoạch + DoC**. Chưa duyệt chưa sửa.
+    - Definition of Complete) → **DỪNG, chờ người dùng duyệt kế hoạch + DoC**. Chưa duyệt chưa sửa.
   - **Pha 3** thực thi từng việc: nhánh riêng → PR nhỏ → `/gate`; bug có **test tái hiện trước khi
     sửa**; cập nhật COMPLETION-PLAN **ngay sau mỗi việc** (trạng thái + PR + bằng chứng).
   - **Pha 4** hội tụ: quét lại nhóm bị ảnh hưởng sau mỗi đợt; sau đợt cuối quét lại đủ 12 nhóm;
