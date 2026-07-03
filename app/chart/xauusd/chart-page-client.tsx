@@ -19,17 +19,11 @@ export function ChartPageClient() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
-            ← Xgold
-          </Link>
-          <h1 className="text-2xl font-semibold">XAU/USD</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
-          <ThemeToggle />
-        </div>
+      <div className="flex items-center gap-3">
+        <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
+          ← Xgold
+        </Link>
+        <h1 className="text-2xl font-semibold">XAU/USD</h1>
       </div>
 
       {source === 'sample' && (
@@ -75,6 +69,11 @@ export function ChartPageClient() {
           <IndicatorPanel config={config} onChange={setConfig} />
         </>
       )}
+
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+        <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
+        <ThemeToggle />
+      </div>
     </main>
   );
 }
