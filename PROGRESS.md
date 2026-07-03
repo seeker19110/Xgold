@@ -6,8 +6,9 @@
 
 ## Giai đoạn hiện tại
 
-- GĐ 4 — Phát triển. Chạy `/auto` theo kế hoạch đã duyệt (`/root/.claude/plans/refactored-frolicking-island.md`),
-  triển khai từng đợt qua `/gate`. Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9.
+- GĐ 4 — Phát triển. Chạy `/auto` theo kế hoạch đã duyệt (kế hoạch triển khai chi tiết được trình bày
+  và duyệt qua Plan Mode trong phiên bootstrap, không lưu trong repo), triển khai từng đợt qua `/gate`.
+  Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9.
 
 ## Đã xong
 
@@ -52,8 +53,7 @@
 ## Tiếp theo
 
 - Đợt 1 → Đợt 2 (chart cơ bản) → Đợt 3 (Multi-MA + Multi-RSI, trọng tâm yêu cầu) → Đợt 4 (hoàn thiện MVP).
-  Chi tiết từng đợt: `docs/plans/xgold-mvp-plan.md` mục 6, kế hoạch thực thi đầy đủ ở
-  `/root/.claude/plans/refactored-frolicking-island.md`.
+  Chi tiết từng đợt: `docs/plans/xgold-mvp-plan.md` mục 6.
 - Commit + mở PR cho Đợt 0 lên nhánh `claude/financial-data-trading-indicators-cwbvf6` (PR #1 hiện có),
   theo dõi CI, merge khi xanh (CLAUDE.md §8).
 

@@ -3,7 +3,8 @@
 > File hướng dẫn vận hành cho AI (Claude Code) — bản thiên về **quản lý dự án phát triển phần mềm**.
 > Đặt ở gốc repo. Claude Code tự đọc file này vào đầu mỗi phiên.
 > Giữ file này gọn (< 200 dòng). Chi tiết để ở tài liệu tham khảo (mục 1), đọc khi cần.
-> Thay các chỗ `[ĐIỀN: ...]` bằng thông tin thật của dự án.
+> Với dự án mới lấy khung này làm nền: thay các phần đánh dấu "cần điền" (dạng backtick, bắt đầu bằng
+> Đ-I-Ề-N trong ngoặc vuông) bằng thông tin thật của dự án. Bản dưới đây đã điền đầy đủ cho Xgold.
 
 ## 0. Vai trò của bạn (AI)
 

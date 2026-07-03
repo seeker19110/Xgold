@@ -156,5 +156,6 @@ Sau MVP (backlog): thêm symbol, MACD/Bollinger, alerts (cần account), export 
 5. ✅ Không đăng nhập/tài khoản ở MVP (cấu hình lưu localStorage + URL).
 6. ✅ Free tier (Vercel Hobby + Supabase Free) lúc đầu.
 
-> Xem kế hoạch thực thi chi tiết (kiến trúc, trình tự đợt, rủi ro môi trường sandbox) tại
-> `/root/.claude/plans/refactored-frolicking-island.md` (đã duyệt) và tiến độ tại `PROGRESS.md`.
+> Kế hoạch thực thi chi tiết (kiến trúc, trình tự đợt, rủi ro môi trường sandbox) đã được trình bày và
+> duyệt qua Plan Mode ở phiên bootstrap; nội dung cốt lõi được phản ánh vào mục 4–8 ở trên,
+> `PROJECT.md`, và tiến độ theo dõi tại `PROGRESS.md`.
