@@ -88,14 +88,48 @@
   - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (28/28, 5 file) ·
     `build` ✅.
 
+- ✅ **Đợt 2 — Chart cơ bản:**
+  - `lib/env.ts`: nới `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` thành OPTIONAL
+    (quyết định thiết kế: app chạy được ở chế độ "chưa cấu hình Supabase" bằng dữ liệu mẫu — nơi thật
+    sự cần Supabase tự kiểm tra `null`, xem `lib/supabase/client.ts`). **Phát hiện 1 lỗi build thật:**
+    ban đầu chỉ nới biến CLIENT, quên biến SERVER — `next build` chết ngay ở bước "Collecting page
+    data" vì `lib/env.ts` validate `serverEnv` NGAY khi import module (kể cả từ route chỉ cần
+    `clientEnv`), đã sửa.
+  - `app/api/candles/route.ts`: đọc Supabase (anon key, RLS cho phép) nếu có cấu hình; else dùng
+    `lib/fixtures/xauusd.ts`; luôn trả `source: 'supabase' | 'sample'` để UI gắn nhãn đúng; Zod
+    validate query param `symbol`/`timeframe`.
+  - `components/chart/`: `gold-chart.tsx` (lightweight-charts v5, nến + đồng bộ màu theo
+    Dark blue/Light qua `MutationObserver` trên `data-theme`), `timeframe-switcher.tsx`,
+    `use-candles.ts` (hook fetch + hủy kết quả cũ khi đổi tham số). `app/chart/xauusd/`: trang chart
+    với 4 trạng thái UI (tải/rỗng/lỗi/thành công) + banner "dữ liệu mẫu" khi chưa có Supabase.
+  - **Kiểm chứng THẬT bằng trình duyệt** (Playwright headless thật, không chỉ đọc code): chụp màn
+    hình chart hiển thị nến đúng ở cả Dark blue và Light, đổi khung 1h→4h cập nhật đúng số nến
+    (336 nến 1h → 84 nến 4h khớp phép chia 4), test qua mobile viewport (375px) responsive tốt.
+  - **Chạy axe thật, phát hiện & vá 2 lỗi a11y thật:** (1) banner "dữ liệu mẫu" `text-warning` trên
+    `bg-warning/10` chỉ đạt contrast 4.15:1 (cần ≥4.5:1) — đổi sang `text-foreground` + viền
+    `border-warning/40` (giữ ý nghĩa cảnh báo bằng viền, chữ đủ tương phản); (2) `role="img"` trên
+    container chart vi phạm `nested-interactive` vì lightweight-charts tự thêm phần tử con focus
+    được (điều hướng bàn phím) — đổi sang `role="group"`. Xác nhận lại: axe 0 vi phạm ở cả 2 theme.
+  - `e2e/chart.spec.ts` (3 test: hiển thị chart, đổi khung, axe) — **chạy thật** bằng Chromium cài sẵn
+    trong sandbox (`/opt/pw-browsers`, cấu hình tạm cục bộ do version browser khác bản
+    `@playwright/test` cài — không đổi `playwright.config.ts` gốc), cả desktop lẫn mobile project:
+    10/10 test xanh.
+  - **Chạy Lighthouse thật** (không chỉ tin cấu hình) — vá 2 giới hạn môi trường cục bộ (Chrome cần
+    `--no-sandbox` khi chạy root; thiếu `CHROME_PATH`), riêng bước upload lên
+    `temporary-public-storage` thất bại vì mạng sandbox chặn (không ảnh hưởng kết quả assertion).
+    Kết quả thật cả trang chủ lẫn `/chart/xauusd`: performance 1.0, accessibility 1.0, seo 1.0,
+    best-practices 0.96, LCP ~614–661ms, CLS 0 — vượt xa ngưỡng `lighthouserc.json`.
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (28/28) · `build` ✅.
+
 ## Đang làm
 
-- Chuẩn bị Đợt 2 — Chart cơ bản: `app/api/candles/route.ts` (đọc Supabase nếu có env, else fixture có
-  nhãn), `GoldChart` (lightweight-charts, nến + zoom/pan), `TimeframeSwitcher`, 4 trạng thái UI.
+- Chuẩn bị Đợt 3 — Indicators (trọng tâm yêu cầu ban đầu): `lib/indicators/` (SMA/EMA/RSI, unit test
+  đối chiếu giá trị chuẩn), Multi-MA overlay (pane giá), Multi-RSI (pane phụ + vạch 30/70),
+  `IndicatorPanel` (thêm/xóa/sửa đường), lưu cấu hình localStorage + URL.
 
 ## Tiếp theo
 
-- Đợt 2 (chart cơ bản) → Đợt 3 (Multi-MA + Multi-RSI, trọng tâm yêu cầu) → Đợt 4 (hoàn thiện MVP).
+- Đợt 3 (Multi-MA + Multi-RSI) → Đợt 4 (hoàn thiện MVP: E2E đầy đủ, Sentry, docs, tối ưu mã nguồn).
   Chi tiết từng đợt: `docs/plans/xgold-mvp-plan.md` mục 6.
 - Theo dõi CI của PR #1 (nhánh `claude/financial-data-trading-indicators-cwbvf6`), merge khi xanh
   (CLAUDE.md §8) — lưu ý CodeQL sẽ vẫn đỏ cho tới khi chủ repo bật "Code scanning" trong Settings.

@@ -126,6 +126,6 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
   - `npm run test:e2e` — Playwright (E2E + axe)
   - `npx supabase migration new <tên>` / `npx supabase db reset` (local) / `npx supabase db push` (prod) — migration CSDL
 - Cấu trúc thư mục chính: `app/` (route Next App Router) · `components/` (UI, `components/chart/` cho chart) · `lib/indicators/` (SMA/EMA/RSI thuần TS) · `lib/providers/` (adapter nguồn dữ liệu: Twelve Data, Stooq) · `lib/candles/` (resample timeframe) · `supabase/migrations/` + `supabase/functions/` (schema + Edge Function ingest) · `e2e/` (Playwright).
-- Quy ước đặt tên file/component: component React `PascalCase.tsx`; route/file đặc biệt Next theo quy ước framework (`page.tsx`, `layout.tsx`...); hàm/biến `camelCase`; hằng số `UPPER_SNAKE_CASE`; bảng/cột CSDL `snake_case`.
+- Quy ước đặt tên file/component: tên file `kebab-case.tsx` (khớp `components/theme-toggle.tsx` sẵn có), export component `PascalCase`; route/file đặc biệt Next theo quy ước framework (`page.tsx`, `layout.tsx`...); hàm/biến `camelCase`; hằng số `UPPER_SNAKE_CASE`; bảng/cột CSDL `snake_case`.
 - Thư viện chính & lý do dùng: xem bảng đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 4 (ma trận chọn thư viện chart + nguồn dữ liệu, đã xác minh phiên bản).
-- Giai đoạn hiện tại: GĐ 4 (Phát triển) — Đợt 0 (Bootstrap) + Đợt 1 (Nền dữ liệu) đã xong; đang triển khai Đợt 2 (Chart cơ bản). Xem `PROGRESS.md`.
+- Giai đoạn hiện tại: GĐ 4 (Phát triển) — Đợt 0–2 đã xong; đang triển khai Đợt 3 (Indicators: Multi-MA + Multi-RSI). Xem `PROGRESS.md`.
