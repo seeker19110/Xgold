@@ -16,9 +16,9 @@
 | 6   | Accessibility & UI/UX           | ✅         | 0 phát hiện mới (kế thừa bằng chứng axe/Lighthouse Đợt 2–5, xem PROGRESS.md)                         | 2026-07-03        |
 | 7   | Dependency & chuỗi cung ứng     | ✅         | trùng F-001; ESLint pin 9.x đã có lý do ghi nhận                                                     | 2026-07-03        |
 | 8   | CI/CD & vận hành/observability  | ✅         | 0 phát hiện mới (branch protection chưa verify được qua tool sẵn có — ghi chú, không phải phát hiện) | 2026-07-03        |
-| 9   | Tài liệu & đồng bộ              | ✅         | 1 Trung (F-002) + 1 Thấp (F-007) + 1 đã biết (F-008)                                                 | 2026-07-03        |
+| 9   | Tài liệu & đồng bộ              | ✅         | 1 Thấp (F-007) + 1 đã biết (F-008); F-002 rút lại — báo động giả                                     | 2026-07-03        |
 | 10  | Dữ liệu & migration             | ✅         | 0 phát hiện mới (RLS/GRANT/CHECK đã test thật ở Đợt 1/5)                                             | 2026-07-03        |
-| 11  | Cấu hình môi trường & bí mật    | ✅         | trùng F-002                                                                                          | 2026-07-03        |
+| 11  | Cấu hình môi trường & bí mật    | ✅         | — (F-002 rút lại, xem Nhóm 9)                                                                        | 2026-07-03        |
 | 12  | Thống nhất chéo tính năng       | ✅         | trùng F-009 (cả 2 API route cùng thiếu 1 bước)                                                       | 2026-07-03        |
 
 ## Ghi chú điểm dừng
@@ -26,3 +26,8 @@
 - Quét xong trọn 12 nhóm trong 1 phiên — không có nhóm dở dang.
 - Nhóm 8 (branch protection rules): không có tool GitHub MCP nào lộ endpoint kiểm tra branch
   protection trong phiên này — không kiểm chứng được, không tính là phát hiện (tránh đoán).
+- **Bài học rút ra khi làm W-201 (Đợt 2):** F-002 ("thiếu `.env.example`") là báo động giả — sandbox
+  của phiên audit chặn quyền Glob/Read/Bash trên MỌI đường dẫn `.env*` (kể cả file mẫu không chứa bí
+  mật thật), khiến "không đọc được" bị hiểu nhầm thành "không tồn tại". Từ nay: khi công cụ báo thiếu
+  file `.env*`, xác nhận lại bằng `git ls-files -- '.env*'` (không đọc nội dung, chỉ liệt kê đường
+  dẫn đã tracked) trước khi kết luận file không tồn tại.
