@@ -1,0 +1,30 @@
+# FEATURE-MAP — Bản đồ tính năng
+
+> Nguồn sự thật về "dự án Xgold này CÓ NHỮNG GÌ". Cập nhật khi thêm/bỏ tính năng.
+> Trạng thái: ✅ ổn · ⚠️ nghi ngờ (có phát hiện audit) · 🚧 dở dang.
+> Lập bằng cách đọc code thật (`app/`, `components/`, `lib/`, `supabase/`) ngày 2026-07-03.
+
+| ID    | Tính năng / luồng                     | Điểm vào (route/endpoint/cmd)                                                | Dữ liệu đụng tới                                               | Trạng thái | Test hiện có                                                                                                                                |
+| ----- | ------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| FT-01 | Trang chủ                             | `app/page.tsx` (`/`)                                                         | –                                                              | ✅         | `e2e/smoke.spec.ts`                                                                                                                         |
+| FT-02 | Chart XAU/USD (nến 4 khung thời gian) | `/chart/xauusd`, `GET /api/candles`                                          | `instruments`, `candles` (hoặc fixture mẫu)                    | ✅         | `e2e/chart.spec.ts`, `lib/candles/resample.test.ts`                                                                                         |
+| FT-03 | Multi-MA (nhiều đường SMA/EMA)        | `components/chart/indicator-panel.tsx` + `gold-chart.tsx` (pane 0)           | cấu hình `ChartConfig` (URL/localStorage), không có bảng riêng | ✅         | `lib/indicators/{sma,ema}.test.ts`, `e2e/indicators.spec.ts`                                                                                |
+| FT-04 | Multi-RSI (nhiều đường RSI, pane phụ) | `components/chart/indicator-panel.tsx` + `gold-chart.tsx` (pane 1)           | như trên                                                       | ✅         | `lib/indicators/rsi.test.ts`, `e2e/indicators.spec.ts`                                                                                      |
+| FT-05 | Chia sẻ cấu hình chỉ báo qua URL      | `lib/indicators/config.ts` (`?cfg=`)                                         | không có (mã hóa base64 trong URL + localStorage)              | ✅         | `lib/indicators/config.test.ts`, `e2e/indicators.spec.ts` (test URL chia sẻ)                                                                |
+| FT-06 | Đổi theme Dark blue / Light           | `components/theme-toggle.tsx`, dùng ở mọi trang                              | `localStorage` (`theme`)                                       | ✅         | `components/theme-toggle.test.tsx`, `e2e/chart.spec.ts` (test đổi theme trên trang chart)                                                   |
+| FT-07 | Giá vàng trong nước (BTMC)            | `/gia-vang-trong-nuoc`, `GET /api/domestic-gold`                             | `domestic_gold_prices` (hoặc fixture mẫu)                      | ✅         | `e2e/domestic-gold.spec.ts`, `lib/domestic-gold/freshness.test.ts`                                                                          |
+| FT-08 | Badge độ tươi dữ liệu (fresh/stale)   | `components/domestic-gold/freshness-badge.tsx`                               | `ts` mới nhất của `domestic_gold_prices`                       | ✅         | `lib/domestic-gold/freshness.test.ts`                                                                                                       |
+| FT-09 | Ingestion XAU/USD (nền, không có UI)  | `supabase/functions/ingest-gold/index.ts` (Edge Function + pg_cron)          | Twelve Data/Stooq → `candles`, `ingest_runs`                   | 🚧         | Chưa chạy thử thật (mạng sandbox chặn Twelve Data/Stooq) — xem "Nợ kỹ thuật" `PROGRESS.md`                                                  |
+| FT-10 | Backfill lịch sử XAU/USD (chạy tay)   | `scripts/backfill.ts` (`npm run backfill`)                                   | Twelve Data/Stooq → `candles`, `ingest_runs`                   | 🚧         | Chỉ dry-run được phần import/env, chưa gọi API thật                                                                                         |
+| FT-11 | Ingestion giá vàng trong nước (nền)   | `supabase/functions/ingest-domestic-gold/index.ts` (Edge Function + pg_cron) | BTMC XML → `domestic_gold_prices`, `domestic_gold_ingest_runs` | 🚧         | 8 unit test cho adapter (`lib/providers-domestic/btmc.test.ts`), Edge Function chưa chạy thử thật + field XML BTMC chưa xác nhận (ADR-0005) |
+| FT-12 | Trang lỗi / 404                       | `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx`                 | –                                                              | ✅         | không có test riêng (scaffold Next.js chuẩn)                                                                                                |
+| FT-13 | Metadata SEO cơ bản                   | `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`                         | –                                                              | ⚠️         | không có test; `manifest.ts` trỏ icon chưa tồn tại (nợ kỹ thuật đã biết)                                                                    |
+
+## Luồng chính (bắt buộc có E2E — đối chiếu Definition of Complete)
+
+- Xem chart XAU/USD, đổi khung thời gian, quan sát Multi-MA + Multi-RSI (FT-02, FT-03, FT-04).
+- Tùy biến chỉ báo (thêm/xóa/đổi màu đường MA hoặc RSI) và chia sẻ cấu hình qua URL (FT-05).
+- Xem giá vàng trong nước + độ tươi dữ liệu (FT-07, FT-08).
+- Đổi theme Dark blue ⇄ Light trên mọi trang, không vỡ layout/chart (FT-06).
+- (Khi có Supabase thật) Ingestion tự động cập nhật dữ liệu mới theo lịch (FT-09, FT-11) — hiện là
+  luồng **chưa kiểm chứng được trong sandbox**, ưu tiên cao khi deploy thật.
