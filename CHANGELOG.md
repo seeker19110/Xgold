@@ -8,6 +8,14 @@ và dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 > Vì commit theo _conventional commits_, phần "Unreleased" có thể được sinh tự động sau
 > (ví dụ `standard-version` / `changesets`). Trước mắt cập nhật tay khi có thay đổi đáng kể.
 
+## [1.0.1](https://github.com/seeker19110/Xgold/compare/v1.0.0...v1.0.1) (2026-07-03)
+
+
+### Bug Fixes
+
+* coerce numeric Supabase response + hoàn thiện Đợt 1 (/completion) ([#8](https://github.com/seeker19110/Xgold/issues/8)) ([a702b84](https://github.com/seeker19110/Xgold/commit/a702b8464351d28706f175d39e118d8fcf13f98b))
+* Đợt 3 hoàn thiện — dọn dẹp nhỏ (F-005/F-006/F-007) ([#11](https://github.com/seeker19110/Xgold/issues/11)) ([96bf5e3](https://github.com/seeker19110/Xgold/commit/96bf5e3979556f00890d26249580f9dd8ff48e8a))
+
 ## 1.0.0 (2026-07-03)
 
 
