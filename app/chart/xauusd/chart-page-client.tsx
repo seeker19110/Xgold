@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { GoldChart } from '@/components/chart/gold-chart';
+import { IndicatorPanel } from '@/components/chart/indicator-panel';
 import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
 import { useCandles } from '@/components/chart/use-candles';
+import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import type { Timeframe } from '@/lib/candles/types';
 
 const SYMBOL = 'XAUUSD';
@@ -11,6 +13,7 @@ const SYMBOL = 'XAUUSD';
 export function ChartPageClient() {
   const [timeframe, setTimeframe] = useState<Timeframe>('1h');
   const { status, candles, source, error } = useCandles(SYMBOL, timeframe);
+  const [config, setConfig] = useIndicatorConfig();
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-4 p-6">
@@ -56,7 +59,12 @@ export function ChartPageClient() {
         </div>
       )}
 
-      {status === 'success' && candles.length > 0 && <GoldChart candles={candles} />}
+      {status === 'success' && candles.length > 0 && (
+        <>
+          <GoldChart candles={candles} config={config} />
+          <IndicatorPanel config={config} onChange={setConfig} />
+        </>
+      )}
     </main>
   );
 }

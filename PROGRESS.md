@@ -121,16 +121,52 @@
     best-practices 0.96, LCP ~614–661ms, CLS 0 — vượt xa ngưỡng `lighthouserc.json`.
   - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (28/28) · `build` ✅.
 
+- ✅ **Sửa 1 lỗi CI thật khác phát hiện trên PR #1** (job `e2e` + `lighthouse`): `next build` chết ở
+  "Collecting page data" vì `ci.yml` đặt `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` qua
+  `${{ secrets.X }}` — khi secret CHƯA cấu hình, GitHub Actions nội suy ra **chuỗi rỗng `""`**,
+  không phải unset; Zod `.optional()` chỉ chấp nhận `undefined`, không chấp nhận `""`. Thêm
+  `z.preprocess` coi `""` như `undefined` cho mọi biến Supabase optional (client + server). Tái
+  hiện lỗi cục bộ bằng `NEXT_PUBLIC_SUPABASE_URL="" npm run build` trước khi sửa, xác nhận xanh
+  sau khi sửa — không đoán.
+
+- ✅ **Đợt 3 — Indicators (trọng tâm yêu cầu ban đầu):**
+  - `lib/indicators/`: `sma.ts`, `ema.ts` (seed bằng SMA, khớp TradingView), `rsi.ts` (Wilder
+    smoothing/RMA — không phải trung bình cộng đơn giản). 23 unit test, **giá trị tính TAY** (không
+    chỉ chạy code rồi dán kết quả): SMA(3)/EMA(3) trên chuỗi tuyến tính [1..5] (chứng minh bằng toán
+    học lý do 2 kết quả trùng nhau — cùng "lag" (period-1)/2); EMA(2) trên [10,20,10,20,10] bằng phân
+    số chính xác (35/3, 155/9, 335/27); RSI(2) trên [44,44.25,44.5,43.75] tính tay Wilder từng bước
+    ra [null,null,100,25]; ca biên toàn tăng→100, toàn giảm→0, đứng yên→50 (quy ước), ngắn hơn chu
+    kỳ→toàn null.
+  - `lib/indicators/config.ts`: `ChartConfig` (Multi-MA + Multi-RSI) với Zod schema, mã hóa
+    base64+URI cho URL query `?cfg=`, giải mã có validate (chuỗi hỏng/bị sửa tay → `null`, không
+    crash trang) — 5 unit test gồm round-trip qua `URLSearchParams` thật.
+  - `components/chart/use-indicator-config.ts`: state cấu hình bắt đầu bằng default (khớp SSR),
+    đọc URL/localStorage THẬT sau mount (tránh lệch hydrate — cùng pattern đã dùng ở
+    `theme-toggle`/`use-candles`), rồi tự đồng bộ lại cả hai mỗi khi đổi.
+  - `components/chart/indicator-panel.tsx`: UI thêm/xóa/sửa (loại SMA|EMA, chu kỳ, màu, ẩn/hiện)
+    cho từng đường MA và RSI riêng, đủ nhãn `aria-label`/`sr-only`, vùng chạm ≥44px.
+  - `components/chart/gold-chart.tsx`: mở rộng — Multi-MA vẽ chồng lên pane giá (pane 0); Multi-RSI
+    ở pane phụ (pane 1, tự tạo/tự xóa theo `chart.addSeries(LineSeries, opts, 1)`) kèm 2 vạch ngưỡng
+    30/70 nét đứt; đồng bộ thêm/xóa/đổi màu từng đường theo cấu hình, không tạo lại toàn bộ chart.
+  - **Kiểm chứng THẬT bằng trình duyệt** (không chỉ đọc code): chụp màn hình xác nhận Multi-MA
+    (3 đường mặc định + 1 đường thêm mới, đổi màu theo từng đường) và Multi-RSI (pane riêng, 2 đường)
+    vẽ đúng, thời gian thực khi bấm nút trong panel; test round-trip URL chia sẻ (mở tab mới bằng URL
+    có `cfg=`, cấu hình khôi phục đúng số đường); axe 0 vi phạm trên toàn trang gồm panel.
+  - `e2e/indicators.spec.ts` (5 test: mặc định 3 MA+1 RSI, thêm/xóa MA, thêm RSI, URL chia sẻ giữ
+    cấu hình, axe) — chạy thật, 20/20 test xanh (chart.spec + indicators.spec + smoke.spec, cả
+    desktop lẫn mobile).
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (51/51, 9 file) ·
+    `build` ✅.
+
 ## Đang làm
 
-- Chuẩn bị Đợt 3 — Indicators (trọng tâm yêu cầu ban đầu): `lib/indicators/` (SMA/EMA/RSI, unit test
-  đối chiếu giá trị chuẩn), Multi-MA overlay (pane giá), Multi-RSI (pane phụ + vạch 30/70),
-  `IndicatorPanel` (thêm/xóa/sửa đường), lưu cấu hình localStorage + URL.
+- Chuẩn bị Đợt 4 — Hoàn thiện MVP: E2E đầy đủ luồng chính còn lại, Sentry, README/runbook, rà tối ưu
+  mã nguồn, báo cáo xác thực cổng merge.
 
 ## Tiếp theo
 
-- Đợt 3 (Multi-MA + Multi-RSI) → Đợt 4 (hoàn thiện MVP: E2E đầy đủ, Sentry, docs, tối ưu mã nguồn).
-  Chi tiết từng đợt: `docs/plans/xgold-mvp-plan.md` mục 6.
+- Đợt 4 (hoàn thiện MVP: Sentry, docs, tối ưu mã nguồn, báo cáo xác thực).
+  Chi tiết: `docs/plans/xgold-mvp-plan.md` mục 6.
 - Theo dõi CI của PR #1 (nhánh `claude/financial-data-trading-indicators-cwbvf6`), merge khi xanh
   (CLAUDE.md §8) — lưu ý CodeQL sẽ vẫn đỏ cho tới khi chủ repo bật "Code scanning" trong Settings.
 
@@ -160,4 +196,4 @@
 
 ## Bàn giao phiên (điền khi WIND-DOWN gần chạm limit 5h — để phiên sau "tiếp tục")
 
-- (chưa cần — phiên đang trong Đợt 1, chưa tới ngưỡng wind-down)
+- (chưa cần — phiên đang trong Đợt 3, chưa tới ngưỡng wind-down)

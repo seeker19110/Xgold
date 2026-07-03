@@ -93,7 +93,7 @@
 - **Đợt 0 — Bootstrap:** khởi tạo Next.js app, hàng rào CI/hook, điền PROJECT.md/CLAUDE.md, ADR 0002–0004. ✅ _(xong)_
 - **Đợt 1 — Nền dữ liệu:** migration + RLS, provider adapter (Twelve Data/Stooq), resample, Edge Function `ingest-gold`. ✅ _(xong — chưa test thật với API/DB thật, xem PROGRESS.md "Nợ kỹ thuật")_
 - **Đợt 2 — Chart cơ bản:** trang chart nến + đổi khung + 4 trạng thái UI + theme. ✅ _(xong — Lighthouse/axe/E2E đã chạy thật, xem PROGRESS.md)_
-- **Đợt 3 — Chỉ báo:** `lib/indicators` (SMA/EMA/RSI) + Multi-MA overlay + Multi-RSI pane + panel cấu hình.
+- **Đợt 3 — Chỉ báo:** `lib/indicators` (SMA/EMA/RSI) + Multi-MA overlay + Multi-RSI pane + panel cấu hình. ✅ _(xong — kiểm chứng thật bằng trình duyệt, 20/20 E2E xanh)_
 - **Đợt 4 — Hoàn thiện MVP:** E2E đầy đủ, a11y, Sentry, docs, tối ưu mã nguồn.
 - **Đợt 5 (Should, sau MVP):** giá vàng trong nước (SJC/BTMC) + cập nhật gần realtime.
 
