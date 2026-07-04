@@ -64,6 +64,16 @@ describe('TwelveDataProvider', () => {
     expect(calledUrl.searchParams.get('apikey')).toBe('k');
   });
 
+  it('map XAGUSD (bạc) sang symbol Twelve Data "XAG/USD"', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ status: 'ok', values: [] }));
+    const provider = new TwelveDataProvider({ apiKey: 'k', fetchImpl });
+
+    await provider.fetchCandles({ symbol: 'XAGUSD', timeframe: '1h' });
+
+    const calledUrl = fetchImpl.mock.calls[0]?.[0] as URL;
+    expect(calledUrl.searchParams.get('symbol')).toBe('XAG/USD');
+  });
+
   it('ném ProviderError khi provider trả status=error', async () => {
     const fetchImpl = vi
       .fn()

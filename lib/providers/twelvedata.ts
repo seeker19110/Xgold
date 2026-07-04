@@ -32,6 +32,7 @@ const TwelveDataResponseSchema = z.union([TwelveDataSuccessSchema, TwelveDataErr
 
 const SYMBOL_MAP: Record<string, string> = {
   XAUUSD: 'XAU/USD',
+  XAGUSD: 'XAG/USD',
 };
 
 const INTERVAL_MAP: Record<FetchCandlesParams['timeframe'], string> = {

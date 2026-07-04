@@ -1,4 +1,4 @@
-// Supabase Edge Function (Deno) — thu thập nến XAU/USD mới nhất từ Twelve Data theo lịch pg_cron.
+// Supabase Edge Function (Deno) — thu thập nến mới nhất (mọi mã) từ Twelve Data theo lịch pg_cron.
 //
 // KHÔNG chạy/kiểm chứng được trong sandbox phát triển hiện tại: không có Deno runtime, và mạng bị
 // chặn tới api.twelvedata.com (xem ADR-0003, PROGRESS.md "Nợ kỹ thuật"). Logic parse mô phỏng theo
@@ -12,8 +12,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod@4';
 
-const SYMBOL = 'XAUUSD';
-const TWELVEDATA_SYMBOL = 'XAU/USD';
+// Mã cần thu thập — giữ đồng bộ THỦ CÔNG với registry `lib/instruments.ts` (Edge Function Deno không
+// import được path alias '@/...' của app Next.js). Thêm mã mới: thêm 1 dòng ở đây + seed migration.
+const INSTRUMENTS: ReadonlyArray<{ symbol: string; twelveDataSymbol: string }> = [
+  { symbol: 'XAUUSD', twelveDataSymbol: 'XAU/USD' },
+  { symbol: 'XAGUSD', twelveDataSymbol: 'XAG/USD' },
+];
 
 // outputsize nhỏ có chủ đích: chạy định kỳ chỉ cần vài nến gần nhất để bắt kịp (đủ bù khi có 1-2
 // lần chạy bị lỡ); backfill lịch sử dài dùng `npm run backfill` (scripts/backfill.ts), không phải ở đây.
@@ -58,9 +62,14 @@ function toIsoUtc(datetime: string): string {
   return `${withTime.replace(' ', 'T')}.000Z`;
 }
 
-async function fetchTwelveDataCandles(interval: string, outputsize: number, apiKey: string) {
+async function fetchTwelveDataCandles(
+  twelveDataSymbol: string,
+  interval: string,
+  outputsize: number,
+  apiKey: string,
+) {
   const url = new URL('https://api.twelvedata.com/time_series');
-  url.searchParams.set('symbol', TWELVEDATA_SYMBOL);
+  url.searchParams.set('symbol', twelveDataSymbol);
   url.searchParams.set('interval', interval);
   url.searchParams.set('timezone', 'UTC');
   url.searchParams.set('outputsize', String(outputsize));
@@ -105,80 +114,94 @@ Deno.serve(async () => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: instrument, error: instrumentError } = await supabase
-    .from('instruments')
-    .select('id')
-    .eq('symbol', SYMBOL)
-    .single();
-
-  if (instrumentError || !instrument) {
-    return new Response(
-      JSON.stringify({
-        error: `Không tìm thấy instrument '${SYMBOL}': ${instrumentError?.message}`,
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
   const results = [];
 
-  for (const job of JOBS) {
-    const { data: run } = await supabase
-      .from('ingest_runs')
-      .insert({
-        instrument_id: instrument.id,
-        provider: 'twelvedata',
-        timeframe: job.appTimeframe,
-        status: 'running',
-      })
+  for (const inst of INSTRUMENTS) {
+    const { data: instrument, error: instrumentError } = await supabase
+      .from('instruments')
       .select('id')
+      .eq('symbol', inst.symbol)
       .single();
 
-    try {
-      const candles = await fetchTwelveDataCandles(
-        job.twelveDataInterval,
-        job.outputsize,
-        twelveDataApiKey,
-      );
-      const rows = candles.map((c) => ({
-        instrument_id: instrument.id as string,
-        timeframe: job.appTimeframe,
-        ts: c.ts,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-        volume: c.volume ?? null,
-        source: 'twelvedata',
-      }));
+    if (instrumentError || !instrument) {
+      // Một mã thiếu trong CSDL không được chặn các mã khác — ghi lỗi rồi bỏ qua (chạy migration seed).
+      results.push({
+        symbol: inst.symbol,
+        status: 'error',
+        error: `Không tìm thấy instrument: ${instrumentError?.message}`,
+      });
+      continue;
+    }
 
-      const { error: upsertError } = await supabase
-        .from('candles')
-        .upsert(rows, { onConflict: 'instrument_id,timeframe,ts' });
-      if (upsertError) {
-        throw new Error(upsertError.message);
-      }
+    for (const job of JOBS) {
+      const { data: run } = await supabase
+        .from('ingest_runs')
+        .insert({
+          instrument_id: instrument.id,
+          provider: 'twelvedata',
+          timeframe: job.appTimeframe,
+          status: 'running',
+        })
+        .select('id')
+        .single();
 
-      if (run) {
-        await supabase
-          .from('ingest_runs')
-          .update({
-            finished_at: new Date().toISOString(),
-            status: 'success',
-            rows_upserted: rows.length,
-          })
-          .eq('id', run.id as string);
+      try {
+        const candles = await fetchTwelveDataCandles(
+          inst.twelveDataSymbol,
+          job.twelveDataInterval,
+          job.outputsize,
+          twelveDataApiKey,
+        );
+        const rows = candles.map((c) => ({
+          instrument_id: instrument.id as string,
+          timeframe: job.appTimeframe,
+          ts: c.ts,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+          volume: c.volume ?? null,
+          source: 'twelvedata',
+        }));
+
+        const { error: upsertError } = await supabase
+          .from('candles')
+          .upsert(rows, { onConflict: 'instrument_id,timeframe,ts' });
+        if (upsertError) {
+          throw new Error(upsertError.message);
+        }
+
+        if (run) {
+          await supabase
+            .from('ingest_runs')
+            .update({
+              finished_at: new Date().toISOString(),
+              status: 'success',
+              rows_upserted: rows.length,
+            })
+            .eq('id', run.id as string);
+        }
+        results.push({
+          symbol: inst.symbol,
+          timeframe: job.appTimeframe,
+          status: 'success',
+          rows: rows.length,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (run) {
+          await supabase
+            .from('ingest_runs')
+            .update({ finished_at: new Date().toISOString(), status: 'error', error: message })
+            .eq('id', run.id as string);
+        }
+        results.push({
+          symbol: inst.symbol,
+          timeframe: job.appTimeframe,
+          status: 'error',
+          error: message,
+        });
       }
-      results.push({ timeframe: job.appTimeframe, status: 'success', rows: rows.length });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (run) {
-        await supabase
-          .from('ingest_runs')
-          .update({ finished_at: new Date().toISOString(), status: 'error', error: message })
-          .eq('id', run.id as string);
-      }
-      results.push({ timeframe: job.appTimeframe, status: 'error', error: message });
     }
   }
 

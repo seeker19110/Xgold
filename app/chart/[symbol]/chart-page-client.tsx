@@ -5,17 +5,27 @@ import Link from 'next/link';
 import { AnalysisPanel } from '@/components/chart/analysis-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
+import { SymbolSwitcher } from '@/components/chart/symbol-switcher';
 import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
 import { useCandles } from '@/components/chart/use-candles';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import { ThemeToggle } from '@/components/theme-toggle';
 import type { Timeframe } from '@/lib/candles/types';
 
-const SYMBOL = 'XAUUSD';
+interface ChartPageClientProps {
+  /** Mã chuẩn (CSDL/provider), vd 'XAUUSD'. */
+  symbol: string;
+  /** Slug URL hiện tại, vd 'xauusd' (để SymbolSwitcher tô đậm mã đang xem). */
+  slug: string;
+  /** Nhãn ngắn hiển thị tiêu đề, vd 'XAU/USD'. */
+  label: string;
+  /** Cụm mô tả aria-label chart, vd 'giá vàng XAU/USD'. */
+  chartLabel: string;
+}
 
-export function ChartPageClient() {
+export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageClientProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('1h');
-  const { status, candles, source, error } = useCandles(SYMBOL, timeframe);
+  const { status, candles, source, error } = useCandles(symbol, timeframe);
   const [config, setConfig] = useIndicatorConfig();
 
   return (
@@ -24,8 +34,10 @@ export function ChartPageClient() {
         <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
           ← Xgold
         </Link>
-        <h1 className="text-2xl font-semibold">XAU/USD</h1>
+        <h1 className="text-2xl font-semibold">{label}</h1>
       </div>
+
+      <SymbolSwitcher currentSlug={slug} />
 
       {source === 'sample' && (
         <p
@@ -70,7 +82,7 @@ export function ChartPageClient() {
 
       {status === 'success' && candles.length > 0 && (
         <>
-          <GoldChart candles={candles} config={config} />
+          <GoldChart candles={candles} config={config} label={chartLabel} />
           <AnalysisPanel
             candles={candles}
             timeframe={timeframe}

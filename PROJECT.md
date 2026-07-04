@@ -28,7 +28,7 @@
   5. Lưu cấu hình chỉ báo (localStorage + URL chia sẻ được) — chưa cần tài khoản. _Tiêu chí:_ reload giữ nguyên cấu hình; dán URL đã chia sẻ khôi phục đúng cấu hình.
   6. Theme Dark blue mặc định + Light, mobile-first, đủ 4 trạng thái (tải/rỗng/lỗi/thành công) trên trang chart.
 - **Should have:** giá vàng trong nước (SJC/BTMC/DOJI — bảng mua/bán + line chart) · cập nhật giá gần realtime (polling hoặc Supabase Realtime) · badge "độ tươi dữ liệu" khi nguồn stale.
-- **Could have:** thêm symbol (XAG, DXY, USD/VND) · MACD, Bollinger Bands · export CSV · so sánh vàng SJC vs thế giới quy đổi.
+- **Could have:** thêm symbol (✅ XAG/USD — Đợt 9, ADR-0008; DXY, USD/VND còn backlog) · ✅ MACD, Bollinger Bands (Đợt 6) · export CSV · so sánh vàng SJC vs thế giới quy đổi.
 - **Won't have (lúc này):** tài khoản/đăng nhập · alert đẩy thông báo · công cụ vẽ lên chart (trendline...) · app mobile riêng · tin tức/phân tích.
 
 ## 3. Yêu cầu phi chức năng
@@ -72,8 +72,8 @@
 
 ## 7. Luồng người dùng chính
 
-1. Vào trang chủ → thấy tiêu đề + mô tả + nút "Xem chart XAU/USD".
-2. Vào `/chart/xauusd` → thấy chart nến XAU/USD khung mặc định (1h), có 3 đường MA mặc định (Multi-MA) và pane RSI (Multi-RSI) bên dưới.
+1. Vào trang chủ → thấy tiêu đề + mô tả + danh sách mã để xem chart (XAU/USD, XAG/USD).
+2. Vào `/chart/xauusd` (hoặc `/chart/xagusd`) → thấy chart nến của mã đó, khung mặc định (1h), có 3 đường MA mặc định (Multi-MA) và pane RSI (Multi-RSI) bên dưới; chuyển mã ngay trên trang qua SymbolSwitcher.
 3. Đổi khung thời gian (1h/4h/1D/1W) → chart cập nhật, resample đúng.
 4. Mở panel chỉ báo → thêm một đường MA mới (chọn SMA/EMA, chu kỳ, màu) → thấy đường mới trên pane giá; thêm một đường RSI mới (chu kỳ khác) → thấy đường mới trên pane RSI.
 5. Reload trang hoặc dán lại URL đã chia sẻ → cấu hình chỉ báo giữ nguyên.

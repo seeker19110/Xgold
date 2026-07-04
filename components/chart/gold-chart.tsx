@@ -22,6 +22,8 @@ import { signalEvents } from '@/lib/analysis';
 interface GoldChartProps {
   candles: readonly Candle[];
   config: ChartConfig;
+  /** Cụm mô tả cho aria-label, vd 'giá vàng XAU/USD' (ghép vào "Chart nến {label} …"). */
+  label: string;
 }
 
 interface ThemeColors {
@@ -71,7 +73,7 @@ function toLineData(points: readonly IndicatorPoint[]): { time: UTCTimestamp; va
  * Chart nến (lightweight-charts v5) + Multi-MA chồng lên pane giá + Multi-RSI ở pane phụ.
  * Tự đồng bộ màu theo theme Dark blue/Light đang chọn.
  */
-export function GoldChart({ candles, config }: GoldChartProps) {
+export function GoldChart({ candles, config, label }: GoldChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -413,7 +415,7 @@ export function GoldChart({ candles, config }: GoldChartProps) {
       ref={containerRef}
       className="h-[560px] w-full min-w-0"
       role="group"
-      aria-label="Chart nến giá vàng XAU/USD với Multi-MA và Multi-RSI"
+      aria-label={`Chart nến ${label} với Multi-MA và Multi-RSI`}
     />
   );
 }

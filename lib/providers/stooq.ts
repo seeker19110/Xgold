@@ -9,6 +9,7 @@ import { ProviderError } from '@/lib/providers/types';
 //   2021-10-29,1081.86,1115.21,1073.205,1114.0,29918417
 const SYMBOL_MAP: Record<string, string> = {
   XAUUSD: 'xauusd',
+  XAGUSD: 'xagusd',
 };
 
 const EXPECTED_HEADER = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume'];

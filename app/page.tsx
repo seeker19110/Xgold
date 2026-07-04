@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { INSTRUMENTS } from '@/lib/instruments';
 
 export default function HomePage() {
   return (
@@ -9,16 +10,28 @@ export default function HomePage() {
         <ThemeToggle />
       </div>
       <p className="text-muted-foreground">
-        Theo dõi giá vàng thế giới (XAU/USD) với chart nến kiểu TradingView, đường trung bình động
-        (Multi-MA) và RSI (Multi-RSI).
+        Theo dõi giá kim loại quý (vàng XAU/USD, bạc XAG/USD) với chart nến kiểu TradingView, đường
+        trung bình động (Multi-MA), RSI, MACD, Bollinger Bands và gợi ý phân tích kỹ thuật.
       </p>
+
+      <section aria-labelledby="charts-heading" className="flex flex-col gap-3">
+        <h2 id="charts-heading" className="text-muted-foreground text-sm font-medium">
+          Chọn mã để xem chart
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          {INSTRUMENTS.map((instrument) => (
+            <Link
+              key={instrument.slug}
+              href={`/chart/${instrument.slug}`}
+              className="bg-primary text-primary-foreground w-fit rounded-lg px-4 py-2 font-medium"
+            >
+              {instrument.name}
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <div className="flex flex-wrap gap-3">
-        <Link
-          href="/chart/xauusd"
-          className="bg-primary text-primary-foreground w-fit rounded-lg px-4 py-2 font-medium"
-        >
-          Xem chart XAU/USD
-        </Link>
         <Link
           href="/gia-vang-trong-nuoc"
           className="border-border text-foreground w-fit rounded-lg border px-4 py-2 font-medium"
