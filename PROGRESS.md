@@ -270,13 +270,18 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
   local trước, nối DB thật sau.
-- Backlog sau Đợt 5 — còn lại: Sentry (cần DSN thật), i18n/PWA (quyết định phạm vi còn bỏ ngỏ, xem
-  dưới), SJC (hoãn có chủ đích, xem "Nợ kỹ thuật" — ADR-0005). vang.today (ADR-0006) **đã xong**, xem
-  "Đã xong" ở trên.
-- **i18n/PWA — cần quyết định phạm vi trước khi làm, KHÔNG tự ý mở rộng:** cả hai đều bị đánh dấu
-  "ngoài phạm vi MVP đã duyệt" trong `PROJECT.md`/ADR gốc. Có scaffold `i18n/` sẵn nhưng chưa dùng.
-  Nếu muốn làm, cần chốt lại phạm vi (ngôn ngữ nào, PWA installable tới mức nào) trước khi code —
-  đây là mở rộng scope, không phải "hoàn thiện lỗi đã biết".
+- Backlog sau Đợt 5 — còn lại: Sentry (cần DSN thật), F-008 icon PWA (chờ ảnh thật từ người dùng),
+  SJC (hoãn có chủ đích, xem "Nợ kỹ thuật" — ADR-0005). vang.today (ADR-0006) **đã xong**, xem "Đã
+  xong" ở trên.
+- **i18n/PWA — phạm vi đã CHỐT với người dùng (2026-07-04):**
+  - **i18n: tiếp tục hoãn.** Chưa có nhu cầu người dùng/khách hàng thật cho ngôn ngữ thứ 2 — giữ
+    nguyên toàn bộ UI tiếng Việt cứng, KHÔNG đụng scaffold `i18n/`. Quyết định của người dùng, không
+    phải AI tự suy đoán — không tự ý làm lại nếu không có yêu cầu mới.
+  - **PWA: chỉ làm mức tối thiểu** — thêm icon `/icon-192.png`, `/icon-512.png` thật (F-008) để
+    `app/manifest.ts` hợp lệ. KHÔNG thêm service worker/cache offline — người dùng xác nhận rủi ro
+    hiển thị giá vàng cũ khi offline (trông như giá hiện tại) chưa đáng đánh đổi lấy tính năng
+    installable đầy đủ. Đang chờ người dùng gửi 2 file ảnh thật (AI không tự tạo ảnh giả, CLAUDE.md
+    §4) để gắn vào `public/`.
 - ✅ **CodeQL đã xử lý (2026-07-03):** nguyên nhân thật là repo **private + tài khoản cá nhân** —
   GitHub Advanced Security (bắt buộc để upload kết quả code scanning cho repo private) chỉ có ở
   organization/Enterprise trả phí, không bật được qua Settings dù làm đúng hướng dẫn. Người dùng đã
