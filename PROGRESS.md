@@ -266,6 +266,13 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
 
 ## Tiếp theo
 
+- **Kế hoạch phát triển toàn diện sau MVP đã lập (2026-07-04), CHỜ NGƯỜI DÙNG CHỐT** —
+  `docs/plans/xgold-development-plan.md`: rà soát kế hoạch MVP (không còn mục mở làm được trong
+  sandbox), đề xuất Đợt 6 (MACD + Bollinger Bands) → Đợt 7 (engine phân tích kết hợp `lib/analysis/`
+  - gợi ý Mua/Bán/Trung lập rule-based, có disclaimer) → Đợt 8 tùy chọn (backtest tối thiểu).
+    Research-first đã xác minh 2026-07-04: không thêm dependency (technicalindicators chết từ 2023,
+    trading-signals/indicatorts không thêm giá trị so với `lib/indicators` tự viết sẵn có). 5 điểm
+    cần chốt ở mục 6 của kế hoạch; chốt xong mới ghi ADR-0007 + code.
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
