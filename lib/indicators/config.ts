@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AnalysisConfigSchema, DEFAULT_ANALYSIS_CONFIG } from '@/lib/analysis/config';
 
 const MaLineSchema = z.object({
   id: z.string(),
@@ -15,6 +16,37 @@ const RsiLineSchema = z.object({
   visible: z.boolean(),
 });
 
+const MacdSettingsSchema = z
+  .object({
+    visible: z.boolean(),
+    fast: z.number().int().positive(),
+    slow: z.number().int().positive(),
+    signal: z.number().int().positive(),
+  })
+  .refine((s) => s.fast < s.slow, { message: 'MACD: fast phải nhỏ hơn slow' });
+
+const BollingerSettingsSchema = z.object({
+  visible: z.boolean(),
+  period: z.number().int().positive(),
+  multiplier: z.number().positive(),
+});
+
+export type MacdSettings = z.infer<typeof MacdSettingsSchema>;
+export type BollingerSettings = z.infer<typeof BollingerSettingsSchema>;
+
+export const DEFAULT_MACD_SETTINGS: MacdSettings = {
+  visible: false,
+  fast: 12,
+  slow: 26,
+  signal: 9,
+};
+
+export const DEFAULT_BOLLINGER_SETTINGS: BollingerSettings = {
+  visible: false,
+  period: 20,
+  multiplier: 2,
+};
+
 function hasUniqueIds(lines: readonly { id: string }[]): boolean {
   return new Set(lines.map((l) => l.id)).size === lines.length;
 }
@@ -26,6 +58,11 @@ export const ChartConfigSchema = z
   .object({
     maLines: z.array(MaLineSchema),
     rsiLines: z.array(RsiLineSchema),
+    // `.default()` giữ tương thích ngược: URL/localStorage cũ (trước Đợt 6/7) không có các khóa
+    // này — giải mã vẫn thành công với giá trị mặc định thay vì trả null làm mất cấu hình cũ.
+    macd: MacdSettingsSchema.default(DEFAULT_MACD_SETTINGS),
+    bollinger: BollingerSettingsSchema.default(DEFAULT_BOLLINGER_SETTINGS),
+    analysis: AnalysisConfigSchema.default(DEFAULT_ANALYSIS_CONFIG),
   })
   .refine((c) => hasUniqueIds(c.maLines), { message: 'maLines có id trùng nhau' })
   .refine((c) => hasUniqueIds(c.rsiLines), { message: 'rsiLines có id trùng nhau' });
@@ -39,6 +76,9 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     { id: 'ma-200', type: 'SMA', period: 200, color: '#f472b6', visible: true },
   ],
   rsiLines: [{ id: 'rsi-14', period: 14, color: '#a78bfa', visible: true }],
+  macd: DEFAULT_MACD_SETTINGS,
+  bollinger: DEFAULT_BOLLINGER_SETTINGS,
+  analysis: DEFAULT_ANALYSIS_CONFIG,
 };
 
 /** Mã hóa cấu hình chỉ báo thành 1 chuỗi query param — nền tảng cho "URL chia sẻ được". */

@@ -55,6 +55,35 @@ describe('encodeChartConfig / decodeChartConfig', () => {
     expect(decodeChartConfig(bad)).toBeNull();
   });
 
+  it('cấu hình CŨ (trước Đợt 6/7, không có macd/bollinger/analysis) vẫn giải mã được với default', () => {
+    const legacy = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [{ id: 'ma-20', type: 'SMA', period: 20, color: '#facc15', visible: true }],
+          rsiLines: [{ id: 'rsi-14', period: 14, color: '#a78bfa', visible: true }],
+        }),
+      ),
+    );
+    const decoded = decodeChartConfig(legacy);
+    expect(decoded).not.toBeNull();
+    expect(decoded?.macd).toEqual(DEFAULT_CHART_CONFIG.macd);
+    expect(decoded?.bollinger).toEqual(DEFAULT_CHART_CONFIG.bollinger);
+    expect(decoded?.analysis).toEqual(DEFAULT_CHART_CONFIG.analysis);
+  });
+
+  it('MACD fast >= slow trong URL bị sửa tay → trả null', () => {
+    const bad = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [],
+          rsiLines: [],
+          macd: { visible: true, fast: 26, slow: 12, signal: 9 },
+        }),
+      ),
+    );
+    expect(decodeChartConfig(bad)).toBeNull();
+  });
+
   it('id trùng nhau trong rsiLines (URL bị sửa tay) → trả null (F-006)', () => {
     const bad = encodeURIComponent(
       btoa(

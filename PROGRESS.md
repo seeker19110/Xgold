@@ -215,6 +215,35 @@
   - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (105/105, 20 file)
     · `build` ✅. 32/32 E2E vẫn xanh (không phá gì, kể cả sau khi sửa UI label).
 
+- ✅ **Đợt 6–8 — Indicator kết hợp phân tích + gợi ý mua/bán (2026-07-04, người dùng chốt "theo
+  đề xuất" trên kế hoạch `docs/plans/xgold-development-plan.md`, ADR-0007):**
+  - **Đợt 6:** `lib/indicators/macd.ts` (EMA12−EMA26, signal EMA9 seed SMA — khớp TradingView) +
+    `bollinger.ts` (SMA20 ± 2σ population, σ=0 không lỗi chia); 12 unit test **giá trị tính tay**
+    (MACD(2,3,2) trên [10,20,10,20,10] bằng phân số chính xác −5/3, 5/9, −25/27, signal −65/81,
+    histogram −10/81; BB(3,2) σ=√(2/3)). `ChartConfig` mở rộng `macd`/`bollinger`/`analysis` với
+    `.default()` — **tương thích ngược URL/localStorage cũ** (có test). Chart: BB overlay pane 0,
+    MACD pane phụ (tự dời pane khi thêm/bỏ RSI — v5 không có API dời series, gỡ + tạo lại).
+  - **Đợt 7:** engine `lib/analysis/` — 5 quy tắc R1–R5 (ma-cross, price-vs-ma, rsi-zone,
+    macd-cross, bb-touch), mỗi quy tắc pure function nhận `AnalysisParams` (chu kỳ tách tham số để
+    test tay bằng chu kỳ nhỏ); `combine.ts` tổng hợp trọng số (thiếu dữ liệu → trung tính đóng góp
+    0, |score| chỉ giảm — không đoán); `signalEvents` chỉ dùng nến ≤ index (không nhìn tương lai).
+    UI `analysis-panel.tsx`: gợi ý Mua/Bán/Trung lập + điểm + lý do từng quy tắc + bật/tắt +
+    trọng số + **disclaimer bắt buộc**; markers ▲Mua/▼Bán trên nến (`createSeriesMarkers` v5 —
+    xác nhận API trong bản 5.2.0 đã cài). 32 unit test tính tay cho rules/combine.
+  - **Đợt 8:** `lib/analysis/backtest.ts` (thống kê MÔ TẢ: đếm sự kiện theo năm UTC, không đo
+    lợi nhuận) + `npm run signal-stats` — chạy thật trên fixture: daily 5 Mua/6 Bán trên 180 nến,
+    1h 10 Mua/15 Bán trên 336 nến (tần suất hợp lý, không nhiễu).
+  - **Kiểm chứng THẬT bằng trình duyệt:** screenshot cả Dark blue + Light — nến + BB + markers
+    Mua/Bán + pane RSI + pane MACD (line/signal/histogram) + khối gợi ý khớp số trên chart (giá
+    3191.79 dưới SMA200 3203.69 → ▼ đúng). **Phát hiện 1 vấn đề môi trường (không phải bug code):**
+    headless_shell sandbox có locale `en-US@posix` không hợp lệ làm `Intl` của lightweight-charts
+    ném RangeError → canvas trống; đặt `locale: 'vi-VN'` trong context Playwright là vẽ đúng —
+    E2E/CI không ảnh hưởng. Môi trường E2E sandbox: browser rev 1228 thiếu, symlink sang 1194 sẵn
+    có (`/opt/pw-browsers`, shim `chrome-headless-shell-linux64`) — không đổi config repo.
+  - **Lighthouse thật cả 3 trang:** performance 1.0, a11y 1.0, CLS 0.000 (không tái phát F-010 dù
+    trang chart cao thêm), LCP ≤ 715ms. E2E 44/44 xanh (desktop+mobile; 5 test analysis mới + test
+    MACD/BB pane). Coverage 88.5%/76.34%/81.03%/90.46% — vượt sàn 70%. 5 cổng local đều đạt.
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
@@ -266,6 +295,11 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
 
 ## Tiếp theo
 
+- ✅ **Kế hoạch phát triển toàn diện sau MVP: ĐÃ CHỐT và ĐÃ THỰC THI Đợt 6–8 (2026-07-04)** —
+  người dùng duyệt "theo đề xuất" cả 5 điểm mục 6 của `docs/plans/xgold-development-plan.md`;
+  ADR-0007 ghi quyết định pure TS không thêm dependency. Kết quả xem mục "Đã xong" (Đợt 6–8).
+  Còn lại của kế hoạch: hướng A (deploy thật — chờ người dùng, xem mục dưới) và backlog cũ
+  (alerts nay đã có nền engine, thêm symbol, export CSV, so sánh SJC vs thế giới).
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển

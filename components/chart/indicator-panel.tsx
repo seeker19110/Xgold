@@ -1,6 +1,6 @@
 'use client';
 
-import type { ChartConfig } from '@/lib/indicators/config';
+import type { BollingerSettings, ChartConfig, MacdSettings } from '@/lib/indicators/config';
 import type { MaLine, MaType, RsiLine } from '@/lib/indicators/types';
 
 interface IndicatorPanelProps {
@@ -73,6 +73,23 @@ export function IndicatorPanel({ config, onChange }: IndicatorPanelProps) {
   function handlePeriodChange(raw: string, apply: (period: number) => void) {
     const period = Number(raw);
     if (Number.isFinite(period) && period > 0) apply(Math.floor(period));
+  }
+
+  // Chỉ áp thay đổi giữ được bất biến fast < slow (khớp ChartConfigSchema — cấu hình vi phạm sẽ
+  // bị Zod từ chối lúc giải mã URL/localStorage, làm mất toàn bộ cấu hình đã lưu).
+  function updateMacd(patch: Partial<MacdSettings>) {
+    const next = { ...config.macd, ...patch };
+    if (next.fast >= next.slow) return;
+    onChange({ ...config, macd: next });
+  }
+
+  function updateBollinger(patch: Partial<BollingerSettings>) {
+    onChange({ ...config, bollinger: { ...config.bollinger, ...patch } });
+  }
+
+  function handleMultiplierChange(raw: string) {
+    const multiplier = Number(raw);
+    if (Number.isFinite(multiplier) && multiplier > 0) updateBollinger({ multiplier });
   }
 
   return (
@@ -203,6 +220,96 @@ export function IndicatorPanel({ config, onChange }: IndicatorPanelProps) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="macd-panel-heading" className="flex flex-col gap-2">
+        <h2 id="macd-panel-heading" className="text-sm font-semibold">
+          MACD
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="checkbox"
+            checked={config.macd.visible}
+            onChange={(e) => updateMacd({ visible: e.target.checked })}
+            aria-label="Hiện/ẩn MACD"
+            className="h-5 w-5"
+          />
+          <label className="sr-only" htmlFor="macd-fast">
+            Chu kỳ EMA nhanh
+          </label>
+          <input
+            id="macd-fast"
+            type="number"
+            min={1}
+            value={config.macd.fast}
+            onChange={(e) => handlePeriodChange(e.target.value, (fast) => updateMacd({ fast }))}
+            className={`${inputClass} w-20`}
+          />
+          <label className="sr-only" htmlFor="macd-slow">
+            Chu kỳ EMA chậm
+          </label>
+          <input
+            id="macd-slow"
+            type="number"
+            min={2}
+            value={config.macd.slow}
+            onChange={(e) => handlePeriodChange(e.target.value, (slow) => updateMacd({ slow }))}
+            className={`${inputClass} w-20`}
+          />
+          <label className="sr-only" htmlFor="macd-signal">
+            Chu kỳ đường signal
+          </label>
+          <input
+            id="macd-signal"
+            type="number"
+            min={1}
+            value={config.macd.signal}
+            onChange={(e) => handlePeriodChange(e.target.value, (signal) => updateMacd({ signal }))}
+            className={`${inputClass} w-20`}
+          />
+          <span className="text-muted-foreground text-xs">nhanh / chậm / signal</span>
+        </div>
+      </section>
+
+      <section aria-labelledby="bb-panel-heading" className="flex flex-col gap-2">
+        <h2 id="bb-panel-heading" className="text-sm font-semibold">
+          Bollinger Bands
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="checkbox"
+            checked={config.bollinger.visible}
+            onChange={(e) => updateBollinger({ visible: e.target.checked })}
+            aria-label="Hiện/ẩn Bollinger Bands"
+            className="h-5 w-5"
+          />
+          <label className="sr-only" htmlFor="bb-period">
+            Chu kỳ Bollinger Bands
+          </label>
+          <input
+            id="bb-period"
+            type="number"
+            min={1}
+            value={config.bollinger.period}
+            onChange={(e) =>
+              handlePeriodChange(e.target.value, (period) => updateBollinger({ period }))
+            }
+            className={`${inputClass} w-20`}
+          />
+          <label className="sr-only" htmlFor="bb-multiplier">
+            Hệ số độ lệch chuẩn
+          </label>
+          <input
+            id="bb-multiplier"
+            type="number"
+            min={0.1}
+            step={0.1}
+            value={config.bollinger.multiplier}
+            onChange={(e) => handleMultiplierChange(e.target.value)}
+            className={`${inputClass} w-20`}
+          />
+          <span className="text-muted-foreground text-xs">chu kỳ / hệ số σ</span>
+        </div>
       </section>
     </div>
   );

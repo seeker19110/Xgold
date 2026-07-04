@@ -3,15 +3,21 @@
 import { useEffect, useRef } from 'react';
 import {
   createChart,
+  createSeriesMarkers,
   CandlestickSeries,
+  HistogramSeries,
   LineSeries,
   type IChartApi,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
+  type SeriesMarker,
+  type Time,
   type UTCTimestamp,
 } from 'lightweight-charts';
 import type { Candle } from '@/lib/candles/types';
 import type { ChartConfig } from '@/lib/indicators/config';
-import { sma, ema, rsi, type IndicatorPoint } from '@/lib/indicators';
+import { sma, ema, rsi, macd, bollinger, type IndicatorPoint } from '@/lib/indicators';
+import { signalEvents } from '@/lib/analysis';
 
 interface GoldChartProps {
   candles: readonly Candle[];
@@ -27,6 +33,15 @@ interface ThemeColors {
 }
 
 const RSI_PANE_INDEX = 1;
+
+// Màu cố định cho BB/MACD (không cấu hình màu ở v1 — khác Multi-MA/RSI vốn mỗi đường một màu).
+const BB_COLOR = '#94a3b8';
+const MACD_LINE_COLOR = '#38bdf8';
+const MACD_SIGNAL_COLOR = '#fb923c';
+const MACD_HIST_UP_COLOR = 'rgba(74, 222, 128, 0.6)';
+const MACD_HIST_DOWN_COLOR = 'rgba(248, 113, 113, 0.6)';
+const MARKER_BUY_COLOR = '#4ade80';
+const MARKER_SELL_COLOR = '#f87171';
 
 function readThemeColors(): ThemeColors {
   const style = getComputedStyle(document.documentElement);
@@ -69,6 +84,18 @@ export function GoldChart({ candles, config }: GoldChartProps) {
     upper: null,
     lower: null,
   });
+  const bbSeriesRef = useRef<{
+    basis: ISeriesApi<'Line'> | null;
+    upper: ISeriesApi<'Line'> | null;
+    lower: ISeriesApi<'Line'> | null;
+  }>({ basis: null, upper: null, lower: null });
+  const macdSeriesRef = useRef<{
+    line: ISeriesApi<'Line'> | null;
+    signal: ISeriesApi<'Line'> | null;
+    histogram: ISeriesApi<'Histogram'> | null;
+    paneIndex: number;
+  }>({ line: null, signal: null, histogram: null, paneIndex: -1 });
+  const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
 
   // Effect 1: dựng chart + series nến một lần; dọn dẹp khi unmount.
   useEffect(() => {
@@ -127,6 +154,9 @@ export function GoldChart({ candles, config }: GoldChartProps) {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       rsiSeriesRef.current.clear();
       rsiThresholdRef.current = { upper: null, lower: null };
+      bbSeriesRef.current = { basis: null, upper: null, lower: null };
+      macdSeriesRef.current = { line: null, signal: null, histogram: null, paneIndex: -1 };
+      markersRef.current = null;
     };
   }, []);
 
@@ -238,6 +268,145 @@ export function GoldChart({ candles, config }: GoldChartProps) {
       series.setData(data);
     }
   }, [candles, config.rsiLines]);
+
+  // Effect 5: Bollinger Bands — 3 đường (basis nét đứt, upper/lower) chồng lên pane giá (0).
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const bb = bbSeriesRef.current;
+    const { visible, period, multiplier } = config.bollinger;
+
+    if (visible && !bb.basis) {
+      const baseOpts = {
+        color: BB_COLOR,
+        lineWidth: 1 as const,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      };
+      bb.basis = chart.addSeries(LineSeries, { ...baseOpts, lineStyle: 2 });
+      bb.upper = chart.addSeries(LineSeries, baseOpts);
+      bb.lower = chart.addSeries(LineSeries, baseOpts);
+    }
+    if (!visible && bb.basis) {
+      for (const series of [bb.basis, bb.upper, bb.lower]) {
+        if (series) chart.removeSeries(series);
+      }
+      bbSeriesRef.current = { basis: null, upper: null, lower: null };
+      return;
+    }
+    if (!bb.basis || !bb.upper || !bb.lower) return;
+
+    const points = bollinger(candles, period, multiplier);
+    bb.basis.setData(
+      points.flatMap((p) =>
+        p.basis !== null ? [{ time: toUtcTimestamp(p.ts), value: p.basis }] : [],
+      ),
+    );
+    bb.upper.setData(
+      points.flatMap((p) =>
+        p.upper !== null ? [{ time: toUtcTimestamp(p.ts), value: p.upper }] : [],
+      ),
+    );
+    bb.lower.setData(
+      points.flatMap((p) =>
+        p.lower !== null ? [{ time: toUtcTimestamp(p.ts), value: p.lower }] : [],
+      ),
+    );
+  }, [candles, config.bollinger]);
+
+  // Effect 6: MACD — pane phụ riêng (sau pane RSI nếu có). Không có API dời series giữa các pane
+  // trong lightweight-charts v5 nên khi bố cục pane đổi (thêm/bỏ RSI) thì gỡ và tạo lại series —
+  // sự kiện hiếm, dữ liệu nhỏ, đổi lấy code đơn giản đúng.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const state = macdSeriesRef.current;
+    const { visible, fast, slow, signal } = config.macd;
+    const desiredPane = config.rsiLines.length > 0 ? RSI_PANE_INDEX + 1 : RSI_PANE_INDEX;
+
+    const removeAll = () => {
+      for (const series of [state.histogram, state.line, state.signal]) {
+        if (series) chart.removeSeries(series);
+      }
+      macdSeriesRef.current = { line: null, signal: null, histogram: null, paneIndex: -1 };
+    };
+
+    if (state.line && (!visible || state.paneIndex !== desiredPane)) removeAll();
+    if (!visible) return;
+
+    const current = macdSeriesRef.current;
+    if (!current.line) {
+      const lineOpts = { lineWidth: 2 as const, priceLineVisible: false, lastValueVisible: false };
+      current.histogram = chart.addSeries(
+        HistogramSeries,
+        { priceLineVisible: false },
+        desiredPane,
+      );
+      current.line = chart.addSeries(
+        LineSeries,
+        { ...lineOpts, color: MACD_LINE_COLOR },
+        desiredPane,
+      );
+      current.signal = chart.addSeries(
+        LineSeries,
+        { ...lineOpts, color: MACD_SIGNAL_COLOR },
+        desiredPane,
+      );
+      current.paneIndex = desiredPane;
+    }
+    if (!current.line || !current.signal || !current.histogram) return;
+
+    const points = macd(candles, fast, slow, signal);
+    current.line.setData(
+      points.flatMap((p) =>
+        p.macd !== null ? [{ time: toUtcTimestamp(p.ts), value: p.macd }] : [],
+      ),
+    );
+    current.signal.setData(
+      points.flatMap((p) =>
+        p.signal !== null ? [{ time: toUtcTimestamp(p.ts), value: p.signal }] : [],
+      ),
+    );
+    current.histogram.setData(
+      points.flatMap((p) =>
+        p.histogram !== null
+          ? [
+              {
+                time: toUtcTimestamp(p.ts),
+                value: p.histogram,
+                color: p.histogram >= 0 ? MACD_HIST_UP_COLOR : MACD_HIST_DOWN_COLOR,
+              },
+            ]
+          : [],
+      ),
+    );
+  }, [candles, config.macd, config.rsiLines.length]);
+
+  // Effect 7: markers tín hiệu Mua/Bán trên nến — các thời điểm phân loại tổng hợp của engine
+  // phân tích (lib/analysis) chuyển sang Mua/Bán. Tắt phân tích → xóa markers.
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    if (!series) return;
+
+    if (!markersRef.current) markersRef.current = createSeriesMarkers(series, []);
+
+    if (!config.analysis.enabled) {
+      markersRef.current.setMarkers([]);
+      return;
+    }
+
+    const markers: SeriesMarker<Time>[] = signalEvents(candles, config.analysis).map((event) => ({
+      time: toUtcTimestamp(event.ts),
+      position: event.direction === 'buy' ? 'belowBar' : 'aboveBar',
+      color: event.direction === 'buy' ? MARKER_BUY_COLOR : MARKER_SELL_COLOR,
+      shape: event.direction === 'buy' ? 'arrowUp' : 'arrowDown',
+      text: event.direction === 'buy' ? 'Mua' : 'Bán',
+    }));
+    markersRef.current.setMarkers(markers);
+  }, [candles, config.analysis]);
 
   return (
     <div

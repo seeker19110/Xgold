@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { AnalysisPanel } from '@/components/chart/analysis-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
 import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
@@ -70,6 +71,12 @@ export function ChartPageClient() {
       {status === 'success' && candles.length > 0 && (
         <>
           <GoldChart candles={candles} config={config} />
+          <AnalysisPanel
+            candles={candles}
+            timeframe={timeframe}
+            config={config.analysis}
+            onChange={(analysis) => setConfig({ ...config, analysis })}
+          />
           <IndicatorPanel config={config} onChange={setConfig} />
         </>
       )}
