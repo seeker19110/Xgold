@@ -1,6 +1,7 @@
 # Kế hoạch phát triển toàn diện Xgold — sau MVP
 
-> **Trạng thái: ĐỀ XUẤT — chờ người dùng chốt** (xem mục 6). Lập ngày 2026-07-04 theo `/consult`
+> **Trạng thái: ĐÃ CHỐT — người dùng duyệt "theo đề xuất" (2026-07-04), cả 5 điểm mục 6 theo
+> phương án đề xuất.** Quyết định công nghệ ghi ở ADR-0007. Lập ngày 2026-07-04 theo `/consult`
 > (brownfield): rà soát kế hoạch MVP `xgold-mvp-plan.md` đối chiếu thực tế, rồi lên lộ trình kế tiếp.
 > Trọng tâm yêu cầu mới: **indicator kết hợp phân tích và gợi ý mua/bán** (mục 4 — ghi chú phát
 > triển chi tiết). Mọi phiên bản trong tài liệu này đã xác minh nguồn sống ngày 2026-07-04.

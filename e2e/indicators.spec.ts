@@ -46,6 +46,27 @@ test('cấu hình giữ nguyên khi dán lại URL đã chia sẻ (tab mới)', 
   await expect(page2.getByRole('button', { name: /^Xóa đường/ })).toHaveCount(4);
 });
 
+test('bật MACD tạo pane phụ mới; bật Bollinger Bands chart không vỡ', async ({ page }) => {
+  await page.goto('/chart/xauusd');
+  await expect(page.getByRole('heading', { name: 'MACD', exact: true })).toBeVisible();
+
+  // lightweight-charts vẽ mỗi pane bằng canvas riêng — pane MACD mới làm tăng số canvas.
+  const before = await page.locator('canvas').count();
+  await page.getByRole('checkbox', { name: 'Hiện/ẩn MACD' }).check();
+  await expect(async () => {
+    expect(await page.locator('canvas').count()).toBeGreaterThan(before);
+  }).toPass();
+
+  await page.getByRole('checkbox', { name: 'Hiện/ẩn Bollinger Bands' }).check();
+  await expect(page.locator('canvas').first()).toBeVisible();
+
+  // Tắt MACD → pane phụ gỡ ra, số canvas quay về như trước.
+  await page.getByRole('checkbox', { name: 'Hiện/ẩn MACD' }).uncheck();
+  await expect(async () => {
+    expect(await page.locator('canvas').count()).toBe(before);
+  }).toPass();
+});
+
 test('panel chỉ báo không có vi phạm accessibility nghiêm trọng', async ({ page }) => {
   await page.goto('/chart/xauusd');
   await expect(page.getByRole('heading', { name: 'Multi-MA' })).toBeVisible();
