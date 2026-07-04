@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { resample } from '@/lib/candles/resample';
 import { TIMEFRAMES, type BaseTimeframe, type Candle, type Timeframe } from '@/lib/candles/types';
-import { SAMPLE_XAUUSD_DAILY, SAMPLE_XAUUSD_HOURLY } from '@/lib/fixtures/xauusd';
+import { getInstrumentBySymbol, type Instrument } from '@/lib/instruments';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,9 +31,8 @@ function baseTimeframeOf(timeframe: Timeframe): BaseTimeframe {
   return timeframe === '4h' ? '1h' : timeframe === '1W' ? '1D' : timeframe;
 }
 
-function sampleBaseCandles(symbol: string, base: BaseTimeframe): Candle[] {
-  if (symbol !== 'XAUUSD') return [];
-  return base === '1h' ? [...SAMPLE_XAUUSD_HOURLY] : [...SAMPLE_XAUUSD_DAILY];
+function sampleBaseCandles(instrument: Instrument, base: BaseTimeframe): Candle[] {
+  return base === '1h' ? [...instrument.sample.hourly] : [...instrument.sample.daily];
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -46,28 +45,35 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   const { symbol, timeframe } = parsed.data;
-  const base = baseTimeframeOf(timeframe);
 
+  // Chỉ phục vụ mã có trong registry (nguồn sự thật) — chặn mã lạ NGAY, trước khi chạm CSDL, cho cả
+  // chế độ Supabase lẫn dữ liệu mẫu (nhất quán 404 ở mọi nhánh).
+  const instrument = getInstrumentBySymbol(symbol);
+  if (!instrument) {
+    return NextResponse.json({ error: `Không tìm thấy symbol '${symbol}'` }, { status: 404 });
+  }
+
+  const base = baseTimeframeOf(timeframe);
   const supabase = getSupabaseClient();
 
   let baseCandles: Candle[];
   let source: 'supabase' | 'sample';
 
   if (supabase) {
-    const { data: instrument, error: instrumentError } = await supabase
+    const { data: dbInstrument, error: instrumentError } = await supabase
       .from('instruments')
       .select('id')
       .eq('symbol', symbol)
       .single();
 
-    if (instrumentError || !instrument) {
+    if (instrumentError || !dbInstrument) {
       return NextResponse.json({ error: `Không tìm thấy symbol '${symbol}'` }, { status: 404 });
     }
 
     const { data, error } = await supabase
       .from('candles')
       .select('ts, open, high, low, close, volume')
-      .eq('instrument_id', instrument.id)
+      .eq('instrument_id', dbInstrument.id)
       .eq('timeframe', base)
       .order('ts', { ascending: true })
       .limit(2000);
@@ -85,7 +91,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     baseCandles = rowsParsed.data;
     source = 'supabase';
   } else {
-    baseCandles = sampleBaseCandles(symbol, base);
+    baseCandles = sampleBaseCandles(instrument, base);
     source = 'sample';
   }
 

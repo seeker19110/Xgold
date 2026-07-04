@@ -1,6 +1,6 @@
 /**
- * Backfill lịch sử XAU/USD vào Supabase — chạy TAY một lần (không phải cron).
- * Dùng: npm run backfill
+ * Backfill lịch sử vào Supabase cho MỌI mã trong registry (`lib/instruments.ts`) — chạy TAY một lần
+ * (không phải cron). Dùng: npm run backfill
  * Cần biến môi trường: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, TWELVEDATA_API_KEY.
  *
  * - Daily ('1D'): Stooq (không cần key) — lấy toàn bộ lịch sử có sẵn.
@@ -13,8 +13,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { StooqProvider, TwelveDataProvider, ProviderError } from '@/lib/providers';
 import type { BaseTimeframe, Candle } from '@/lib/candles/types';
 import type { Database } from '@/lib/supabase/database.types';
+import { INSTRUMENTS } from '@/lib/instruments';
 
-const SYMBOL = 'XAUUSD';
 const UPSERT_BATCH_SIZE = 500;
 
 function requireEnv(name: string): string {
@@ -105,28 +105,35 @@ async function main(): Promise<void> {
   const twelveDataApiKey = requireEnv('TWELVEDATA_API_KEY');
 
   const supabase = createClient<Database>(supabaseUrl, serviceRoleKey);
-
-  const { data: instrument, error } = await supabase
-    .from('instruments')
-    .select('id')
-    .eq('symbol', SYMBOL)
-    .single();
-  if (error || !instrument) {
-    throw new Error(
-      `Không tìm thấy instrument '${SYMBOL}' — chạy migration trước. (${error?.message})`,
-    );
-  }
-
   const stooq = new StooqProvider();
   const twelveData = new TwelveDataProvider({ apiKey: twelveDataApiKey });
 
-  await runBackfillTask(supabase, instrument.id as string, 'stooq', '1D', () =>
-    stooq.fetchCandles({ symbol: SYMBOL, timeframe: '1D' }),
-  );
+  for (const instrument of INSTRUMENTS) {
+    const symbol = instrument.symbol;
+    console.log(`\n############ ${instrument.label} (${symbol}) ############`);
 
-  await runBackfillTask(supabase, instrument.id as string, 'twelvedata', '1h', () =>
-    twelveData.fetchCandles({ symbol: SYMBOL, timeframe: '1h', outputsize: 5000 }),
-  );
+    const { data: dbInstrument, error } = await supabase
+      .from('instruments')
+      .select('id')
+      .eq('symbol', symbol)
+      .single();
+    if (error || !dbInstrument) {
+      // Một mã thiếu trong CSDL không được chặn các mã khác — ghi lỗi rồi bỏ qua (chạy migration seed).
+      console.error(
+        `  Bỏ qua ${symbol}: không tìm thấy instrument — chạy migration trước. (${error?.message})`,
+      );
+      continue;
+    }
+    const instrumentId = dbInstrument.id as string;
+
+    await runBackfillTask(supabase, instrumentId, 'stooq', '1D', () =>
+      stooq.fetchCandles({ symbol, timeframe: '1D' }),
+    );
+
+    await runBackfillTask(supabase, instrumentId, 'twelvedata', '1h', () =>
+      twelveData.fetchCandles({ symbol, timeframe: '1h', outputsize: 5000 }),
+    );
+  }
 
   console.log('\nHoàn tất backfill.');
 }

@@ -6,9 +6,10 @@
 
 ## Giai đoạn hiện tại
 
-- GĐ 4 — Phát triển. MVP Đợt 0–4 đã xong (bootstrap, nền dữ liệu, chart, Multi-MA/Multi-RSI, hoàn
-  thiện). Còn lại là việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion)
-  — xem "Tiếp theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9.
+- GĐ 4 — Phát triển. MVP Đợt 0–4 + Đợt 5 (vàng trong nước) + Đợt 6–8 (MACD/Bollinger + engine phân
+  tích gợi ý mua/bán) + **Đợt 9 (đa symbol: XAU/USD + XAG/USD, ADR-0008)** đã xong. Còn lại là việc
+  chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion) — xem "Tiếp theo". Xem
+  lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9, `docs/plans/xgold-development-plan.md`.
 
 ## Đã xong
 
@@ -244,6 +245,36 @@
     trang chart cao thêm), LCP ≤ 715ms. E2E 44/44 xanh (desktop+mobile; 5 test analysis mới + test
     MACD/BB pane). Coverage 88.5%/76.34%/81.03%/90.46% — vượt sàn 70%. 5 cổng local đều đạt.
 
+- ✅ **Đợt 9 — Đa symbol (2026-07-04, người dùng chốt "làm toàn bộ" bước tiếp theo, ADR-0008):**
+  - **Registry mã** `lib/instruments.ts` — nguồn sự thật đa symbol (symbol/slug/label/name/chartLabel/
+    type/currency/sample). Thêm **XAG/USD (bạc)** làm mã thứ hai. Toàn bộ `lib/indicators/` + engine
+    `lib/analysis/` + `resample` **giữ nguyên** (vốn symbol-agnostic — nhận `Candle[]`).
+  - **Route động** `app/chart/[symbol]/` thay route tĩnh `xauusd` (`dynamicParams=false` +
+    `generateStaticParams` từ registry → slug hợp lệ prerender SSG, slug lạ **404 do framework**).
+    `/chart/xauusd` giữ nguyên hoạt động → **mọi E2E cũ không đổi**. `SymbolSwitcher` điều hướng giữa
+    mã (Link, aria-current), trang chủ + sitemap liệt kê mã từ registry. `GoldChart` nhận prop `label`
+    (aria-label theo mã, hết hard-code "XAU/USD").
+  - **Fixtures:** tách generator dùng chung `lib/fixtures/generate.ts` (`makeSampleSet`), giữ nguyên
+    export/giá trị mẫu XAU/USD (seed 1/2, giá 3300/3350 — test cũ không đổi), thêm `xagusd.ts` (bạc
+    ~40 USD/oz, seed 3/4). API `/api/candles` đọc mẫu theo registry, validate symbol → **404 mã lạ**
+    ở cả nhánh Supabase lẫn mẫu.
+  - **Provider:** `SYMBOL_MAP` thêm XAG/USD (Twelve Data `XAG/USD`, Stooq `xagusd`) + test. Ingestion
+    đa mã: `backfill.ts` lặp theo registry; Edge Function `ingest-gold` lặp mảng `INSTRUMENTS` nội
+    tuyến (đồng bộ thủ công registry ↔ Deno — ghi rõ ở README); migration seed mới
+    `20260704090000_add_xagusd_instrument.sql` (idempotent, không sửa migration cũ). **XAG/USD
+    ingestion thật vẫn thuộc nợ FT-09/10** (mạng sandbox chặn) — như XAU/USD.
+  - **Kiểm chứng THẬT bằng trình duyệt:** screenshot `/chart/xagusd` cả Dark blue + Light — nến bạc
+    dải giá ~41–45, SMA 20/50/200, markers Mua/Bán, pane RSI, khối gợi ý **khớp số bạc** (giá 42.82
+    dưới SMA200 43.52 → thiên giảm; RSI 17.9 < 30 quá bán; chạm băng BB dưới). SymbolSwitcher đúng
+    trạng thái active. API thật: `?symbol=XAGUSD` trả nến mẫu ~40, `?symbol=NOPE` → 404.
+  - **E2E** `e2e/multi-symbol.spec.ts` (4 test: render bạc, chuyển mã XAU→XAG, 404 mã lạ, axe) —
+    chạy thật **52/52 xanh** (desktop+mobile, gồm 44 test cũ không phá). 5 cổng local đều đạt:
+    `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (170/170, 28 file) · `build` ✅. Coverage
+    89.5%/77.33%/82.78%/91.37% — vượt sàn 70%.
+  - Môi trường E2E sandbox (không đổi config repo): symlink browser rev 1228→1194 + shim
+    `chrome-headless-shell-linux64`; config Playwright tạm cục bộ đặt `locale: 'vi-VN'` (tránh Intl
+    RangeError của lightweight-charts trong headless_shell) — đã xoá trước khi commit.
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
@@ -299,7 +330,9 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   người dùng duyệt "theo đề xuất" cả 5 điểm mục 6 của `docs/plans/xgold-development-plan.md`;
   ADR-0007 ghi quyết định pure TS không thêm dependency. Kết quả xem mục "Đã xong" (Đợt 6–8).
   Còn lại của kế hoạch: hướng A (deploy thật — chờ người dùng, xem mục dưới) và backlog cũ
-  (alerts nay đã có nền engine, thêm symbol, export CSV, so sánh SJC vs thế giới).
+  (alerts nay đã có nền engine, ~~thêm symbol~~ **✅ XAG/USD xong (Đợt 9)**, export CSV, so sánh SJC
+  vs thế giới quy đổi — nay rẻ hơn vì chỉ cần thêm mã USD/VND vào registry). Backlog symbol còn lại:
+  DXY, USD/VND.
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển

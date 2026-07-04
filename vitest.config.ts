@@ -43,12 +43,13 @@ export default defineConfig({
         // che bằng E2E: e2e/smoke.spec.ts (/), e2e/chart.spec.ts (/chart/xauusd),
         // e2e/domestic-gold.spec.ts (/gia-vang-trong-nuoc).
         'app/page.tsx',
-        'app/chart/xauusd/page.tsx',
+        'app/chart/[symbol]/page.tsx',
         'app/gia-vang-trong-nuoc/page.tsx',
         // Component thuần trình bày/tổ hợp (không có nhánh logic riêng đáng unit test) — che bằng
         // cùng bộ E2E ở trên (indicators.spec.ts test trực tiếp thao tác trên indicator-panel.tsx).
         'components/chart/indicator-panel.tsx',
         'components/chart/timeframe-switcher.tsx',
+        'components/chart/symbol-switcher.tsx',
         'components/domestic-gold/price-table.tsx',
         'components/domestic-gold/freshness-badge.tsx',
       ],

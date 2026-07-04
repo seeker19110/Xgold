@@ -33,6 +33,17 @@ describe('StooqProvider', () => {
     ]);
   });
 
+  it('map XAGUSD (bạc) sang symbol Stooq "xagusd"', async () => {
+    const csv = 'Date,Open,High,Low,Close,Volume\n2021-10-29,24.1,24.5,23.9,24.3,1000';
+    const fetchImpl = vi.fn().mockResolvedValue(textResponse(csv));
+    const provider = new StooqProvider({ fetchImpl });
+
+    await provider.fetchCandles({ symbol: 'XAGUSD', timeframe: '1D' });
+
+    const calledUrl = fetchImpl.mock.calls[0]?.[0] as URL;
+    expect(calledUrl.searchParams.get('s')).toBe('xagusd');
+  });
+
   it('trả mảng rỗng khi Stooq báo "N/D" (không có dữ liệu)', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(textResponse('N/D'));
     const provider = new StooqProvider({ fetchImpl });
