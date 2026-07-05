@@ -17,6 +17,10 @@ import { z } from 'npm:zod@4';
 const INSTRUMENTS: ReadonlyArray<{ symbol: string; twelveDataSymbol: string }> = [
   { symbol: 'XAUUSD', twelveDataSymbol: 'XAU/USD' },
   { symbol: 'XAGUSD', twelveDataSymbol: 'XAG/USD' },
+  // DXY/USDVND: mã Twelve Data suy từ tài liệu công khai, CHƯA gọi API thật xác nhận (xem
+  // lib/providers/twelvedata.ts và ADR-0009) — bắt buộc test curl thật trước khi bật pg_cron.
+  { symbol: 'DXY', twelveDataSymbol: 'DXY' },
+  { symbol: 'USDVND', twelveDataSymbol: 'USD/VND' },
 ];
 
 // outputsize nhỏ có chủ đích: chạy định kỳ chỉ cần vài nến gần nhất để bắt kịp (đủ bù khi có 1-2

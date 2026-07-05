@@ -72,6 +72,19 @@ describe('StooqProvider', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it('ném ProviderError cho DXY/USDVND (chưa xác nhận được ticker Stooq — xem ADR-0009)', async () => {
+    const fetchImpl = vi.fn();
+    const provider = new StooqProvider({ fetchImpl });
+
+    await expect(provider.fetchCandles({ symbol: 'DXY', timeframe: '1D' })).rejects.toThrow(
+      ProviderError,
+    );
+    await expect(provider.fetchCandles({ symbol: 'USDVND', timeframe: '1D' })).rejects.toThrow(
+      ProviderError,
+    );
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it('ném ProviderError khi symbol không được hỗ trợ', async () => {
     const fetchImpl = vi.fn();
     const provider = new StooqProvider({ fetchImpl });

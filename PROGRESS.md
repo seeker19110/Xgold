@@ -275,6 +275,34 @@
     `chrome-headless-shell-linux64`; config Playwright tạm cục bộ đặt `locale: 'vi-VN'` (tránh Intl
     RangeError của lightweight-charts trong headless_shell) — đã xoá trước khi commit.
 
+## Đã xong (tiếp)
+
+- ✅ **Thêm mã DXY + USD/VND (2026-07-05, người dùng chọn hạng mục backlog "Thêm mã DXY/USD-VND",
+  ADR-0009):**
+  - `lib/instruments.ts`: mở rộng `Instrument.type`/`currency`, thêm 2 mục registry (DXY: index/USD
+    quy ước; USDVND: forex/VND) dùng chung toàn bộ hạ tầng đa symbol từ Đợt 9 (route động, sitemap,
+    trang chủ, API `/api/candles`) — không đổi kiến trúc.
+  - `lib/fixtures/dxy.ts` (seed 5/6, giá quanh 100 điểm), `lib/fixtures/usdvnd.ts` (seed 7/8, giá
+    quanh 26.300 VND) — cùng generator dùng chung `makeSampleSet`.
+  - **Nghiên cứu mã provider có kỷ luật** (mạng sandbox vẫn chặn trực tiếp `api.twelvedata.com` +
+    `stooq.com`, dùng `WebSearch` tra cứu gián tiếp): Twelve Data thêm `DXY`/`USD/VND` vào
+    `SYMBOL_MAP` (độ tin cậy vừa phải, gắn nhãn CHƯA xác nhận + bắt buộc field-verification kỹ hơn
+    trước khi bật `pg_cron`) — nhưng **chủ động KHÔNG đoán ticker Stooq** vì tìm thấy 2 khả năng khác
+    nhau cho DXY (`dx.f` hợp đồng tương lai vs `usd_i` chỉ số) và không có bằng chứng cho USD/VND;
+    đoán sai ở Stooq rủi ro cao hơn Twelve Data vì có thể âm thầm lấy nhầm loại tài sản (không bị
+    Zod/test bắt được). Quyết định + lý do đầy đủ ở ADR-0009.
+  - Seed migration `20260705070000_add_dxy_usdvnd_instruments.sql` (idempotent), cập nhật mảng
+    `INSTRUMENTS` trong Edge Function `ingest-gold` + README (cảnh báo kiểm tra kỹ 2 mã mới).
+  - **Kiểm chứng THẬT bằng trình duyệt:** screenshot `/chart/dxy` và `/chart/usdvnd` — nến + SMA +
+    RSI + khối gợi ý phân tích hiển thị đúng, giá trị hợp lý (DXY ~100–106, USD/VND ~26.000–28.000).
+  - `e2e/dxy-usdvnd.spec.ts` (4 test: render DXY, render USD/VND, thanh chuyển mã đủ 4 mã, axe) —
+    chạy thật, 60/60 E2E xanh toàn repo (desktop+mobile, gồm test cũ không phá).
+  - Sửa 1 test cũ bị lỗi thời do đổi trạng thái: `lib/instruments.test.ts` và
+    `lib/providers/twelvedata.test.ts` từng dùng `'DXY'` làm ví dụ "mã không hỗ trợ" — đổi sang
+    `'NOPE'` vì DXY nay đã hỗ trợ.
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (173/173, 28 file)
+    · `build` ✅ (4 route SSG: xauusd/xagusd/dxy/usdvnd).
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
@@ -330,9 +358,9 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   người dùng duyệt "theo đề xuất" cả 5 điểm mục 6 của `docs/plans/xgold-development-plan.md`;
   ADR-0007 ghi quyết định pure TS không thêm dependency. Kết quả xem mục "Đã xong" (Đợt 6–8).
   Còn lại của kế hoạch: hướng A (deploy thật — chờ người dùng, xem mục dưới) và backlog cũ
-  (alerts nay đã có nền engine, ~~thêm symbol~~ **✅ XAG/USD xong (Đợt 9)**, export CSV, so sánh SJC
-  vs thế giới quy đổi — nay rẻ hơn vì chỉ cần thêm mã USD/VND vào registry). Backlog symbol còn lại:
-  DXY, USD/VND.
+  (alerts nay đã có nền engine, ~~thêm symbol~~ **✅ XAG/USD (Đợt 9) + DXY/USD-VND (2026-07-05,
+  ADR-0009) xong**, export CSV, so sánh SJC vs thế giới quy đổi — nay chỉ còn phần tính toán/UI so
+  sánh, mã USD/VND đã có sẵn).
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
@@ -388,6 +416,10 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   `lib/providers/*` chỉ kiểm bằng fixture (đã unit test kỹ); `supabase/functions/ingest-gold/index.ts`
   hoàn toàn chưa chạy thử — làm theo README cùng thư mục (test bằng `curl` thật) NGAY sau khi deploy,
   trước khi bật lịch `pg_cron`; `scripts/backfill.ts` mới dry-run được phần import/env, chưa gọi API thật.
+- **Mã Twelve Data của DXY/USD-VND đặc biệt chưa chắc chắn** (ADR-0009, độ tin cậy thấp hơn các mã
+  khác — suy từ tìm kiếm gián tiếp, không đọc được tài liệu gốc do mạng chặn): kiểm tra kỹ hơn ở bước
+  field-verification. Stooq **chủ động chưa hỗ trợ** 2 mã này (ticker chưa xác nhận được, xem
+  `lib/providers/stooq.ts`) — nếu cần backfill lịch sử dài, phải xác nhận ticker thật trước khi thêm.
 - `lib/supabase/database.types.ts` viết tay — khi có project Supabase thật, chạy
   `supabase gen types typescript` và đối chiếu lại (không tự động, không sinh migration mới).
 - Migration đã test bằng Postgres 16 thuần + role giả lập `anon`/`authenticated`/`service_role` — nên

@@ -1,6 +1,8 @@
 import type { Candle } from '@/lib/candles/types';
 import { SAMPLE_XAUUSD_DAILY, SAMPLE_XAUUSD_HOURLY } from '@/lib/fixtures/xauusd';
 import { SAMPLE_XAGUSD_DAILY, SAMPLE_XAGUSD_HOURLY } from '@/lib/fixtures/xagusd';
+import { SAMPLE_DXY_DAILY, SAMPLE_DXY_HOURLY } from '@/lib/fixtures/dxy';
+import { SAMPLE_USDVND_DAILY, SAMPLE_USDVND_HOURLY } from '@/lib/fixtures/usdvnd';
 
 /**
  * Registry mã (instrument) — NGUỒN SỰ THẬT DUY NHẤT cho danh sách mã Xgold theo dõi. Mọi nơi cần
@@ -22,9 +24,10 @@ export interface Instrument {
   /** Cụm mô tả cho aria-label chart, vd 'giá vàng XAU/USD' (ghép vào "Chart nến {chartLabel} …"). */
   chartLabel: string;
   /** Loại tài sản (khớp cột `instruments.type`). */
-  type: 'commodity';
-  /** Tiền tệ báo giá (khớp cột `instruments.currency`). */
-  currency: 'USD';
+  type: 'commodity' | 'index' | 'forex';
+  /** Tiền tệ báo giá (khớp cột `instruments.currency`). Với DXY (chỉ số, không có đơn vị tiền tệ
+   * thật) dùng 'USD' theo quy ước — chỉ số này đo sức mạnh đồng đô la. */
+  currency: 'USD' | 'VND';
   /** Dữ liệu MẪU (chưa có Supabase / test) — daily cho 1D/1W, hourly cho 1h/4h. */
   sample: { daily: readonly Candle[]; hourly: readonly Candle[] };
 }
@@ -49,6 +52,26 @@ export const INSTRUMENTS: readonly Instrument[] = [
     type: 'commodity',
     currency: 'USD',
     sample: { daily: SAMPLE_XAGUSD_DAILY, hourly: SAMPLE_XAGUSD_HOURLY },
+  },
+  {
+    symbol: 'DXY',
+    slug: 'dxy',
+    label: 'DXY',
+    name: 'Chỉ số đô la Mỹ (DXY)',
+    chartLabel: 'chỉ số đô la Mỹ DXY',
+    type: 'index',
+    currency: 'USD',
+    sample: { daily: SAMPLE_DXY_DAILY, hourly: SAMPLE_DXY_HOURLY },
+  },
+  {
+    symbol: 'USDVND',
+    slug: 'usdvnd',
+    label: 'USD/VND',
+    name: 'Tỷ giá USD/VND',
+    chartLabel: 'tỷ giá USD/VND',
+    type: 'forex',
+    currency: 'VND',
+    sample: { daily: SAMPLE_USDVND_DAILY, hourly: SAMPLE_USDVND_HOURLY },
   },
 ];
 

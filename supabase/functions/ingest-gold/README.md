@@ -1,7 +1,13 @@
 # Edge Function: `ingest-gold`
 
 Thu thập nến mới nhất (1h + 1D) cho **mọi mã** trong mảng `INSTRUMENTS` ở đầu `index.ts`
-(hiện: XAU/USD + XAG/USD) từ Twelve Data, chạy định kỳ qua `pg_cron` + `pg_net`.
+(hiện: XAU/USD, XAG/USD, DXY, USD/VND) từ Twelve Data, chạy định kỳ qua `pg_cron` + `pg_net`.
+
+> ⚠️ Mã Twelve Data của DXY (`DXY`) và USD/VND (`USD/VND`) suy từ tài liệu công khai + tìm kiếm, KHÔNG
+> gọi API thật xác nhận được (mạng sandbox chặn — xem ADR-0009). Ở Bước 3, kiểm tra riêng 2 mã này
+> KỸ hơn: nếu `status: "error"` hoặc dữ liệu trả về sai định dạng/đơn vị (vd DXY không phải quanh
+> 95–110 điểm, USD/VND không phải quanh 24.000–27.000), sửa lại `twelveDataSymbol` trong `INSTRUMENTS`
+> trước khi bật pg_cron cho 2 mã này.
 
 > ⚠️ Mảng `INSTRUMENTS` phải giữ **đồng bộ thủ công** với registry `lib/instruments.ts` (Deno không
 > import được path alias `@/…`) và với seed migration `instruments`. Thêm mã: thêm một dòng ở cả ba
