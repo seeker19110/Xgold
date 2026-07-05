@@ -39,6 +39,12 @@ export default function HomePage() {
         >
           Giá vàng trong nước
         </Link>
+        <Link
+          href="/so-sanh-gia-vang"
+          className="border-border text-foreground w-fit rounded-lg border px-4 py-2 font-medium"
+        >
+          So sánh giá trong nước &amp; thế giới
+        </Link>
       </div>
     </main>
   );

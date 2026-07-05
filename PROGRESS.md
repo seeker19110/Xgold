@@ -303,6 +303,36 @@
   - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (173/173, 28 file)
     · `build` ✅ (4 route SSG: xauusd/xagusd/dxy/usdvnd).
 
+- ✅ **So sánh giá vàng SJC/BTMC vs thế giới quy đổi (2026-07-05, người dùng chọn hạng mục backlog
+  "So sánh SJC vs thế giới"):**
+  - `lib/gold-compare/convert.ts`: quy đổi giá vàng thế giới (USD/troy oz) sang VND/lượng
+    (1 lượng = 37,5g, 1 troy oz = 31,1034768g — hằng số quốc tế chính xác, không phải số đo gần
+    đúng) rồi so với giá trong nước (buy/sell). Pure function, không phụ thuộc fetch. 3 unit test
+    **giá trị tính tay bằng máy tính độc lập** (không copy output của chính hàm đang test): quy đổi
+    cơ bản + ca trong nước đắt hơn thế giới (diff dương) + ca trong nước rẻ hơn (diff âm).
+  - `components/gold-compare/use-gold-compare.ts`: gộp 3 nguồn (`/api/domestic-gold` +
+    `/api/candles?symbol=XAUUSD&timeframe=1D` + `/api/candles?symbol=USDVND&timeframe=1D`, đều đã có
+    sẵn từ Đợt 1/2/9 — không thêm API mới), lấy nến đóng cửa GẦN NHẤT làm mốc giá thế giới. Thiếu bất
+    kỳ nguồn nào (mảng nến rỗng) → trả `rows` rỗng, KHÔNG đoán giá trị (cùng nguyên tắc pure rule ở
+    `lib/analysis/`). Mốc thời gian hiển thị lấy nến **CŨ HƠN** trong 2 nến XAU/USD và USD/VND (thận
+    trọng — không tự nhận "mới hơn" thực tế của nó). 3 unit test (thành công, thiếu nến, 1 nguồn lỗi).
+  - `components/gold-compare/compare-table.tsx` + trang `app/so-sanh-gia-vang/` (page + page-client,
+    4 trạng thái UI, link từ trang chủ + `app/sitemap.ts`).
+  - **Chạy axe thật, phát hiện & vá 1 lỗi a11y thật ở mobile viewport:** bảng 4 cột tràn ngang ở
+    375px → axe `scrollable-region-focusable` (vùng cuộn ngang phải nhận được focus bàn phím) —
+    thêm `role="region"` + `aria-label` + `tabIndex={0}` vào container cuộn; xác nhận lại axe 0 vi
+    phạm cả 2 viewport (bảng ở `gia-vang-trong-nuoc` chỉ 3 cột nên chưa từng tràn, không gặp lỗi
+    này — không cần sửa ngược).
+  - `e2e/gold-compare.spec.ts` (4 test: hiển thị bảng + mốc thời gian, chênh lệch % từng dòng, axe,
+    điều hướng từ trang chủ) — chạy thật, xanh cả desktop+mobile.
+  - **Môi trường E2E sandbox** (không đổi config repo, hết sau phiên): browser rev 1228 thiếu, tự
+    symlink sang rev 1194 sẵn có + shim tên file `chrome-headless-shell` (cùng vấn đề đã ghi ở Đợt 6–8
+    — môi trường sandbox khác, không phải lỗi code).
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (185/185, 32 file)
+    · `build` ✅ (5 trang tĩnh mới: `so-sanh-gia-vang`). E2E 72/72 xanh (desktop+mobile) trừ 1 lần
+    flake đã biết ở `indicators.spec.ts` (locale POSIX sandbox — xem "Nợ kỹ thuật", không liên quan
+    tính năng này, xác nhận lại pass khi chạy riêng).
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
@@ -359,8 +389,8 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   ADR-0007 ghi quyết định pure TS không thêm dependency. Kết quả xem mục "Đã xong" (Đợt 6–8).
   Còn lại của kế hoạch: hướng A (deploy thật — chờ người dùng, xem mục dưới) và backlog cũ
   (alerts nay đã có nền engine, ~~thêm symbol~~ **✅ XAG/USD (Đợt 9) + DXY/USD-VND (2026-07-05,
-  ADR-0009) xong**, export CSV, so sánh SJC vs thế giới quy đổi — nay chỉ còn phần tính toán/UI so
-  sánh, mã USD/VND đã có sẵn).
+  ADR-0009) xong**, export CSV, ~~so sánh SJC vs thế giới quy đổi~~ **✅ xong (2026-07-05, xem
+  `lib/gold-compare/`)**).
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
