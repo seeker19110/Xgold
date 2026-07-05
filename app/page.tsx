@@ -10,8 +10,9 @@ export default function HomePage() {
         <ThemeToggle />
       </div>
       <p className="text-muted-foreground">
-        Theo dõi giá kim loại quý (vàng XAU/USD, bạc XAG/USD) với chart nến kiểu TradingView, đường
-        trung bình động (Multi-MA), RSI, MACD, Bollinger Bands và gợi ý phân tích kỹ thuật.
+        Theo dõi giá kim loại quý (vàng XAU/USD, bạc XAG/USD), chỉ số đô la Mỹ (DXY) và tỷ giá
+        USD/VND với chart nến kiểu TradingView, đường trung bình động (Multi-MA), RSI, MACD,
+        Bollinger Bands và gợi ý phân tích kỹ thuật.
       </p>
 
       <section aria-labelledby="charts-heading" className="flex flex-col gap-3">

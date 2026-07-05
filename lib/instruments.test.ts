@@ -7,10 +7,12 @@ import {
 } from '@/lib/instruments';
 
 describe('registry mã (lib/instruments)', () => {
-  it('có ít nhất XAU/USD và XAG/USD', () => {
+  it('có ít nhất XAU/USD, XAG/USD, DXY và USD/VND', () => {
     const symbols = INSTRUMENTS.map((i) => i.symbol);
     expect(symbols).toContain('XAUUSD');
     expect(symbols).toContain('XAGUSD');
+    expect(symbols).toContain('DXY');
+    expect(symbols).toContain('USDVND');
   });
 
   it('symbol và slug đều duy nhất', () => {
@@ -41,8 +43,10 @@ describe('registry mã (lib/instruments)', () => {
   it('isSupportedSymbol đúng cho mã hỗ trợ và mã lạ', () => {
     expect(isSupportedSymbol('XAUUSD')).toBe(true);
     expect(isSupportedSymbol('XAGUSD')).toBe(true);
+    expect(isSupportedSymbol('DXY')).toBe(true);
+    expect(isSupportedSymbol('USDVND')).toBe(true);
     expect(isSupportedSymbol('xauusd')).toBe(false); // phân biệt hoa/thường: symbol là chữ hoa
-    expect(isSupportedSymbol('DXY')).toBe(false);
+    expect(isSupportedSymbol('NOPE')).toBe(false);
   });
 
   it('mỗi mã có bộ dữ liệu mẫu daily + hourly không rỗng', () => {

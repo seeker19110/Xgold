@@ -7,6 +7,12 @@ import { ProviderError } from '@/lib/providers/types';
 // (không tự gọi được API thật trong sandbox — mạng bị chặn, xem PROGRESS.md "Nợ kỹ thuật"):
 //   Date,Open,High,Low,Close,Volume
 //   2021-10-29,1081.86,1115.21,1073.205,1114.0,29918417
+// DXY/USD-VND: KHÔNG thêm vào map này có chủ đích — tìm kiếm không cho kết quả xác thực chắc chắn
+// cho ticker Stooq của 2 mã này (có ít nhất 2 khả năng khác nhau cho DXY: "dx.f" hay "usd_i"), và
+// mạng sandbox chặn stooq.com nên không gọi thử được để xác nhận (xem ADR-0009). Đoán sai ticker sẽ
+// âm thầm lấy nhầm dữ liệu (vd "dx.f" là hợp đồng tương lai, khác chỉ số spot) — rủi ro cao hơn lợi
+// ích của việc có Stooq backfill cho 2 mã này. Twelve Data (SYMBOL_MAP ở twelvedata.ts) vẫn phục vụ
+// được khung 1h/1D cho cả 2 mã; thiếu Stooq chỉ nghĩa là backfill lịch sử dài (nhiều năm) tạm chưa có.
 const SYMBOL_MAP: Record<string, string> = {
   XAUUSD: 'xauusd',
   XAGUSD: 'xagusd',

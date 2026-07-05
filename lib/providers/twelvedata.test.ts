@@ -74,6 +74,26 @@ describe('TwelveDataProvider', () => {
     expect(calledUrl.searchParams.get('symbol')).toBe('XAG/USD');
   });
 
+  it('map DXY sang symbol Twelve Data "DXY"', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ status: 'ok', values: [] }));
+    const provider = new TwelveDataProvider({ apiKey: 'k', fetchImpl });
+
+    await provider.fetchCandles({ symbol: 'DXY', timeframe: '1h' });
+
+    const calledUrl = fetchImpl.mock.calls[0]?.[0] as URL;
+    expect(calledUrl.searchParams.get('symbol')).toBe('DXY');
+  });
+
+  it('map USDVND sang symbol Twelve Data "USD/VND"', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ status: 'ok', values: [] }));
+    const provider = new TwelveDataProvider({ apiKey: 'k', fetchImpl });
+
+    await provider.fetchCandles({ symbol: 'USDVND', timeframe: '1h' });
+
+    const calledUrl = fetchImpl.mock.calls[0]?.[0] as URL;
+    expect(calledUrl.searchParams.get('symbol')).toBe('USD/VND');
+  });
+
   it('ném ProviderError khi provider trả status=error', async () => {
     const fetchImpl = vi
       .fn()
@@ -98,7 +118,7 @@ describe('TwelveDataProvider', () => {
     const fetchImpl = vi.fn();
     const provider = new TwelveDataProvider({ apiKey: 'k', fetchImpl });
 
-    await expect(provider.fetchCandles({ symbol: 'DXY', timeframe: '1h' })).rejects.toThrow(
+    await expect(provider.fetchCandles({ symbol: 'NOPE', timeframe: '1h' })).rejects.toThrow(
       ProviderError,
     );
     expect(fetchImpl).not.toHaveBeenCalled();

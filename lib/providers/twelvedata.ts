@@ -30,9 +30,15 @@ const TwelveDataErrorSchema = z.object({
 
 const TwelveDataResponseSchema = z.union([TwelveDataSuccessSchema, TwelveDataErrorSchema]);
 
+// DXY/USDVND: mã Twelve Data suy từ tài liệu công khai + kết quả tìm kiếm (mạng sandbox chặn
+// api.twelvedata.com nên KHÔNG gọi thử được — cùng hạn chế đã ghi ở ADR-0003). CHƯA xác nhận bằng
+// gọi API thật — bắt buộc kiểm tra lại (xem README backfill/ingest-gold) trước khi tin tưởng hoàn
+// toàn, giống quy trình field-verification đã áp dụng cho BTMC (ADR-0005).
 const SYMBOL_MAP: Record<string, string> = {
   XAUUSD: 'XAU/USD',
   XAGUSD: 'XAG/USD',
+  DXY: 'DXY',
+  USDVND: 'USD/VND',
 };
 
 const INTERVAL_MAP: Record<FetchCandlesParams['timeframe'], string> = {
