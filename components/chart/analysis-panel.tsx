@@ -3,9 +3,13 @@
 import { useMemo } from 'react';
 import type { Candle, Timeframe } from '@/lib/candles/types';
 import {
+  computeAnalysisInputs,
+  computeTradeLevels,
+  DEFAULT_ANALYSIS_PARAMS,
   RULE_IDS,
   suggestLatest,
   type AnalysisConfig,
+  type RiskLevel,
   type RuleId,
   type RuleSetting,
   type SignalDirection,
@@ -25,7 +29,11 @@ const RULE_LABELS: Record<RuleId, string> = {
   'rsi-zone': 'Vùng RSI 14 (30/70)',
   'macd-cross': 'Giao cắt MACD (12/26/9)',
   'bb-touch': 'Chạm băng Bollinger (20, 2σ)',
+  'ichimoku-cloud': 'Mây Ichimoku (9/26/52, dịch 26)',
+  'rsi-stack': 'Xếp chồng RSI (10/14/21)',
 };
+
+const RISK_LABEL: Record<RiskLevel, string> = { LOW: 'Thấp', MEDIUM: 'Trung bình', HIGH: 'Cao' };
 
 const DIRECTION_LABEL: Record<SignalDirection, string> = {
   buy: 'Thiên MUA',
@@ -46,15 +54,25 @@ const DIRECTION_BORDER: Record<SignalDirection, string> = {
 const inputClass = 'border-border bg-input text-foreground min-h-11 rounded-md border px-2 text-sm';
 
 /**
- * Khối "Phân tích kết hợp": gợi ý tổng hợp Mua/Bán/Trung lập từ 5 quy tắc rule-based
+ * Khối "Phân tích kết hợp": gợi ý tổng hợp Mua/Bán/Trung lập từ 7 quy tắc rule-based
  * (`lib/analysis/`) trên nến đã đóng gần nhất của khung đang xem, kèm lý do từng quy tắc,
- * bật/tắt + trọng số từng quy tắc, và disclaimer bắt buộc (ADR-0007).
+ * bật/tắt + trọng số từng quy tắc, mức tham chiếu Xác suất/Rủi ro/Entry-SL-TP (ADR-0011), và
+ * disclaimer bắt buộc (ADR-0007/0010/0011).
  */
 export function AnalysisPanel({ candles, timeframe, config, onChange }: AnalysisPanelProps) {
   const suggestion = useMemo(
     () => (config.enabled ? suggestLatest(candles, config) : null),
     [candles, config],
   );
+
+  // Entry/SL/TP + Xác suất/Rủi ro (ADR-0011) — cần AnalysisInputs đầy đủ (mây/ATR/RSI đa chu kỳ)
+  // nên tính riêng, dùng chung DEFAULT_ANALYSIS_PARAMS với suggestLatest (tham số quy tắc cố định
+  // v1, không cấu hình qua UI).
+  const tradeLevels = useMemo(() => {
+    if (!config.enabled || !suggestion || candles.length === 0) return null;
+    const inputs = computeAnalysisInputs(candles, DEFAULT_ANALYSIS_PARAMS);
+    return computeTradeLevels(inputs, suggestion, candles.length - 1, DEFAULT_ANALYSIS_PARAMS);
+  }, [candles, config.enabled, suggestion]);
 
   function updateRule(ruleId: RuleId, patch: Partial<RuleSetting>) {
     onChange({
@@ -119,6 +137,30 @@ export function AnalysisPanel({ candles, timeframe, config, onChange }: Analysis
           </ul>
         </div>
       )}
+
+      {config.enabled &&
+        suggestion &&
+        suggestion.direction !== 'neutral' &&
+        tradeLevels &&
+        tradeLevels.confidence !== null && (
+          <div className="border-border bg-surface rounded-md border px-3 py-2 text-sm">
+            <p className="font-semibold">Mức tham chiếu giao dịch (ADR-0011)</p>
+            <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
+              <dt className="text-muted-foreground">Xác suất</dt>
+              <dd>{tradeLevels.confidence.toFixed(0)}%</dd>
+              <dt className="text-muted-foreground">Rủi ro</dt>
+              <dd>{tradeLevels.risk ? RISK_LABEL[tradeLevels.risk] : '-'}</dd>
+              <dt className="text-muted-foreground">Entry / SL</dt>
+              <dd>
+                {tradeLevels.entry?.toFixed(2) ?? '-'} / {tradeLevels.sl?.toFixed(2) ?? '-'}
+              </dd>
+              <dt className="text-muted-foreground">TP1 / TP2</dt>
+              <dd>
+                {tradeLevels.tp1?.toFixed(2) ?? '-'} / {tradeLevels.tp2?.toFixed(2) ?? '-'}
+              </dd>
+            </dl>
+          </div>
+        )}
 
       {config.enabled && noRuleEnabled && (
         <p role="status" className="text-muted-foreground text-sm">

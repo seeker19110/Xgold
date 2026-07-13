@@ -1,6 +1,7 @@
 # ADR-0007: Engine phân tích kết hợp + gợi ý mua/bán tự viết (pure TS, không thêm dependency)
 
-- **Trạng thái:** Đã chấp nhận
+- **Trạng thái:** Đã chấp nhận — riêng ranh giới "không entry/SL/TP" đã bị **lật lại bởi ADR-0011**
+  (2026-07-13); phần còn lại (kiến trúc pure TS, rule-based, không ML) vẫn hiệu lực.
 - **Ngày:** 2026-07-04
 - **Liên quan:** ADR-0002 (lightweight-charts), quyết định Đợt 3 tự viết `lib/indicators/`;
   kế hoạch `docs/plans/xgold-development-plan.md` mục 3–4 (người dùng chốt "theo đề xuất" 2026-07-04)

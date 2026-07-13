@@ -8,9 +8,11 @@
 
 - GĐ 4 — Phát triển. MVP Đợt 0–4 + Đợt 5 (vàng trong nước) + Đợt 6–8 (MACD/Bollinger + engine phân
   tích gợi ý mua/bán) + Đợt 9 (đa symbol: XAU/USD + XAG/USD + DXY + USD/VND, ADR-0008/0009) +
-  **Đợt 10 (bề mặt phân tích: MTF confluence + Screener + Ratio/Correlation, ADR-0010)** đã xong.
-  Còn lại là việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion) — xem
-  "Tiếp theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9,
+  **Đợt 10 (bề mặt phân tích: MTF confluence + Screener + Ratio/Correlation, ADR-0010)** +
+  **Đợt 11 (mây Ichimoku R6 + xếp chồng RSI R7 + Entry/SL/TP/Xác suất/Rủi ro, ADR-0011 — LẬT LẠI
+  ranh giới "không entry/SL/TP" của ADR-0007/0010 theo yêu cầu người dùng)** đã xong. Còn lại là
+  việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion) — xem "Tiếp
+  theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9,
   `docs/plans/xgold-development-plan.md`, `docs/plans/xgold-analysis-surface-plan.md`.
 
 ## Đã xong
@@ -384,6 +386,32 @@
     coverage 89.49%/75.49%/82.65%/91.67% — vượt sàn 70%) · `build` ✅ (thêm route tĩnh `quet-tin-hieu`).
   - **Môi trường E2E sandbox** (không đổi config repo, hết sau phiên): cùng vấn đề đã ghi ở các đợt
     trước (browser rev 1228 thiếu, symlink sang rev sẵn có + shim `chrome-headless-shell-linux64`).
+
+- **Đợt 11 — Mây Ichimoku + xếp chồng RSI + Entry/SL/TP/Xác suất/Rủi ro (ADR-0011, 2026-07-13):**
+  người dùng dán đặc tả một chỉ báo TradingView (Pine Script) và yêu cầu tích hợp phần tốt vào
+  engine hiện có.
+  - Hỏi người dùng trước khi code vì Entry/SL/TP + Xác suất % mâu thuẫn trực tiếp ranh giới
+    "không entry/SL/TP" đã chốt ở ADR-0007/0010 — người dùng chọn **lật lại** (ADR-0011), cập nhật
+    Trạng thái của 2 ADR cũ để trỏ sang ADR-0011 (không sửa nội dung ADR cũ).
+  - `lib/indicators/atr.ts` (ATR Wilder trên True Range) + `lib/indicators/ichimoku.ts`
+    (`ichimokuCloud` — mây Senkou A/B donchian-based, chỉ mây; `cloudAt` — biên mây đã dịch tới
+    trước `displacement` nến).
+  - 2 rule mới cắm vào engine trọng số sẵn có (KHÔNG port hệ thống cộng dồn ad-hoc của Pine): R6
+    `ichimoku-cloud`, R7 `rsi-stack` (RSI 10/14/21). Trọng số 7 rule phân bổ lại về tổng 1.0
+    (`lib/analysis/config.ts`).
+  - `lib/analysis/trade-levels.ts` (`computeTradeLevels`) — Xác suất/Rủi ro/Entry/SL/TP1/TP2, công
+    thức phỏng theo (không port nguyên văn) đặc tả Pine, chỉ có giá trị khi gợi ý là Mua/Bán.
+  - UI: `indicator-panel.tsx` (toggle + 4 tham số mây), `analysis-panel.tsx` (2 nhãn rule mới + khối
+    "Mức tham chiếu giao dịch"), `gold-chart.tsx` (vẽ Span A/B dịch tới trước bằng kỹ thuật
+    whitespace time, không tô vùng giữa 2 đường ở v1 — nhất quán Bollinger), disclaimer mạnh hơn.
+  - Kiểm chứng thật bằng trình duyệt (Playwright thủ công, không phải chỉ test): bật mây Ichimoku
+    không vỡ chart; đổi khung 1D ra tín hiệu Bán thật → khối "Mức tham chiếu giao dịch" hiện đúng
+    Xác suất 59% / Rủi ro Trung bình / Entry-SL/TP1-TP2 hợp lý (SL đúng phía, TP đúng hướng).
+  - 5 cổng local đều đạt: `build` ✅ · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (225/225, gồm test mới cho ATR/Ichimoku/2 rule/trade-levels tính tay).
+  - Việc chưa làm trong đợt này (có thể cân nhắc sau, không chặn): mở rộng `backtest.ts` để đo tần
+    suất R/R đạt TP1/TP2 trên dữ liệu lịch sử; chưa tô màu vùng giữa Span A/B trên chart (v1 chỉ vẽ
+    2 đường).
 
 ## Đang làm
 

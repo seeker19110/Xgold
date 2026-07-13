@@ -1,6 +1,11 @@
 'use client';
 
-import type { BollingerSettings, ChartConfig, MacdSettings } from '@/lib/indicators/config';
+import type {
+  BollingerSettings,
+  ChartConfig,
+  IchimokuSettings,
+  MacdSettings,
+} from '@/lib/indicators/config';
 import type { MaLine, MaType, RsiLine } from '@/lib/indicators/types';
 
 interface IndicatorPanelProps {
@@ -85,6 +90,10 @@ export function IndicatorPanel({ config, onChange }: IndicatorPanelProps) {
 
   function updateBollinger(patch: Partial<BollingerSettings>) {
     onChange({ ...config, bollinger: { ...config.bollinger, ...patch } });
+  }
+
+  function updateIchimoku(patch: Partial<IchimokuSettings>) {
+    onChange({ ...config, ichimoku: { ...config.ichimoku, ...patch } });
   }
 
   function handleMultiplierChange(raw: string) {
@@ -309,6 +318,78 @@ export function IndicatorPanel({ config, onChange }: IndicatorPanelProps) {
             className={`${inputClass} w-20`}
           />
           <span className="text-muted-foreground text-xs">chu kỳ / hệ số σ</span>
+        </div>
+      </section>
+
+      <section aria-labelledby="ichimoku-panel-heading" className="flex flex-col gap-2">
+        <h2 id="ichimoku-panel-heading" className="text-sm font-semibold">
+          Mây Ichimoku
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="checkbox"
+            checked={config.ichimoku.visible}
+            onChange={(e) => updateIchimoku({ visible: e.target.checked })}
+            aria-label="Hiện/ẩn mây Ichimoku"
+            className="h-5 w-5"
+          />
+          <label className="sr-only" htmlFor="ichimoku-conversion">
+            Chu kỳ Conversion Line
+          </label>
+          <input
+            id="ichimoku-conversion"
+            type="number"
+            min={1}
+            value={config.ichimoku.conversionPeriod}
+            onChange={(e) =>
+              handlePeriodChange(e.target.value, (conversionPeriod) =>
+                updateIchimoku({ conversionPeriod }),
+              )
+            }
+            className={`${inputClass} w-20`}
+          />
+          <label className="sr-only" htmlFor="ichimoku-base">
+            Chu kỳ Base Line
+          </label>
+          <input
+            id="ichimoku-base"
+            type="number"
+            min={1}
+            value={config.ichimoku.basePeriod}
+            onChange={(e) =>
+              handlePeriodChange(e.target.value, (basePeriod) => updateIchimoku({ basePeriod }))
+            }
+            className={`${inputClass} w-20`}
+          />
+          <label className="sr-only" htmlFor="ichimoku-spanb">
+            Chu kỳ Leading Span B
+          </label>
+          <input
+            id="ichimoku-spanb"
+            type="number"
+            min={1}
+            value={config.ichimoku.spanBPeriod}
+            onChange={(e) =>
+              handlePeriodChange(e.target.value, (spanBPeriod) => updateIchimoku({ spanBPeriod }))
+            }
+            className={`${inputClass} w-20`}
+          />
+          <label className="sr-only" htmlFor="ichimoku-displacement">
+            Độ dịch mây (Lagging Span)
+          </label>
+          <input
+            id="ichimoku-displacement"
+            type="number"
+            min={1}
+            value={config.ichimoku.displacement}
+            onChange={(e) =>
+              handlePeriodChange(e.target.value, (displacement) => updateIchimoku({ displacement }))
+            }
+            className={`${inputClass} w-20`}
+          />
+          <span className="text-muted-foreground text-xs">
+            Conversion / Base / Span B / độ dịch
+          </span>
         </div>
       </section>
     </div>

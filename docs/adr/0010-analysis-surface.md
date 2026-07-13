@@ -1,6 +1,7 @@
 # ADR-0010: Bề mặt phân tích (MTF confluence + Screener + Ratio/Correlation) — tái dùng engine, pure TS
 
-- **Trạng thái:** Đã chấp nhận
+- **Trạng thái:** Đã chấp nhận — riêng câu "không entry/SL/TP" trong ranh giới pháp lý đã bị **lật
+  lại bởi ADR-0011** (2026-07-13); phần còn lại (A/B/C tái dùng engine, pure TS) vẫn hiệu lực.
 - **Ngày:** 2026-07-13
 - **Liên quan:** ADR-0007 (engine phân tích pure TS), ADR-0008 (registry đa mã),
   ADR-0002 (lightweight-charts); đặc tả `docs/plans/xgold-analysis-surface-plan.md`

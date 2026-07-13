@@ -27,3 +27,4 @@ export {
   type TimeframeVerdict,
 } from '@/lib/analysis/multi-timeframe';
 export { ratioSeries, simpleReturns, pearson, correlationXauDxy } from '@/lib/analysis/ratio';
+export { computeTradeLevels, type TradeLevels, type RiskLevel } from '@/lib/analysis/trade-levels';

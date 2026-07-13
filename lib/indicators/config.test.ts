@@ -68,6 +68,7 @@ describe('encodeChartConfig / decodeChartConfig', () => {
     expect(decoded).not.toBeNull();
     expect(decoded?.macd).toEqual(DEFAULT_CHART_CONFIG.macd);
     expect(decoded?.bollinger).toEqual(DEFAULT_CHART_CONFIG.bollinger);
+    expect(decoded?.ichimoku).toEqual(DEFAULT_CHART_CONFIG.ichimoku);
     expect(decoded?.analysis).toEqual(DEFAULT_CHART_CONFIG.analysis);
   });
 

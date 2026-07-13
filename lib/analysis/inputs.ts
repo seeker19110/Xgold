@@ -1,12 +1,12 @@
 import type { Candle } from '@/lib/candles/types';
-import { bollinger, macd, rsi, sma } from '@/lib/indicators';
+import { atr, bollinger, ichimokuCloud, macd, rsi, sma } from '@/lib/indicators';
 import {
   DEFAULT_ANALYSIS_PARAMS,
   type AnalysisInputs,
   type AnalysisParams,
 } from '@/lib/analysis/types';
 
-/** Tính sẵn mọi chuỗi chỉ báo mà 5 quy tắc cần — mỗi chỉ báo tính đúng 1 lần cho cả lịch sử. */
+/** Tính sẵn mọi chuỗi chỉ báo mà các quy tắc cần — mỗi chỉ báo tính đúng 1 lần cho cả lịch sử. */
 export function computeAnalysisInputs(
   candles: readonly Candle[],
   params: AnalysisParams = DEFAULT_ANALYSIS_PARAMS,
@@ -19,5 +19,14 @@ export function computeAnalysisInputs(
     rsi: rsi(candles, params.rsiPeriod).map((p) => p.value),
     macd: macd(candles, params.macdFast, params.macdSlow, params.macdSignal),
     bb: bollinger(candles, params.bbPeriod, params.bbMultiplier),
+    rsiFast: rsi(candles, params.rsiStackFastPeriod).map((p) => p.value),
+    rsiSlow: rsi(candles, params.rsiStackSlowPeriod).map((p) => p.value),
+    ichimoku: ichimokuCloud(
+      candles,
+      params.ichimokuConversionPeriod,
+      params.ichimokuBasePeriod,
+      params.ichimokuSpanBPeriod,
+    ),
+    atr: atr(candles, params.atrPeriod).map((p) => p.value),
   };
 }
