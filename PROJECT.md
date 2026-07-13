@@ -28,7 +28,7 @@
   5. Lưu cấu hình chỉ báo (localStorage + URL chia sẻ được) — chưa cần tài khoản. _Tiêu chí:_ reload giữ nguyên cấu hình; dán URL đã chia sẻ khôi phục đúng cấu hình.
   6. Theme Dark blue mặc định + Light, mobile-first, đủ 4 trạng thái (tải/rỗng/lỗi/thành công) trên trang chart.
 - **Should have:** giá vàng trong nước (SJC/BTMC/DOJI — bảng mua/bán + line chart) · cập nhật giá gần realtime (polling hoặc Supabase Realtime) · badge "độ tươi dữ liệu" khi nguồn stale.
-- **Could have:** thêm symbol (✅ XAG/USD — Đợt 9, ADR-0008; DXY, USD/VND còn backlog) · ✅ MACD, Bollinger Bands (Đợt 6) · export CSV · so sánh vàng SJC vs thế giới quy đổi.
+- **Could have:** thêm symbol (✅ XAG/USD — Đợt 9, ADR-0008; ✅ DXY, USD/VND — sau Đợt 9, ADR-0009) · ✅ MACD, Bollinger Bands (Đợt 6) · ✅ so sánh vàng SJC vs thế giới quy đổi (`/so-sanh-gia-vang`) · ✅ hợp lưu tín hiệu đa khung (MTF), màn hình quét tín hiệu toàn mã (screener), tỷ lệ Vàng/Bạc + tương quan XAU/DXY (Đợt 10, ADR-0010) · export CSV.
 - **Won't have (lúc này):** tài khoản/đăng nhập · alert đẩy thông báo · công cụ vẽ lên chart (trendline...) · app mobile riêng · tin tức/phân tích.
 
 ## 3. Yêu cầu phi chức năng
@@ -78,6 +78,10 @@
 4. Mở panel chỉ báo → thêm một đường MA mới (chọn SMA/EMA, chu kỳ, màu) → thấy đường mới trên pane giá; thêm một đường RSI mới (chu kỳ khác) → thấy đường mới trên pane RSI.
 5. Reload trang hoặc dán lại URL đã chia sẻ → cấu hình chỉ báo giữ nguyên.
 6. Chuyển theme Dark blue ↔ Light → chart và toàn bộ UI đổi theo, không mất tương phản.
+7. Trên trang chart, xem panel **Hợp lưu tín hiệu đa khung (MTF)** bên dưới phân tích kết hợp — 4 khung
+   (1h/4h/1D/1W) + dòng tổng hợp, theo đúng bộ quy tắc đang bật ở panel phân tích.
+8. Vào `/quet-tin-hieu` → thấy bảng tín hiệu kỹ thuật của MỌI mã theo khung chọn được (mặc định 1D),
+   sắp xếp theo độ mạnh; thẻ "Bối cảnh thị trường" hiện tỷ lệ Vàng/Bạc + tương quan XAU/DXY.
 
 ## 8. Definition of Done (DoD)
 
@@ -96,6 +100,16 @@
 - **Đợt 3 — Chỉ báo:** `lib/indicators` (SMA/EMA/RSI) + Multi-MA overlay + Multi-RSI pane + panel cấu hình. ✅ _(xong — kiểm chứng thật bằng trình duyệt, 20/20 E2E xanh)_
 - **Đợt 4 — Hoàn thiện MVP:** E2E đầy đủ, a11y, docs, tối ưu mã nguồn. ✅ _(xong — Sentry hoãn sang backlog: cần DSN thật để cấu hình + kiểm chứng, không cắm mù; xem PROGRESS.md)_
 - **Đợt 5 — Should (Domestic gold):** giá vàng trong nước (BTMC) + cập nhật gần realtime (60s polling). ✅ _(xong — trang `/gia-vang-trong-nuoc`, table mua/bán/badge tươi dữ liệu, E2E 10/10 xanh)_
+- **Đợt 6–9 — MACD/Bollinger, engine phân tích, đa symbol (XAU/XAG/DXY/USD-VND):** xem PROGRESS.md
+  mục "Đã xong" + ADR-0007/0008/0009 cho chi tiết đầy đủ. ✅ _(xong)_
+- **Đợt 10 — Bề mặt phân tích (MTF confluence + Screener + Ratio/Correlation):** tái dùng engine
+  `lib/analysis/` + registry `lib/instruments.ts` sẵn có, pure TS, không thêm dependency/schema
+  (ADR-0010, `docs/plans/xgold-analysis-surface-plan.md`). `lib/analysis/multi-timeframe.ts` +
+  `ratio.ts` (unit test tính tay); panel MTF trên trang chart (`use-confluence.ts` +
+  `confluence-panel.tsx`); trang `/quet-tin-hieu` (screener toàn mã, `use-screener.ts` +
+  `screener-table.tsx`) + thẻ "Bối cảnh thị trường" (`market-context.tsx`); disclaimer dùng chung
+  tách thành `analysis-disclaimer.tsx`. ✅ _(xong — 5 cổng xanh, E2E mới `screener.spec.ts` +
+  `confluence.spec.ts`, xem PROGRESS.md)_
 
 ## 10. Rủi ro & Giả định
 

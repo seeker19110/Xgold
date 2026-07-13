@@ -19,3 +19,11 @@ export {
   type SignalEvent,
   type Suggestion,
 } from '@/lib/analysis/types';
+export {
+  computeConfluence,
+  CONFLUENCE_TIMEFRAMES,
+  CONFLUENCE_THRESHOLD,
+  type Confluence,
+  type TimeframeVerdict,
+} from '@/lib/analysis/multi-timeframe';
+export { ratioSeries, simpleReturns, pearson, correlationXauDxy } from '@/lib/analysis/ratio';
