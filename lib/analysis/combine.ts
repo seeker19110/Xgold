@@ -18,6 +18,8 @@ import { evaluatePriceVsMa } from '@/lib/analysis/rules/price-vs-ma';
 import { evaluateRsiZone } from '@/lib/analysis/rules/rsi-zone';
 import { evaluateMacdCross } from '@/lib/analysis/rules/macd-cross';
 import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
+import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
+import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
 
 type RuleEvaluator = (inputs: AnalysisInputs, index: number, params: AnalysisParams) => RuleVerdict;
 
@@ -27,6 +29,8 @@ const EVALUATORS: Record<RuleId, RuleEvaluator> = {
   'rsi-zone': evaluateRsiZone,
   'macd-cross': evaluateMacdCross,
   'bb-touch': evaluateBbTouch,
+  'ichimoku-cloud': evaluateIchimokuCloud,
+  'rsi-stack': evaluateRsiStack,
 };
 
 const DIRECTION_VALUE: Record<SignalDirection, number> = { buy: 1, sell: -1, neutral: 0 };

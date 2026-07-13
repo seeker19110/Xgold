@@ -16,7 +16,15 @@ import {
 } from 'lightweight-charts';
 import type { Candle } from '@/lib/candles/types';
 import type { ChartConfig } from '@/lib/indicators/config';
-import { sma, ema, rsi, macd, bollinger, type IndicatorPoint } from '@/lib/indicators';
+import {
+  sma,
+  ema,
+  rsi,
+  macd,
+  bollinger,
+  ichimokuCloud,
+  type IndicatorPoint,
+} from '@/lib/indicators';
 import { signalEvents } from '@/lib/analysis';
 
 interface GoldChartProps {
@@ -44,6 +52,8 @@ const MACD_HIST_UP_COLOR = 'rgba(74, 222, 128, 0.6)';
 const MACD_HIST_DOWN_COLOR = 'rgba(248, 113, 113, 0.6)';
 const MARKER_BUY_COLOR = '#4ade80';
 const MARKER_SELL_COLOR = '#f87171';
+const ICHIMOKU_SPAN_A_COLOR = '#f5cf0e';
+const ICHIMOKU_SPAN_B_COLOR = '#f10f0f';
 
 function readThemeColors(): ThemeColors {
   const style = getComputedStyle(document.documentElement);
@@ -98,6 +108,10 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     paneIndex: number;
   }>({ line: null, signal: null, histogram: null, paneIndex: -1 });
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const ichimokuSeriesRef = useRef<{
+    spanA: ISeriesApi<'Line'> | null;
+    spanB: ISeriesApi<'Line'> | null;
+  }>({ spanA: null, spanB: null });
 
   // Effect 1: dựng chart + series nến một lần; dọn dẹp khi unmount.
   useEffect(() => {
@@ -159,6 +173,7 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       bbSeriesRef.current = { basis: null, upper: null, lower: null };
       macdSeriesRef.current = { line: null, signal: null, histogram: null, paneIndex: -1 };
       markersRef.current = null;
+      ichimokuSeriesRef.current = { spanA: null, spanB: null };
     };
   }, []);
 
@@ -317,6 +332,62 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       ),
     );
   }, [candles, config.bollinger]);
+
+  // Effect: mây Ichimoku (ADR-0011) — Span A/B chồng lên pane giá (0), DỊCH tới trước
+  // `displacement` nến (đúng cách Ichimoku vẽ). lightweight-charts không hỗ trợ `offset` như Pine
+  // Script nên tự tính mốc thời gian tương lai cho phần nhô ra ngoài dữ liệu nến hiện có (khoảng
+  // cách suy từ 2 nến cuối — đúng với mọi khung thời gian, không cần bảng tra cứu). Không tô màu
+  // vùng giữa 2 đường ở v1 (nhất quán với Bollinger — cũng chỉ vẽ đường, không tô).
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const state = ichimokuSeriesRef.current;
+    const { visible, conversionPeriod, basePeriod, spanBPeriod, displacement } = config.ichimoku;
+
+    if (visible && !state.spanA) {
+      const opts = {
+        lineWidth: 1 as const,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      };
+      state.spanA = chart.addSeries(LineSeries, { ...opts, color: ICHIMOKU_SPAN_A_COLOR });
+      state.spanB = chart.addSeries(LineSeries, { ...opts, color: ICHIMOKU_SPAN_B_COLOR });
+    }
+    if (!visible && state.spanA) {
+      if (state.spanA) chart.removeSeries(state.spanA);
+      if (state.spanB) chart.removeSeries(state.spanB);
+      ichimokuSeriesRef.current = { spanA: null, spanB: null };
+      return;
+    }
+    if (!state.spanA || !state.spanB || candles.length === 0) return;
+
+    const last = candles[candles.length - 1];
+    const prev = candles.length > 1 ? candles[candles.length - 2] : undefined;
+    if (!last) return;
+    const lastTs = toUtcTimestamp(last.ts);
+    const intervalSeconds = prev ? Math.max(1, lastTs - toUtcTimestamp(prev.ts)) : 86400;
+
+    function displacedTime(index: number): UTCTimestamp {
+      const shifted = index + displacement;
+      const candle = candles[shifted];
+      if (candle) return toUtcTimestamp(candle.ts);
+      const beyond = shifted - candles.length + 1;
+      return (lastTs + beyond * intervalSeconds) as UTCTimestamp;
+    }
+
+    const points = ichimokuCloud(candles, conversionPeriod, basePeriod, spanBPeriod);
+    const spanAData: { time: UTCTimestamp; value: number }[] = [];
+    const spanBData: { time: UTCTimestamp; value: number }[] = [];
+    points.forEach((p, i) => {
+      const time = displacedTime(i);
+      if (p.spanA !== null) spanAData.push({ time, value: p.spanA });
+      if (p.spanB !== null) spanBData.push({ time, value: p.spanB });
+    });
+    state.spanA.setData(spanAData);
+    state.spanB.setData(spanBData);
+  }, [candles, config.ichimoku]);
 
   // Effect 6: MACD — pane phụ riêng (sau pane RSI nếu có). Không có API dời series giữa các pane
   // trong lightweight-charts v5 nên khi bố cục pane đổi (thêm/bỏ RSI) thì gỡ và tạo lại series —

@@ -31,8 +31,17 @@ const BollingerSettingsSchema = z.object({
   multiplier: z.number().positive(),
 });
 
+const IchimokuSettingsSchema = z.object({
+  visible: z.boolean(),
+  conversionPeriod: z.number().int().positive(),
+  basePeriod: z.number().int().positive(),
+  spanBPeriod: z.number().int().positive(),
+  displacement: z.number().int().positive(),
+});
+
 export type MacdSettings = z.infer<typeof MacdSettingsSchema>;
 export type BollingerSettings = z.infer<typeof BollingerSettingsSchema>;
+export type IchimokuSettings = z.infer<typeof IchimokuSettingsSchema>;
 
 export const DEFAULT_MACD_SETTINGS: MacdSettings = {
   visible: false,
@@ -45,6 +54,15 @@ export const DEFAULT_BOLLINGER_SETTINGS: BollingerSettings = {
   visible: false,
   period: 20,
   multiplier: 2,
+};
+
+/** ADR-0011 — mây Ichimoku (chỉ vẽ Span A/B, không Conversion/Base/Chikou riêng lẻ). */
+export const DEFAULT_ICHIMOKU_SETTINGS: IchimokuSettings = {
+  visible: false,
+  conversionPeriod: 9,
+  basePeriod: 26,
+  spanBPeriod: 52,
+  displacement: 26,
 };
 
 function hasUniqueIds(lines: readonly { id: string }[]): boolean {
@@ -62,6 +80,7 @@ export const ChartConfigSchema = z
     // này — giải mã vẫn thành công với giá trị mặc định thay vì trả null làm mất cấu hình cũ.
     macd: MacdSettingsSchema.default(DEFAULT_MACD_SETTINGS),
     bollinger: BollingerSettingsSchema.default(DEFAULT_BOLLINGER_SETTINGS),
+    ichimoku: IchimokuSettingsSchema.default(DEFAULT_ICHIMOKU_SETTINGS),
     analysis: AnalysisConfigSchema.default(DEFAULT_ANALYSIS_CONFIG),
   })
   .refine((c) => hasUniqueIds(c.maLines), { message: 'maLines có id trùng nhau' })
@@ -78,6 +97,7 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
   rsiLines: [{ id: 'rsi-14', period: 14, color: '#a78bfa', visible: true }],
   macd: DEFAULT_MACD_SETTINGS,
   bollinger: DEFAULT_BOLLINGER_SETTINGS,
+  ichimoku: DEFAULT_ICHIMOKU_SETTINGS,
   analysis: DEFAULT_ANALYSIS_CONFIG,
 };
 

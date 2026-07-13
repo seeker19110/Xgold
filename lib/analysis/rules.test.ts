@@ -8,6 +8,8 @@ import { evaluatePriceVsMa } from '@/lib/analysis/rules/price-vs-ma';
 import { evaluateRsiZone } from '@/lib/analysis/rules/rsi-zone';
 import { evaluateMacdCross } from '@/lib/analysis/rules/macd-cross';
 import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
+import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
+import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
 
 function candlesFromCloses(closes: number[]): Candle[] {
   return closes.map((close, i) => ({
@@ -33,7 +35,23 @@ const P: AnalysisParams = {
   macdCrossLookback: 5,
   bbPeriod: 3,
   bbMultiplier: 1,
+  ichimokuConversionPeriod: 1,
+  ichimokuBasePeriod: 2,
+  ichimokuSpanBPeriod: 2,
+  ichimokuDisplacement: 1,
+  ichimokuBreakoutLookback: 3,
 };
+
+function candle(day: number, high: number, low: number, close: number): Candle {
+  return {
+    ts: new Date(Date.UTC(2026, 0, day)).toISOString(),
+    open: close,
+    high,
+    low,
+    close,
+    volume: null,
+  };
+}
 
 describe('findRecentCross', () => {
   it('bỏ qua nến có giá trị null thay vì đoán', () => {
@@ -178,5 +196,71 @@ describe('evaluateBbTouch (R5)', () => {
   it('chưa đủ dữ liệu → Trung lập', () => {
     const inputs = computeAnalysisInputs(candlesFromCloses([1, 2, 3]), P);
     expect(evaluateBbTouch(inputs, 1, P).direction).toBe('neutral');
+  });
+});
+
+describe('evaluateIchimokuCloud (R6)', () => {
+  // conv(1)/base(2)/spanB(2), displacement 1 — donchian tính tay (xem ichimoku.test.ts cho công
+  // thức donchian). Mây tại nến index dùng Span A/B RAW tính ở index-1 (đã dịch tới trước).
+  // raw spanA/spanB: i0 null, i1 (9,9), i2 (6,7), i3 (5,5), i4 (5,5).
+  // → cloudAt(index,1): i2→(top9,bot9,green), i3→(top7,bot6,¬green), i4→(top5,bot5,green).
+  const candles: Candle[] = [
+    candle(1, 10, 8, 9),
+    candle(2, 10, 8, 9),
+    candle(3, 6, 4, 5),
+    candle(4, 6, 4, 12),
+    candle(5, 6, 4, 12),
+  ];
+  const inputs = computeAnalysisInputs(candles, P);
+
+  it('giá dưới mây → Bán', () => {
+    // index2: close 5 < bot mây 9.
+    const verdict = evaluateIchimokuCloud(inputs, 2, P);
+    expect(verdict.direction).toBe('sell');
+    expect(verdict.reason).toContain('dưới mây');
+  });
+
+  it('giá trên mây kèm breakout gần đây → Mua', () => {
+    // index3: close 12 > top mây 7; breakout lên tại chính nến này (close[2]=5 ≤ cloudTop[2]=9 →
+    // close[3]=12 > cloudTop[3]=7).
+    const verdict = evaluateIchimokuCloud(inputs, 3, P);
+    expect(verdict.direction).toBe('buy');
+    expect(verdict.reason).toContain('trên mây');
+    expect(verdict.reason).toContain('vừa breakout lên khỏi mây');
+  });
+
+  it('chưa đủ dữ liệu (mây chưa dịch được) → Trung lập', () => {
+    expect(evaluateIchimokuCloud(inputs, 0, P).direction).toBe('neutral');
+  });
+});
+
+describe('evaluateRsiStack (R7)', () => {
+  const base = computeAnalysisInputs(candlesFromCloses([1, 2, 3]), P);
+
+  it('RSI 10>14>21 → Mua, ghi rõ khi cả ba quá bán', () => {
+    const inputs = { ...base, rsiFast: [28], rsi: [20], rsiSlow: [10] };
+    const verdict = evaluateRsiStack(inputs, 0, P);
+    expect(verdict.direction).toBe('buy');
+    expect(verdict.reason).toContain('xếp chồng tăng dần');
+  });
+
+  it('RSI 10<14<21 và cả ba quá mua → Bán, ghi rõ quá mua', () => {
+    const inputs = { ...base, rsiFast: [75], rsi: [80], rsiSlow: [85] };
+    const verdict = evaluateRsiStack(inputs, 0, P);
+    expect(verdict.direction).toBe('sell');
+    expect(verdict.reason).toContain('xếp chồng giảm dần');
+    expect(verdict.reason).toContain('cả ba quá mua');
+  });
+
+  it('không xếp chồng rõ hướng → Trung lập', () => {
+    const inputs = { ...base, rsiFast: [50], rsi: [60], rsiSlow: [55] };
+    expect(evaluateRsiStack(inputs, 0, P).direction).toBe('neutral');
+  });
+
+  it('thiếu dữ liệu (RSI null) → Trung lập', () => {
+    const inputs = { ...base, rsiFast: [null], rsi: [50], rsiSlow: [50] };
+    const verdict = evaluateRsiStack(inputs, 0, P);
+    expect(verdict.direction).toBe('neutral');
+    expect(verdict.reason).toContain('Chưa đủ dữ liệu');
   });
 });

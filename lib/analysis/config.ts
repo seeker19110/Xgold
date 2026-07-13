@@ -27,15 +27,21 @@ export const AnalysisConfigSchema = z.object({
 
 export type AnalysisConfig = z.infer<typeof AnalysisConfigSchema>;
 
-/** Trọng số mặc định theo kế hoạch mục 4.4 (R1 0.30 · R2 0.15 · R3 0.20 · R4 0.25 · R5 0.10). */
+/**
+ * Trọng số mặc định — kế hoạch mục 4.4 gốc (R1 0.30 · R2 0.15 · R3 0.20 · R4 0.25 · R5 0.10) được
+ * phân bổ lại (ADR-0011) để nhường chỗ cho R6/R7, giữ tổng = 1.0:
+ * R1 0.25 · R2 0.10 · R3 0.15 · R4 0.20 · R5 0.05 · R6 0.15 · R7 0.10.
+ */
 export const DEFAULT_ANALYSIS_CONFIG: AnalysisConfig = {
   enabled: true,
   buyThreshold: 0.25,
   rules: {
-    'ma-cross': { enabled: true, weight: 0.3 },
-    'price-vs-ma': { enabled: true, weight: 0.15 },
-    'rsi-zone': { enabled: true, weight: 0.2 },
-    'macd-cross': { enabled: true, weight: 0.25 },
-    'bb-touch': { enabled: true, weight: 0.1 },
+    'ma-cross': { enabled: true, weight: 0.25 },
+    'price-vs-ma': { enabled: true, weight: 0.1 },
+    'rsi-zone': { enabled: true, weight: 0.15 },
+    'macd-cross': { enabled: true, weight: 0.2 },
+    'bb-touch': { enabled: true, weight: 0.05 },
+    'ichimoku-cloud': { enabled: true, weight: 0.15 },
+    'rsi-stack': { enabled: true, weight: 0.1 },
   },
 };
