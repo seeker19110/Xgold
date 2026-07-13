@@ -7,9 +7,11 @@
 ## Giai đoạn hiện tại
 
 - GĐ 4 — Phát triển. MVP Đợt 0–4 + Đợt 5 (vàng trong nước) + Đợt 6–8 (MACD/Bollinger + engine phân
-  tích gợi ý mua/bán) + **Đợt 9 (đa symbol: XAU/USD + XAG/USD, ADR-0008)** đã xong. Còn lại là việc
-  chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion) — xem "Tiếp theo". Xem
-  lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9, `docs/plans/xgold-development-plan.md`.
+  tích gợi ý mua/bán) + Đợt 9 (đa symbol: XAU/USD + XAG/USD + DXY + USD/VND, ADR-0008/0009) +
+  **Đợt 10 (bề mặt phân tích: MTF confluence + Screener + Ratio/Correlation, ADR-0010)** đã xong.
+  Còn lại là việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion) — xem
+  "Tiếp theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9,
+  `docs/plans/xgold-development-plan.md`, `docs/plans/xgold-analysis-surface-plan.md`.
 
 ## Đã xong
 
@@ -333,6 +335,56 @@
     flake đã biết ở `indicators.spec.ts` (locale POSIX sandbox — xem "Nợ kỹ thuật", không liên quan
     tính năng này, xác nhận lại pass khi chạy riêng).
 
+- ✅ **Đợt 10 — Bề mặt phân tích: MTF confluence + Screener + Ratio/Correlation (2026-07-13, người
+  dùng chốt hướng "Đợt 10: A+B(+C)", ADR-0010, đặc tả `docs/plans/xgold-analysis-surface-plan.md`):**
+  - **Lib pure TS (tái dùng engine `lib/analysis/` sẵn có, KHÔNG thêm dependency/schema):**
+    - `lib/analysis/multi-timeframe.ts` (`computeConfluence`): chạy `suggestLatest` cho 1h/4h/1D/1W,
+      tổng hợp `buyCount/sellCount/neutralCount` + `meanNorm` (trung bình `score/maxScore` trên các
+      khung CÓ suggestion, bỏ khung null — không chia 0) + `overall` theo ngưỡng `±0.25`. 6 unit test
+      tính tay (mọi khung Mua, khung thiếu nến bị loại khỏi mean, không khung nào có dữ liệu, ngưỡng
+      biên `+0.25`/`-0.25` chính xác, mean=0).
+    - `lib/analysis/ratio.ts`: `ratioSeries` (inner join theo `ts`, bỏ `b.close<=0`), `simpleReturns`
+      (bỏ chia 0 khi `close[i-1]=0`), `pearson` (kẹp `[-1,+1]`, `null` khi <2 điểm hoặc phương sai 0),
+      `correlationXauDxy` (align → lợi suất → Pearson trên `window` điểm gần nhất). 14 unit test tính
+      tay (tỷ lệ cơ bản 3200/40=80, align bỏ đúng `ts` lệch, đồng biến/nghịch biến hoàn hảo ±1,
+      phương sai 0 → null, tương quan lợi suất nghịch biến hoàn hảo → -1).
+    - Export qua `lib/analysis/index.ts` (cùng barrel file sẵn có).
+  - **Disclaimer dùng chung (DRY):** tách `components/chart/analysis-disclaimer.tsx` từ chuỗi vốn
+    inline trong `analysis-panel.tsx` (giữ nguyên chữ + style) — `analysis-panel`, `confluence-panel`,
+    `screener-table` cùng import, không chép chuỗi disclaimer ở nhiều nơi.
+  - **Tính năng A (MTF):** `components/chart/use-confluence.ts` (chỉ fetch 1h+1D, suy 4h/1W bằng
+    `resample` sẵn có, dùng đúng `config.analysis` người dùng đang đặt trên trang chart) +
+    `confluence-panel.tsx` (bảng 4 khung + dòng tổng hợp, `role="region"` + `tabIndex={0}` +
+    `aria-label`), cắm dưới `analysis-panel` trên `/chart/[symbol]`.
+  - **Tính năng B (Screener):** trang `/quet-tin-hieu` (`page.tsx` + `page-client.tsx`),
+    `components/screener/use-screener.ts` (fetch song song mọi mã trong `INSTRUMENTS`, một mã lỗi/rỗng
+    chỉ làm dòng đó "—" chứ không hỏng cả bảng, `status='error'` chỉ khi TẤT CẢ lỗi) +
+    `screener-table.tsx` (cột Mã/Giá/Tín hiệu/Độ mạnh/RSI14/Xu hướng/Nguồn, sort theo độ mạnh đảo
+    chiều được, vùng cuộn ngang a11y). Link từ `app/page.tsx` + `app/sitemap.ts`.
+  - **Tính năng C (Ratio/Correlation):** `components/screener/market-context.tsx` (thẻ Tỷ lệ
+    Vàng/Bạc + Tương quan XAU↔DXY 30 phiên, "chưa đủ dữ liệu" khi thiếu mã, KHÔNG đoán) trên trang
+    screener; `use-screener` tái dùng nến 1D đã fetch khi screener đang ở khung 1D (không fetch
+    trùng), chỉ fetch riêng 1D cho XAU/XAG/DXY khi khung khác 1D.
+  - **Phát hiện & vá 1 lỗi a11y thật khi thêm `confluence-panel.tsx`:** vùng cuộn ngang bảng MTF thiếu
+    `tabIndex={0}` → axe `scrollable-region-focusable` trên MỌI trang chart (mobile) — vá theo đúng
+    pattern đã áp ở `so-sanh-gia-vang` (Đợt "So sánh giá vàng"), xác nhận lại axe 0 vi phạm.
+  - **Cập nhật 2 test E2E cũ bị strict-mode violation do disclaimer dùng chung xuất hiện 2 lần trên
+    trang chart** (`e2e/analysis.spec.ts`): scope assertion vào đúng khối `analysis-panel` (2 khối
+    cùng có chữ "không phải lời khuyên đầu tư" là ĐÚNG theo thiết kế, không phải lỗi).
+  - **Coverage:** thêm unit test cho 2 hook fetch (`use-confluence.test.ts`, `use-screener.test.ts`,
+    theo đúng pattern `use-candles.test.ts`/`use-gold-compare.test.ts` — mock `fetch`, kiểm cancel khi
+    đổi symbol/khung, kiểm 1 mã lỗi không hỏng cả bảng). Thêm exclude coverage cho các
+    component/route thuần trình bày mới (che bằng E2E, cùng quy ước đã có trong `vitest.config.ts`
+    cho `indicator-panel.tsx`/`timeframe-switcher.tsx`...).
+  - `e2e/confluence.spec.ts` (3 test: đủ 4 khung + dòng tổng hợp, disclaimer, axe) + `e2e/screener.spec.ts`
+    (6 test: bảng đủ mã + đổi khung, sort đảo chiều, thẻ bối cảnh thị trường, disclaimer, điều hướng
+    từ trang chủ, axe) — chạy thật, 9/9 xanh (desktop), full suite 86/86 xanh (desktop+mobile) trừ 1
+    lần flake đã biết ở `indicators.spec.ts` (locale sandbox, không liên quan, pass khi chạy riêng).
+  - 5 cổng local đều đạt: `lint` ✅ · `type-check` ✅ · `format:check` ✅ · `test` ✅ (207/207, 34 file,
+    coverage 89.49%/75.49%/82.65%/91.67% — vượt sàn 70%) · `build` ✅ (thêm route tĩnh `quet-tin-hieu`).
+  - **Môi trường E2E sandbox** (không đổi config repo, hết sau phiên): cùng vấn đề đã ghi ở các đợt
+    trước (browser rev 1228 thiếu, symlink sang rev sẵn có + shim `chrome-headless-shell-linux64`).
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
@@ -391,6 +443,13 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   (alerts nay đã có nền engine, ~~thêm symbol~~ **✅ XAG/USD (Đợt 9) + DXY/USD-VND (2026-07-05,
   ADR-0009) xong**, export CSV, ~~so sánh SJC vs thế giới quy đổi~~ **✅ xong (2026-07-05, xem
   `lib/gold-compare/`)**).
+- ✅ **Đợt 10 — Bề mặt phân tích (MTF confluence + Screener + Ratio/Correlation): ĐÃ CHỐT và ĐÃ
+  THỰC THI (2026-07-13)** — người dùng duyệt "Đợt 10: A+B(+C)" (ADR-0010,
+  `docs/plans/xgold-analysis-surface-plan.md`). Kết quả xem mục "Đã xong" (Đợt 10). Backlog còn
+  lại có chủ đích hoãn: **alert đẩy thông báo** dựa trên `computeConfluence`/screener (cần deploy
+  Supabase thật để chạy nền định kỳ — nêu ở ADR-0010 "Việc tiếp theo"), chart đầy đủ cho
+  ratio/correlation (v1 chỉ thẻ số, xem ADR-0010 "Các phương án đã cân nhắc"), panel chỉnh cấu hình
+  quy tắc trên screener (v1 dùng `DEFAULT_ANALYSIS_CONFIG`), export CSV.
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển

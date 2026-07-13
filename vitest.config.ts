@@ -45,6 +45,7 @@ export default defineConfig({
         'app/page.tsx',
         'app/chart/[symbol]/page.tsx',
         'app/gia-vang-trong-nuoc/page.tsx',
+        'app/quet-tin-hieu/page.tsx',
         // Component thuần trình bày/tổ hợp (không có nhánh logic riêng đáng unit test) — che bằng
         // cùng bộ E2E ở trên (indicators.spec.ts test trực tiếp thao tác trên indicator-panel.tsx).
         'components/chart/indicator-panel.tsx',
@@ -52,6 +53,14 @@ export default defineConfig({
         'components/chart/symbol-switcher.tsx',
         'components/domestic-gold/price-table.tsx',
         'components/domestic-gold/freshness-badge.tsx',
+        // Đợt 10 (bề mặt phân tích) — component/trang thuần trình bày, logic thật (computeConfluence,
+        // ratio/pearson, use-confluence, use-screener) đã có unit test riêng ở lib/analysis + hook
+        // test. Che bằng E2E: e2e/confluence.spec.ts, e2e/screener.spec.ts.
+        'components/chart/analysis-disclaimer.tsx',
+        'components/chart/confluence-panel.tsx',
+        'components/screener/screener-table.tsx',
+        'components/screener/market-context.tsx',
+        'app/quet-tin-hieu/page-client.tsx',
       ],
     },
   },

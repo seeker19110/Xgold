@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AnalysisPanel } from '@/components/chart/analysis-panel';
+import { ConfluencePanel } from '@/components/chart/confluence-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
 import { SymbolSwitcher } from '@/components/chart/symbol-switcher';
@@ -89,6 +90,7 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
             config={config.analysis}
             onChange={(analysis) => setConfig({ ...config, analysis })}
           />
+          <ConfluencePanel symbol={symbol} label={label} config={config.analysis} />
           <IndicatorPanel config={config} onChange={setConfig} />
         </>
       )}

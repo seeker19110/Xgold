@@ -14,8 +14,14 @@ test('khối phân tích hiển thị gợi ý + disclaimer bắt buộc', async
   // Gợi ý tổng hợp (Mua/Bán/Trung lập) hiển thị kèm điểm số.
   await expect(page.getByText(/Thiên MUA|Thiên BÁN|TRUNG LẬP/)).toBeVisible();
   await expect(page.getByText(/điểm [+-]?\d/)).toBeVisible();
-  // Disclaimer pháp lý bắt buộc (ADR-0007) — luôn hiển thị, kể cả khi tắt phân tích.
-  await expect(page.getByText('không phải lời khuyên đầu tư')).toBeVisible();
+  // Disclaimer pháp lý bắt buộc (ADR-0007) — luôn hiển thị, kể cả khi tắt phân tích. Từ Đợt 10,
+  // confluence-panel (bên dưới) cũng mang cùng disclaimer dùng chung → scope vào khối phân tích để
+  // tránh strict-mode violation (2 khối cùng có chữ này là ĐÚNG, không phải lỗi).
+  await expect(
+    page
+      .getByRole('region', { name: 'Phân tích kết hợp — tín hiệu kỹ thuật' })
+      .getByText('không phải lời khuyên đầu tư'),
+  ).toBeVisible();
 });
 
 test('tắt hết quy tắc → trạng thái rỗng hợp lệ, không còn gợi ý', async ({ page }) => {
@@ -39,7 +45,12 @@ test('tắt toàn bộ phân tích → ẩn gợi ý lẫn danh sách quy tắc,
 
   await expect(page.getByText(/Thiên MUA|Thiên BÁN|TRUNG LẬP/)).toBeHidden();
   await expect(page.getByRole('checkbox', { name: /^Bật\/tắt quy tắc/ })).toHaveCount(0);
-  await expect(page.getByText('không phải lời khuyên đầu tư')).toBeVisible();
+  // Cùng lý do scope ở test trên — confluence-panel bên dưới cũng mang disclaimer dùng chung.
+  await expect(
+    page
+      .getByRole('region', { name: 'Phân tích kết hợp — tín hiệu kỹ thuật' })
+      .getByText('không phải lời khuyên đầu tư'),
+  ).toBeVisible();
 });
 
 test('đổi khung thời gian → tín hiệu ghi rõ khung mới đang chọn', async ({ page }) => {

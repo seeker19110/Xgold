@@ -10,6 +10,7 @@ import {
   type RuleSetting,
   type SignalDirection,
 } from '@/lib/analysis';
+import { AnalysisDisclaimer } from '@/components/chart/analysis-disclaimer';
 
 interface AnalysisPanelProps {
   candles: readonly Candle[];
@@ -158,11 +159,7 @@ export function AnalysisPanel({ candles, timeframe, config, onChange }: Analysis
         </ul>
       )}
 
-      <p className="text-muted-foreground border-border border-t pt-2 text-xs">
-        Tín hiệu kỹ thuật tự động từ quy tắc chỉ báo, chỉ mang tính tham khảo —{' '}
-        <strong className="text-foreground">không phải lời khuyên đầu tư</strong>. Không dùng làm
-        căn cứ duy nhất cho quyết định mua/bán.
-      </p>
+      <AnalysisDisclaimer />
     </section>
   );
 }

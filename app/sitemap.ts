@@ -26,5 +26,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily' as const,
       priority: 0.7,
     },
+    {
+      url: `${siteUrl}/quet-tin-hieu`,
+      lastModified: now,
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    },
   ];
 }

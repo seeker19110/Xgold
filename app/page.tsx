@@ -45,6 +45,12 @@ export default function HomePage() {
         >
           So sánh giá trong nước &amp; thế giới
         </Link>
+        <Link
+          href="/quet-tin-hieu"
+          className="border-border text-foreground w-fit rounded-lg border px-4 py-2 font-medium"
+        >
+          Quét tín hiệu
+        </Link>
       </div>
     </main>
   );
