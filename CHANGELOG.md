@@ -8,6 +8,18 @@ và dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 > Vì commit theo _conventional commits_, phần "Unreleased" có thể được sinh tự động sau
 > (ví dụ `standard-version` / `changesets`). Trước mắt cập nhật tay khi có thay đổi đáng kể.
 
+## [1.3.0](https://github.com/seeker19110/Xgold/compare/v1.2.0...v1.3.0) (2026-07-16)
+
+
+### Features
+
+* **ADR-0011:** Add Ichimoku cloud + RSI stack rules + trade levels ([29fd32e](https://github.com/seeker19110/Xgold/commit/29fd32e0b1a48319e76aa70bc5fcda776444786d))
+* **chart:** đa symbol — thêm XAG/USD + registry mã + route động /chart/[symbol] (Đợt 9) ([#18](https://github.com/seeker19110/Xgold/issues/18)) ([fe8c3c2](https://github.com/seeker19110/Xgold/commit/fe8c3c2f36bafbd5687a5ff33e6b5ddecfa0f21b))
+* **chart:** thêm mã DXY (chỉ số đô la Mỹ) và USD/VND vào registry ([#20](https://github.com/seeker19110/Xgold/issues/20)) ([d5ad378](https://github.com/seeker19110/Xgold/commit/d5ad378595dee7e561ab5b1ca8cb720d66c3b168))
+* đợt 10 — bề mặt phân tích (MTF confluence + Screener + Ratio) ([#22](https://github.com/seeker19110/Xgold/issues/22)) ([24b2315](https://github.com/seeker19110/Xgold/commit/24b231530a2b778528e46fbe223f413989e04045))
+* **gold-compare:** so sánh giá vàng trong nước với giá thế giới quy đổi ([#21](https://github.com/seeker19110/Xgold/issues/21)) ([c637839](https://github.com/seeker19110/Xgold/commit/c6378392c619e148b668638e31095ccad72cdc98))
+* **orchestration:** áp dụng Kiến trúc điều phối 3 tầng ([#24](https://github.com/seeker19110/Xgold/issues/24)) ([0068fa8](https://github.com/seeker19110/Xgold/commit/0068fa8eab92c34c715f1d96e7f7036813569fa6))
+
 ## [1.2.0](https://github.com/seeker19110/Xgold/compare/v1.1.0...v1.2.0) (2026-07-04)
 
 
