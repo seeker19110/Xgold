@@ -2,9 +2,8 @@
 
 > AI đọc/ghi file này để biết làm tới đâu — resume qua nhiều phiên.
 > Trạng thái việc: ⬜ chưa làm · 🔄 đang làm · ✅ xong (kèm bằng chứng) · ➖ hủy (kèm lý do).
-> **Vòng 1 (2026-07-03, F-001..F-010, W-101..W-303) đã đóng hoàn chỉnh** — xem lịch sử ở
-> `docs/ops/COMPLETION-PLAN.history-2026-07-03.md` (di chuyển nguyên văn xuống dưới trước khi ghi
-> đè, để không mất bằng chứng vòng 1) — thực ra giữ nguyên trong Git history, không cần file riêng.
+> **Vòng 1 (2026-07-03, F-001..F-010, W-101..W-303) đã đóng hoàn chỉnh** — xem lịch sử ở bản trước
+> của file này trong Git (`git log -p -- docs/ops/COMPLETION-PLAN.md`), không tách file riêng.
 
 - Ngày lập vòng 2: 2026-07-16 · Duyệt bởi người dùng: 2026-07-16 (đủ cả 3 đợt)
 - Nguồn phát hiện: `docs/ops/COMPREHENSIVE-AUDIT-STATUS.md` (quét lại lần 2, 12/12 nhóm ✅, bao phủ
@@ -35,8 +34,8 @@ không cần việc riêng.)_
 - [ ] Nút "Xuất CSV" hoạt động đúng chuẩn trên mọi trình duyệt (F-011 vá) + có E2E xác nhận tải file.
 - [ ] `trade-levels.ts` nhất quán: hoặc sửa để `confidence` cũng `null` khi thiếu cloud/ATR, hoặc sửa
       docstring + đảm bảo UI xử lý đúng ca nửa vời — quyết định cụ thể ghi ở W-403.
-- [ ] Coverage các trang client chính (`chart-page-client.tsx`, `gia-vang-trong-nuoc/page-client.tsx`,
-      `so-sanh-gia-vang/page-client.tsx`, `compare-table.tsx`) không bắt buộc 100%, nhưng có ít nhất
+- [ ] Coverage các trang client chính (`chart-page-client.tsx`, `app/gia-vang-trong-nuoc/page-client.tsx`,
+      `app/so-sanh-gia-vang/page-client.tsx`, `compare-table.tsx`) không bắt buộc 100%, nhưng có ít nhất
       test smoke render + interaction chính (không còn 0%).
 - [ ] Lighthouse CI đo cả `/quet-tin-hieu` và `/so-sanh-gia-vang`, đạt ngân sách đã đặt.
 - [ ] `CLAUDE.md` mục 10 khớp cấu trúc thư mục thật.
@@ -53,12 +52,12 @@ không cần việc riêng.)_
 
 ## Đợt 2 — Lấp hàng rào coverage + hiệu năng (⬜)
 
-| ID    | Từ phát hiện | Việc                                                                                                                          | Tiêu chí nghiệm thu                                                                                    | Phụ thuộc | Ước lượng | Trạng thái |
-| ----- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------- | --------- | ---------- |
-| W-404 | F-013        | Unit test smoke cho `compare-table.tsx` + `so-sanh-gia-vang/page-client.tsx` (render đủ 4 trạng thái, định dạng số tiền đúng) | Coverage 2 file từ 0% lên ≥60%; test hiện có (E2E) vẫn xanh                                            | –         | M         | ⬜         |
-| W-405 | F-014        | Unit test smoke cho `chart-page-client.tsx` + `gia-vang-trong-nuoc/page-client.tsx` (4 trạng thái, nút Xuất CSV gọi đúng hàm) | Coverage 2 file từ 0% lên ≥60%                                                                         | W-403     | M         | ⬜         |
-| W-406 | F-015        | Thêm `/quet-tin-hieu` và `/so-sanh-gia-vang` vào `lighthouserc.json` (`collect.url`)                                          | Lighthouse CI chạy thật trên cả 5 URL, đạt ngưỡng đã đặt (hoặc điều chỉnh có lý do nếu trang nặng hơn) | –         | S         | ⬜         |
-| W-407 | F-020        | Thêm test trực tiếp cho nhánh `default` trong `bucketStartMs` (`resample.ts:43`) hoặc xác nhận + xóa nếu là dead code         | Coverage `resample.ts` 100% branch, hoặc dead code bị xóa với lý do ghi rõ                             | –         | S         | ⬜         |
+| ID    | Từ phát hiện | Việc                                                                                                                              | Tiêu chí nghiệm thu                                                                                    | Phụ thuộc | Ước lượng | Trạng thái |
+| ----- | ------------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------- | --------- | ---------- |
+| W-404 | F-013        | Unit test smoke cho `compare-table.tsx` + `app/so-sanh-gia-vang/page-client.tsx` (render đủ 4 trạng thái, định dạng số tiền đúng) | Coverage 2 file từ 0% lên ≥60%; test hiện có (E2E) vẫn xanh                                            | –         | M         | ⬜         |
+| W-405 | F-014        | Unit test smoke cho `chart-page-client.tsx` + `app/gia-vang-trong-nuoc/page-client.tsx` (4 trạng thái, nút Xuất CSV gọi đúng hàm) | Coverage 2 file từ 0% lên ≥60%                                                                         | W-403     | M         | ⬜         |
+| W-406 | F-015        | Thêm `/quet-tin-hieu` và `/so-sanh-gia-vang` vào `lighthouserc.json` (`collect.url`)                                              | Lighthouse CI chạy thật trên cả 5 URL, đạt ngưỡng đã đặt (hoặc điều chỉnh có lý do nếu trang nặng hơn) | –         | S         | ⬜         |
+| W-407 | F-020        | Thêm test trực tiếp cho nhánh `default` trong `bucketStartMs` (`resample.ts:43`) hoặc xác nhận + xóa nếu là dead code             | Coverage `resample.ts` 100% branch, hoặc dead code bị xóa với lý do ghi rõ                             | –         | S         | ⬜         |
 
 ## Đợt 3 — Dọn dẹp tài liệu + quyết định dependency (⬜)
 
