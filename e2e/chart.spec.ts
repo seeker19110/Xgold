@@ -73,6 +73,22 @@ test('legend OHLC kiểu TradingView hiển thị trên chart (O/H/L/C + mức t
   await expect(legend).toContainText('%');
 });
 
+test('bấm nút "Xuất CSV" tải file nến đúng tên + nội dung (F-011)', async ({ page }) => {
+  await page.goto('/chart/xauusd');
+
+  const exportButton = page.getByRole('button', { name: 'Xuất CSV' });
+  await expect(exportButton).toBeVisible();
+
+  const [download] = await Promise.all([page.waitForEvent('download'), exportButton.click()]);
+
+  expect(download.suggestedFilename()).toBe('xauusd-1h-candles.csv');
+  const path = await download.path();
+  const content = await (await import('node:fs/promises')).readFile(path!, 'utf-8');
+  const lines = content.split('\n');
+  expect(lines[0]).toBe('time,open,high,low,close,volume');
+  expect(lines.length).toBeGreaterThan(1);
+});
+
 test('trang chart không có vi phạm accessibility nghiêm trọng', async ({ page }) => {
   await page.goto('/chart/xauusd');
   await expect(
