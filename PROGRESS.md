@@ -437,6 +437,20 @@
   - Chưa làm (không chặn): khung giây/phút-1 (Twelve Data free tier không đáng tin cho 1min spot
     metals); tô khối lượng (volume pane) — cân nhắc đợt UI chart riêng.
 
+- **Đợt 13 — Volume + legend OHLC kiểu TradingView (2026-07-16):** tiếp mạch "tính năng đầy đủ cho
+  chart" sau Đợt 12.
+  - **Thanh khối lượng**: HistogramSeries overlay 20% đáy pane giá (bố cục mặc định TradingView),
+    thang giá riêng `volume` không kéo méo thang nến, màu theo nến tăng/giảm (alpha 0.35); toggle ở
+    IndicatorPanel, **bật mặc định** như TradingView; `ChartConfigSchema` thêm khóa `volume` với
+    `.default()` giữ tương thích URL/localStorage cũ. Nến thiếu volume (null) bỏ qua điểm đó.
+  - **Legend OHLC**: `lib/candles/legend.ts` (`legendAt` — Δ so với CLOSE nến trước đúng quy ước
+    TradingView, nến đầu so với open chính nó, chống chia 0; format có dấu ±/%); overlay góc trên
+    trái chart, rê crosshair hiện nến dưới con trỏ, rời chart về nến mới nhất, màu theo hướng.
+  - Test: unit 245/245 (legend 8 case + config volume backward-compat); E2E 92/92 desktop+mobile
+    (legend hiển thị đủ O/H/L/C+%, volume bật mặc định + tắt/bật không vỡ chart). Sửa race sẵn có
+    của test MACD (chụp baseline canvas trước khi chart dựng đủ pane — chờ ổn định 2 lần đọc).
+  - Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format` ✅ · `test` ✅ · E2E ✅.
+
 ## Đang làm
 
 - (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +

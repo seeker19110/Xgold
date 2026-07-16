@@ -5,6 +5,7 @@ import type {
   ChartConfig,
   IchimokuSettings,
   MacdSettings,
+  VolumeSettings,
 } from '@/lib/indicators/config';
 import type { MaLine, MaType, RsiLine } from '@/lib/indicators/types';
 
@@ -78,6 +79,10 @@ export function IndicatorPanel({ config, onChange }: IndicatorPanelProps) {
   function handlePeriodChange(raw: string, apply: (period: number) => void) {
     const period = Number(raw);
     if (Number.isFinite(period) && period > 0) apply(Math.floor(period));
+  }
+
+  function updateVolume(patch: Partial<VolumeSettings>) {
+    onChange({ ...config, volume: { ...config.volume, ...patch } });
   }
 
   // Chỉ áp thay đổi giữ được bất biến fast < slow (khớp ChartConfigSchema — cấu hình vi phạm sẽ
@@ -229,6 +234,24 @@ export function IndicatorPanel({ config, onChange }: IndicatorPanelProps) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="volume-panel-heading" className="flex flex-col gap-2">
+        <h2 id="volume-panel-heading" className="text-sm font-semibold">
+          Khối lượng (Volume)
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="checkbox"
+            checked={config.volume.visible}
+            onChange={(e) => updateVolume({ visible: e.target.checked })}
+            aria-label="Hiện/ẩn thanh khối lượng"
+            className="h-5 w-5"
+          />
+          <span className="text-muted-foreground text-xs">
+            Thanh khối lượng ở đáy pane giá (mã không có dữ liệu khối lượng sẽ không hiện)
+          </span>
+        </div>
       </section>
 
       <section aria-labelledby="macd-panel-heading" className="flex flex-col gap-2">

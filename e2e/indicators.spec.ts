@@ -51,7 +51,16 @@ test('bật MACD tạo pane phụ mới; bật Bollinger Bands chart không vỡ
   await expect(page.getByRole('heading', { name: 'MACD', exact: true })).toBeVisible();
 
   // lightweight-charts vẽ mỗi pane bằng canvas riêng — pane MACD mới làm tăng số canvas.
-  const before = await page.locator('canvas').count();
+  // Chart dựng pane trong useEffect SAU khi trang paint (panel/heading hiện trước khi đủ canvas) —
+  // chờ số canvas ổn định qua 2 lần đọc liên tiếp rồi mới chụp baseline, tránh race chụp thiếu pane.
+  let before = await page.locator('canvas').count();
+  await expect(async () => {
+    const now = await page.locator('canvas').count();
+    if (now !== before) {
+      before = now;
+      throw new Error(`số canvas chưa ổn định (${now})`);
+    }
+  }).toPass();
   await page.getByRole('checkbox', { name: 'Hiện/ẩn MACD' }).check();
   await expect(async () => {
     expect(await page.locator('canvas').count()).toBeGreaterThan(before);
@@ -65,6 +74,22 @@ test('bật MACD tạo pane phụ mới; bật Bollinger Bands chart không vỡ
   await expect(async () => {
     expect(await page.locator('canvas').count()).toBe(before);
   }).toPass();
+});
+
+test('thanh khối lượng bật mặc định (kiểu TradingView), tắt/bật lại chart không vỡ', async ({
+  page,
+}) => {
+  await page.goto('/chart/xauusd');
+
+  const volumeToggle = page.getByRole('checkbox', { name: 'Hiện/ẩn thanh khối lượng' });
+  await expect(volumeToggle).toBeChecked(); // mặc định BẬT như TradingView
+
+  // Volume là overlay cùng pane giá (không thêm canvas) — kiểm tra tắt/bật không phá chart.
+  await volumeToggle.uncheck();
+  await expect(page.locator('canvas').first()).toBeVisible();
+  await volumeToggle.check();
+  await expect(volumeToggle).toBeChecked();
+  await expect(page.locator('canvas').first()).toBeVisible();
 });
 
 test('panel chỉ báo không có vi phạm accessibility nghiêm trọng', async ({ page }) => {

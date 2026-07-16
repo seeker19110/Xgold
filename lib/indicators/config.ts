@@ -31,6 +31,10 @@ const BollingerSettingsSchema = z.object({
   multiplier: z.number().positive(),
 });
 
+const VolumeSettingsSchema = z.object({
+  visible: z.boolean(),
+});
+
 const IchimokuSettingsSchema = z.object({
   visible: z.boolean(),
   conversionPeriod: z.number().int().positive(),
@@ -39,9 +43,15 @@ const IchimokuSettingsSchema = z.object({
   displacement: z.number().int().positive(),
 });
 
+export type VolumeSettings = z.infer<typeof VolumeSettingsSchema>;
 export type MacdSettings = z.infer<typeof MacdSettingsSchema>;
 export type BollingerSettings = z.infer<typeof BollingerSettingsSchema>;
 export type IchimokuSettings = z.infer<typeof IchimokuSettingsSchema>;
+
+/** Bật mặc định — khớp mặc định của TradingView (chart mở lên là thấy thanh khối lượng). */
+export const DEFAULT_VOLUME_SETTINGS: VolumeSettings = {
+  visible: true,
+};
 
 export const DEFAULT_MACD_SETTINGS: MacdSettings = {
   visible: false,
@@ -78,6 +88,7 @@ export const ChartConfigSchema = z
     rsiLines: z.array(RsiLineSchema),
     // `.default()` giữ tương thích ngược: URL/localStorage cũ (trước Đợt 6/7) không có các khóa
     // này — giải mã vẫn thành công với giá trị mặc định thay vì trả null làm mất cấu hình cũ.
+    volume: VolumeSettingsSchema.default(DEFAULT_VOLUME_SETTINGS),
     macd: MacdSettingsSchema.default(DEFAULT_MACD_SETTINGS),
     bollinger: BollingerSettingsSchema.default(DEFAULT_BOLLINGER_SETTINGS),
     ichimoku: IchimokuSettingsSchema.default(DEFAULT_ICHIMOKU_SETTINGS),
@@ -95,6 +106,7 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     { id: 'ma-200', type: 'SMA', period: 200, color: '#f472b6', visible: true },
   ],
   rsiLines: [{ id: 'rsi-14', period: 14, color: '#a78bfa', visible: true }],
+  volume: DEFAULT_VOLUME_SETTINGS,
   macd: DEFAULT_MACD_SETTINGS,
   bollinger: DEFAULT_BOLLINGER_SETTINGS,
   ichimoku: DEFAULT_ICHIMOKU_SETTINGS,
