@@ -90,11 +90,12 @@ describe('computeTradeLevels', () => {
     expect(levels.tp2).toBeCloseTo(-307.5, 10);
   });
 
-  it('Mua nhưng thiếu mây/ATR → confidence vẫn tính được, SL/TP/risk null', () => {
+  it('Mua nhưng thiếu mây/ATR → mọi trường null kể cả confidence (F-018: nhất quán, không nửa vời)', () => {
     const inputs = { ...base, closes: [100], atr: [null] };
     const levels = computeTradeLevels(inputs, suggestion('buy', 1, 1), 0, P);
-    expect(levels.confidence).not.toBeNull();
+    expect(levels.confidence).toBeNull();
     expect(levels.risk).toBeNull();
+    expect(levels.entry).toBeNull();
     expect(levels.sl).toBeNull();
     expect(levels.tp1).toBeNull();
     expect(levels.tp2).toBeNull();
