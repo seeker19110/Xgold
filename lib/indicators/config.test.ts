@@ -66,6 +66,7 @@ describe('encodeChartConfig / decodeChartConfig', () => {
     );
     const decoded = decodeChartConfig(legacy);
     expect(decoded).not.toBeNull();
+    expect(decoded?.volume).toEqual(DEFAULT_CHART_CONFIG.volume);
     expect(decoded?.macd).toEqual(DEFAULT_CHART_CONFIG.macd);
     expect(decoded?.bollinger).toEqual(DEFAULT_CHART_CONFIG.bollinger);
     expect(decoded?.ichimoku).toEqual(DEFAULT_CHART_CONFIG.ichimoku);

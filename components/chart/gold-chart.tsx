@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createChart,
   createSeriesMarkers,
@@ -10,11 +10,13 @@ import {
   type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
+  type MouseEventParams,
   type SeriesMarker,
   type Time,
   type UTCTimestamp,
 } from 'lightweight-charts';
 import type { Candle } from '@/lib/candles/types';
+import { formatLegendChange, formatLegendPrice, legendAt } from '@/lib/candles/legend';
 import type { ChartConfig } from '@/lib/indicators/config';
 import {
   sma,
@@ -54,6 +56,9 @@ const MARKER_BUY_COLOR = '#4ade80';
 const MARKER_SELL_COLOR = '#f87171';
 const ICHIMOKU_SPAN_A_COLOR = '#f5cf0e';
 const ICHIMOKU_SPAN_B_COLOR = '#f10f0f';
+// Thanh khối lượng mờ để không lấn át nến (overlay 20% đáy pane giá — bố cục mặc định TradingView).
+const VOLUME_UP_COLOR = 'rgba(74, 222, 128, 0.35)';
+const VOLUME_DOWN_COLOR = 'rgba(248, 113, 113, 0.35)';
 
 function readThemeColors(): ThemeColors {
   const style = getComputedStyle(document.documentElement);
@@ -108,6 +113,10 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     paneIndex: number;
   }>({ line: null, signal: null, histogram: null, paneIndex: -1 });
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  // Tra chỉ số nến theo mốc thời gian cho crosshair → legend OHLC (cập nhật ở Effect 2).
+  const timeToIndexRef = useRef<Map<number, number>>(new Map());
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const ichimokuSeriesRef = useRef<{
     spanA: ISeriesApi<'Line'> | null;
     spanB: ISeriesApi<'Line'> | null;
@@ -136,6 +145,14 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
 
+    // Legend OHLC kiểu TradingView: rê crosshair → hiện nến dưới con trỏ; rời chart → nến mới nhất.
+    const onCrosshairMove = (param: MouseEventParams<Time>) => {
+      const index =
+        typeof param.time === 'number' ? timeToIndexRef.current.get(param.time) : undefined;
+      setHoveredIndex(index ?? null);
+    };
+    chart.subscribeCrosshairMove(onCrosshairMove);
+
     const observer = new MutationObserver(() => {
       const next = readThemeColors();
       chart.applyOptions({
@@ -159,9 +176,11 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
 
     return () => {
       observer.disconnect();
+      chart.unsubscribeCrosshairMove(onCrosshairMove);
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
       // maSeriesRef/rsiSeriesRef là Map bền vững suốt vòng đời component (không phải node DOM) —
       // muốn đọc nội dung MỚI NHẤT lúc dọn dẹp (chart.remove() đã tự hủy mọi series bên trong nó),
       // không phải chụp nhanh lúc effect chạy — cảnh báo exhaustive-deps không áp dụng ở đây.
@@ -177,21 +196,62 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     };
   }, []);
 
-  // Effect 2: dữ liệu nến.
+  // Effect 2: dữ liệu nến + map thời gian→chỉ số cho legend (đổi dữ liệu thì bỏ trạng thái hover cũ).
   useEffect(() => {
     const series = candleSeriesRef.current;
     if (!series) return;
+    const timeToIndex = new Map<number, number>();
     series.setData(
-      candles.map((c) => ({
-        time: toUtcTimestamp(c.ts),
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      })),
+      candles.map((c, i) => {
+        const time = toUtcTimestamp(c.ts);
+        timeToIndex.set(time, i);
+        return { time, open: c.open, high: c.high, low: c.low, close: c.close };
+      }),
     );
+    timeToIndexRef.current = timeToIndex;
+    // Nến cũ không còn — index hover cũ trỏ nhầm nến mới; đặt lại về "nến mới nhất".
+    setHoveredIndex(null);
     chartRef.current?.timeScale().fitContent();
   }, [candles]);
+
+  // Effect 2b: thanh khối lượng — overlay 20% đáy pane giá (bố cục TradingView), thang giá riêng
+  // 'volume' để không kéo méo thang giá nến. Nến thiếu volume (null) thì bỏ qua điểm đó.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    if (config.volume.visible && !volumeSeriesRef.current) {
+      const series = chart.addSeries(HistogramSeries, {
+        priceScaleId: 'volume',
+        priceFormat: { type: 'volume' },
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      series.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+      volumeSeriesRef.current = series;
+    }
+    if (!config.volume.visible && volumeSeriesRef.current) {
+      chart.removeSeries(volumeSeriesRef.current);
+      volumeSeriesRef.current = null;
+      return;
+    }
+    const series = volumeSeriesRef.current;
+    if (!series) return;
+
+    series.setData(
+      candles.flatMap((c) =>
+        c.volume != null
+          ? [
+              {
+                time: toUtcTimestamp(c.ts),
+                value: c.volume,
+                color: c.close >= c.open ? VOLUME_UP_COLOR : VOLUME_DOWN_COLOR,
+              },
+            ]
+          : [],
+      ),
+    );
+  }, [candles, config.volume]);
 
   // Effect 3: Multi-MA — thêm/xóa/cập nhật đường theo config.maLines, chồng lên pane giá (0).
   useEffect(() => {
@@ -481,12 +541,42 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     markersRef.current.setMarkers(markers);
   }, [candles, config.analysis]);
 
+  const legend = legendAt(candles, hoveredIndex ?? candles.length - 1);
+  const legendColorClass =
+    legend?.direction === 'up'
+      ? 'text-success'
+      : legend?.direction === 'down'
+        ? 'text-danger'
+        : 'text-muted-foreground';
+
   return (
-    <div
-      ref={containerRef}
-      className="h-[560px] w-full min-w-0"
-      role="group"
-      aria-label={`Chart nến ${label} với Multi-MA và Multi-RSI`}
-    />
+    <div className="relative min-w-0">
+      <div
+        ref={containerRef}
+        className="h-[560px] w-full min-w-0"
+        role="group"
+        aria-label={`Chart nến ${label} với Multi-MA và Multi-RSI`}
+      />
+      {legend && (
+        <div
+          aria-label={`Chú giải OHLC ${label}`}
+          className="text-foreground bg-surface/70 pointer-events-none absolute top-2 left-2 z-10 flex flex-wrap gap-x-3 rounded px-2 py-1 font-mono text-xs"
+        >
+          <span>
+            O <span className={legendColorClass}>{formatLegendPrice(legend.open)}</span>
+          </span>
+          <span>
+            H <span className={legendColorClass}>{formatLegendPrice(legend.high)}</span>
+          </span>
+          <span>
+            L <span className={legendColorClass}>{formatLegendPrice(legend.low)}</span>
+          </span>
+          <span>
+            C <span className={legendColorClass}>{formatLegendPrice(legend.close)}</span>
+          </span>
+          <span className={legendColorClass}>{formatLegendChange(legend)}</span>
+        </div>
+      )}
+    </div>
   );
 }
