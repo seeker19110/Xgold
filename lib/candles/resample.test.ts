@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resample } from '@/lib/candles/resample';
+import { bucketStartMs, resample } from '@/lib/candles/resample';
 import type { Candle } from '@/lib/candles/types';
 
 function c(
@@ -146,5 +146,12 @@ describe('resample', () => {
     ];
     const result = resample(input, '4h');
     expect(result[0]?.volume).toBeNull();
+  });
+
+  it('bucketStartMs với khung cơ sở (5m/1h/1D) trả nguyên mốc thời gian, không bucket (F-020)', () => {
+    const tsMs = Date.parse('2026-07-03T13:37:42.123Z');
+    expect(bucketStartMs(tsMs, '5m')).toBe(tsMs);
+    expect(bucketStartMs(tsMs, '1h')).toBe(tsMs);
+    expect(bucketStartMs(tsMs, '1D')).toBe(tsMs);
   });
 });

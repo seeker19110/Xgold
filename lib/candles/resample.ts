@@ -17,7 +17,12 @@ export const SOURCE_TIMEFRAME: Record<Timeframe, BaseTimeframe> = {
 
 const MINUTE_MS = 60 * 1000;
 
-function bucketStartMs(tsMs: number, timeframe: Timeframe): number {
+/**
+ * Xuất riêng để test trực tiếp nhánh `default` (khung cơ sở 5m/1h/1D) — `resample()` không bao giờ
+ * gọi hàm này với khung cơ sở (early-return ở dòng trên), nên nhánh đó không tới được qua API công
+ * khai; export để phủ test thay vì xóa (F-020 — đúng ngữ nghĩa phòng thủ, không phải dead code).
+ */
+export function bucketStartMs(tsMs: number, timeframe: Timeframe): number {
   const d = new Date(tsMs);
   switch (timeframe) {
     case '15m':
