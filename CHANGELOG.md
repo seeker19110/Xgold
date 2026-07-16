@@ -8,6 +8,13 @@ và dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 > Vì commit theo _conventional commits_, phần "Unreleased" có thể được sinh tự động sau
 > (ví dụ `standard-version` / `changesets`). Trước mắt cập nhật tay khi có thay đổi đáng kể.
 
+## [1.5.0](https://github.com/seeker19110/Xgold/compare/v1.4.0...v1.5.0) (2026-07-16)
+
+
+### Features
+
+* **chart:** xuất dữ liệu nến ra CSV ([#29](https://github.com/seeker19110/Xgold/issues/29)) ([a7123de](https://github.com/seeker19110/Xgold/commit/a7123de62015ff6a8a7c9a81ef988c046a3b9ecd))
+
 ## [1.4.0](https://github.com/seeker19110/Xgold/compare/v1.3.0...v1.4.0) (2026-07-16)
 
 
