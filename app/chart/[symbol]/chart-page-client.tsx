@@ -11,6 +11,7 @@ import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
 import { useCandles } from '@/components/chart/use-candles';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { candlesCsvFileName, candlesToCsv } from '@/lib/candles/csv';
 import type { Timeframe } from '@/lib/candles/types';
 
 interface ChartPageClientProps {
@@ -28,6 +29,16 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   const [timeframe, setTimeframe] = useState<Timeframe>('1h');
   const { status, candles, source, error } = useCandles(symbol, timeframe);
   const [config, setConfig] = useIndicatorConfig();
+
+  function handleExportCsv() {
+    const blob = new Blob([candlesToCsv(candles)], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = candlesCsvFileName(symbol, timeframe);
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-4 p-6">
@@ -83,6 +94,15 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
 
       {status === 'success' && candles.length > 0 && (
         <>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="border-border text-foreground hover:bg-surface rounded-md border px-3 py-1.5 text-sm"
+            >
+              Xuất CSV
+            </button>
+          </div>
           <GoldChart candles={candles} config={config} label={chartLabel} />
           <AnalysisPanel
             candles={candles}

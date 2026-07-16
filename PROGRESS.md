@@ -450,6 +450,17 @@
     (legend hiển thị đủ O/H/L/C+%, volume bật mặc định + tắt/bật không vỡ chart). Sửa race sẵn có
     của test MACD (chụp baseline canvas trước khi chart dựng đủ pane — chờ ổn định 2 lần đọc).
   - Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format` ✅ · `test` ✅ · E2E ✅.
+- **Đợt 14 — Export CSV (2026-07-16):** dọn nốt mục backlog làm được trong sandbox (không cần
+  deploy Supabase thật).
+  - `lib/candles/csv.ts` thuần TS: `candlesToCsv` (dòng tiêu đề `time,open,high,low,close,volume`,
+    escape ô có dấu phẩy/ngoặc kép/xuống dòng theo chuẩn CSV, `volume` rỗng khi `null`) +
+    `candlesCsvFileName` (`<symbol>-<timeframe>-candles.csv`).
+  - Nút "Xuất CSV" trên `app/chart/[symbol]/chart-page-client.tsx` (chỉ hiện khi có dữ liệu nến) —
+    tạo `Blob` + tải qua thẻ `<a download>`, không cần thư viện ngoài.
+  - Test: unit mới (`csv.test.ts`, tổng 248/248) + xác nhận **thật bằng trình duyệt** (Playwright
+    thủ công qua Chromium có sẵn): bấm nút → tải đúng file `xauusd-1h-candles.csv`, nội dung đúng cột
+    và dữ liệu khớp chart.
+  - Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format` ✅ · `test` ✅ (248/248).
 
 ## Đang làm
 
@@ -507,15 +518,16 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   ADR-0007 ghi quyết định pure TS không thêm dependency. Kết quả xem mục "Đã xong" (Đợt 6–8).
   Còn lại của kế hoạch: hướng A (deploy thật — chờ người dùng, xem mục dưới) và backlog cũ
   (alerts nay đã có nền engine, ~~thêm symbol~~ **✅ XAG/USD (Đợt 9) + DXY/USD-VND (2026-07-05,
-  ADR-0009) xong**, export CSV, ~~so sánh SJC vs thế giới quy đổi~~ **✅ xong (2026-07-05, xem
-  `lib/gold-compare/`)**).
+  ADR-0009) xong**, ~~export CSV~~ **✅ xong (Đợt 14, 2026-07-16)**, ~~so sánh SJC vs thế giới quy
+  đổi~~ **✅ xong (2026-07-05, xem `lib/gold-compare/`)**).
 - ✅ **Đợt 10 — Bề mặt phân tích (MTF confluence + Screener + Ratio/Correlation): ĐÃ CHỐT và ĐÃ
   THỰC THI (2026-07-13)** — người dùng duyệt "Đợt 10: A+B(+C)" (ADR-0010,
   `docs/plans/xgold-analysis-surface-plan.md`). Kết quả xem mục "Đã xong" (Đợt 10). Backlog còn
   lại có chủ đích hoãn: **alert đẩy thông báo** dựa trên `computeConfluence`/screener (cần deploy
   Supabase thật để chạy nền định kỳ — nêu ở ADR-0010 "Việc tiếp theo"), chart đầy đủ cho
   ratio/correlation (v1 chỉ thẻ số, xem ADR-0010 "Các phương án đã cân nhắc"), panel chỉnh cấu hình
-  quy tắc trên screener (v1 dùng `DEFAULT_ANALYSIS_CONFIG`), export CSV.
+  quy tắc trên screener (v1 dùng `DEFAULT_ANALYSIS_CONFIG`). ~~export CSV~~ **✅ xong (Đợt 14,
+  2026-07-16)**.
 - **Việc chỉ làm được ngoài sandbox này** (xem "Nợ kỹ thuật"): tạo project Supabase thật + áp
   migration, đăng ký `TWELVEDATA_API_KEY`, deploy + test thật Edge Function `ingest-gold` (theo
   README riêng), chạy `npm run backfill`, bật `pg_cron`. Người dùng đã xác nhận: tiếp tục phát triển
