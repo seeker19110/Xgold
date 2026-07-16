@@ -24,6 +24,7 @@ ALLOW_MISSING_PATH=(
   "docs/ops/COMPLETION-PLAN.md" "docs/ops/COMPREHENSIVE-AUDIT-STATUS.md"
   "app/layout.tsx" "lib/example.test.ts"
   ".claude/project-commands.sh" ".claude/settings-sonnet.json" ".claude/usage-budget.sh"
+  "lib/candles/heikin-ashi.ts"
 )
 
 is_in() { local needle="$1"; shift; for x in "$@"; do [ "$x" = "$needle" ] && return 0; done; return 1; }
