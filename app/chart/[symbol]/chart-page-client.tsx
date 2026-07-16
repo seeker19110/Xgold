@@ -36,7 +36,11 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = candlesCsvFileName(symbol, timeframe);
+    // appendChild trước khi click: Firefox và một số trình duyệt cũ bỏ qua click() trên <a download>
+    // chưa gắn vào DOM (F-011).
+    document.body.appendChild(anchor);
     anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   }
 

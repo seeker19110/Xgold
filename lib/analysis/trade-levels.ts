@@ -49,6 +49,11 @@ export function computeTradeLevels(
   const close = inputs.closes[index];
   const atr14 = inputs.atr[index];
   const cloud = cloudAt(inputs.ichimoku, index, params.ichimokuDisplacement);
+
+  // Mây/ATR/close chưa đủ dữ liệu → mọi trường null theo docstring, kể cả confidence (không tính
+  // "một nửa kết quả" — confidence riêng lẻ không có entry/SL/TP đi kèm gây hiểu lầm là gợi ý dùng được).
+  if (!cloud || !isNum(atr14) || close === undefined) return EMPTY_LEVELS;
+
   const r10 = inputs.rsiFast[index];
   const r14 = inputs.rsi[index];
   const r21 = inputs.rsiSlow[index];
@@ -64,10 +69,6 @@ export function computeTradeLevels(
   if (extremeAligned) confRaw += 1;
   if (extremeAgainst) confRaw -= 2;
   const confidence = Math.min(Math.max(50 + confRaw * 6, 50), 95);
-
-  if (!cloud || !isNum(atr14) || close === undefined) {
-    return { ...EMPTY_LEVELS, confidence };
-  }
 
   const thinCloud = cloud.top - cloud.bot < 0.3 * atr14;
   const distance = isBuy ? close - cloud.top : cloud.bot - close;
