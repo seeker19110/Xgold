@@ -126,7 +126,19 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
   - `npm run test` / `npm run test:coverage` — Vitest (unit)
   - `npm run test:e2e` — Playwright (E2E + axe)
   - `npx supabase migration new <tên>` / `npx supabase db reset` (local) / `npx supabase db push` (prod) — migration CSDL
-- Cấu trúc thư mục chính: `app/` (route Next App Router, chart đa mã ở `app/chart/[symbol]/`) · `components/` (UI, `components/chart/` cho chart gồm `symbol-switcher.tsx`) · `lib/instruments.ts` (registry mã — nguồn sự thật đa symbol: XAU/USD, XAG/USD) · `lib/indicators/` (SMA/EMA/RSI/MACD/Bollinger thuần TS) · `lib/analysis/` (engine gợi ý mua/bán) · `lib/providers/` (adapter nguồn dữ liệu: Twelve Data, Stooq) · `lib/candles/` (resample timeframe) · `lib/fixtures/` (dữ liệu mẫu đa mã + generator dùng chung) · `supabase/migrations/` + `supabase/functions/` (schema + Edge Function ingest) · `e2e/` (Playwright).
+- Cấu trúc thư mục chính: `app/` (route Next App Router — chart đa mã `app/chart/[symbol]/`, giá vàng
+  trong nước `app/gia-vang-trong-nuoc/`, quét tín hiệu `app/quet-tin-hieu/`, so sánh giá vàng
+  `app/so-sanh-gia-vang/`) · `components/chart/` (UI chart: `gold-chart.tsx`, `symbol-switcher.tsx`,
+  `analysis-panel.tsx`, `confluence-panel.tsx`, `indicator-panel.tsx`, `timeframe-switcher.tsx`) ·
+  `components/domestic-gold/`, `components/gold-compare/`, `components/screener/` (UI theo tính năng) ·
+  `lib/instruments.ts` (registry mã — nguồn sự thật đa symbol: XAU/USD, XAG/USD, DXY, USD/VND) ·
+  `lib/indicators/` (SMA/EMA/RSI/MACD/Bollinger/Ichimoku/ATR thuần TS) · `lib/analysis/` (engine gợi ý
+  mua/bán — `lib/analysis/rules/` chứa 7 quy tắc, `trade-levels.ts` cho Entry/SL/TP) ·
+  `lib/providers/` (adapter nguồn dữ liệu quốc tế: Twelve Data, Stooq) · `lib/providers-domestic/`
+  (adapter BTMC, vang.today) · `lib/candles/` (resample timeframe, `legend.ts` OHLC, `csv.ts` xuất
+  CSV) · `lib/gold-compare/` (quy đổi giá vàng SJC vs thế giới) · `lib/fixtures/` (dữ liệu mẫu đa mã +
+  generator dùng chung) · `supabase/migrations/` + `supabase/functions/` (schema + Edge Function
+  ingest) · `e2e/` (Playwright).
 - Quy ước đặt tên file/component: tên file `kebab-case.tsx` (khớp `components/theme-toggle.tsx` sẵn có), export component `PascalCase`; route/file đặc biệt Next theo quy ước framework (`page.tsx`, `layout.tsx`...); hàm/biến `camelCase`; hằng số `UPPER_SNAKE_CASE`; bảng/cột CSDL `snake_case`.
 - Thư viện chính & lý do dùng: xem bảng đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 4 (ma trận chọn thư viện chart + nguồn dữ liệu, đã xác minh phiên bản).
 - Giai đoạn hiện tại: GĐ 4 (Phát triển) — MVP Đợt 0–4 + Đợt 5 (vàng trong nước) + Đợt 6–8 (MACD/Bollinger + engine phân tích gợi ý mua/bán) + Đợt 9 (đa symbol: XAU/USD + XAG/USD) đã xong, kiểm chứng thật bằng trình duyệt + E2E xanh (52 test desktop+mobile). Việc còn lại chỉ làm được ngoài sandbox (deploy Supabase thật) — xem `PROGRESS.md` mục "Tiếp theo"/"Nợ kỹ thuật".

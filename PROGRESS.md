@@ -464,7 +464,10 @@
 
 ## Đang làm
 
-- (không có — đã hoàn tất trọn vòng đời `/completion` (2026-07-03): Pha 0 (FEATURE-MAP.md +
+- **Chờ merge PR #31/#32/#33 (vòng `/completion` thứ 2, 2026-07-16)** — xem "Báo cáo hoàn thiện vòng
+  2" bên dưới. Sau khi cả 3 merge: chạy lại Lighthouse thật trên trạng thái cuối của `main` (khuyến
+  nghị ở nhật ký hội tụ Pha 4, `docs/ops/COMPLETION-PLAN.md`) để đóng hẳn vòng 2.
+- Vòng `/completion` đầu tiên (2026-07-03) đã hoàn tất trọn vòng đời: Pha 0 (FEATURE-MAP.md +
   CONVENTIONS.md) → Pha 1 (audit 12 nhóm, `COMPREHENSIVE-AUDIT-STATUS.md`) → Pha 2 (kế hoạch
   `docs/ops/COMPLETION-PLAN.md`, người dùng duyệt) → Pha 3 (Đợt 1–3, PR #8/#10/#11, tất cả đã merge)
   → Pha 4 (hội tụ, xem mục "Báo cáo hoàn thiện" bên dưới). PR #1–#11 đều đã merge vào `main` (squash),
@@ -473,6 +476,23 @@
   duyệt + đủ 5 cổng xanh (`build`/`type-check`/`lint`/`format:check`/`test` 95/95, coverage thật
   89.64%/73.48%/89.47%/91.42%) + 32/32 E2E xanh (desktop+mobile) + Lighthouse thật trên cả 3 trang
   (performance 1.0, CLS 0, LCP 392–677ms).
+
+### Báo cáo hoàn thiện vòng 2 (Pha 4 — 2026-07-16)
+
+Nguồn: audit lại 12 nhóm trên trạng thái Đợt 6–14 (`docs/ops/COMPREHENSIVE-AUDIT-STATUS.md`, quét lại
+lần 2) → kế hoạch 3 đợt, 9 việc (`docs/ops/COMPLETION-PLAN.md`, người dùng duyệt cả 3 đợt) → thực thi
+qua PR #31 (tài liệu Pha 0/1/2), #32 (Đợt 1), #33 (Đợt 2+3, gộp chung một PR vì Đợt 3 nhỏ).
+
+**10 phát hiện (F-011..F-020), kết cục:** 1 Cao (F-012, `analysis-panel.tsx` 0%→96.29% coverage) +
+2 Trung liên quan hiển thị giao dịch (F-011 lỗi `appendChild` nút CSV, F-018 `trade-levels.ts` nửa
+vời) đã vá tận gốc có test hồi quy (Đợt 1); 3 Trung + 1 Thấp (F-013/F-014 coverage UI 0%→60-100%,
+F-015 Lighthouse thiếu 2 route, F-020 nhánh resample chưa test) đã lấp (Đợt 2); 2 Thấp còn lại
+(F-016 tài liệu lệch, F-019 dependency lệch major) đã xử lý — F-016 vá, F-019 quyết định hoãn có lý
+do (Đợt 3). Coverage toàn repo 89%→94.61% statement. Chi tiết đầy đủ + bằng chứng từng việc: xem
+`docs/ops/COMPLETION-PLAN.md`.
+
+**Còn lại trước khi đóng hẳn:** merge PR #31→#32→#33 theo FIFO, chạy lại Lighthouse thật trên `main`
+sau merge (đã xác nhận trên nhánh riêng ở W-406, nên xác nhận lại 1 lần trên trạng thái tích hợp).
 
 ### Báo cáo hoàn thiện (Pha 4 — 2026-07-03)
 
@@ -577,6 +597,13 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
 
 ## Nợ kỹ thuật (chỗ "làm tạm" cần quay lại)
 
+- **Dependency lệch major (F-019, W-409, quyết định 2026-07-16):** `npm outdated` cho thấy 3 gói lệch
+  major — `typescript` 6.0.3→7.0.2, `eslint` 9.39.4→10.7.0, `@types/node` 22.20.0→26.1.1. **Quyết
+  định: hoãn có chủ đích**, không nâng cấp ngay trong vòng hoàn thiện này — nâng major 3 gói cùng lúc
+  (2 trong số đó là công cụ build/lint nền tảng) có rủi ro breaking change cao hơn giá trị nhận lại ở
+  thời điểm này (không phải lỗ hổng bảo mật, `npm audit --omit=dev` sạch), ngoài phạm vi đã audit/
+  duyệt. Nâng cấp khi có nhu cầu cụ thể (tính năng mới cần, hoặc lỗ hổng bảo mật phát sinh) — làm
+  riêng từng gói một, không gộp, chạy đủ cổng sau mỗi gói.
 - `app/manifest.ts` tham chiếu icon `/icon-192.png`, `/icon-512.png` chưa có file thật — không chặn cổng
   (không phải lỗi build/lint), nhưng cần bổ sung ảnh icon thật trước khi PWA/manifest được dùng nghiêm túc.
 - **Chưa test thật được với Supabase/Twelve Data/Stooq thật** (mạng sandbox chặn + không có Docker/Deno):
