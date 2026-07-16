@@ -38,7 +38,7 @@ curl -i -X POST 'https://<project-ref>.supabase.co/functions/v1/ingest-gold' \
   -H "Authorization: Bearer <service-role-key>"
 ```
 
-Kiểm tra: response `results` có `status: "success"` cho từng mã (`symbol`) × cả `1h` và `1D`; đối
+Kiểm tra: response `results` có `status: "success"` cho từng mã (`symbol`) × cả `5m`, `1h` và `1D`; đối
 chiếu bảng `ingest_runs` và `candles` trên Supabase Studio thấy dữ liệu mới, hợp lý (không trùng lặp
 khi gọi lại — upsert idempotent). Nếu một mã chưa có trong bảng `instruments` (quên chạy migration
 seed) thì `results` sẽ có mục `status: "error"` cho mã đó nhưng KHÔNG chặn các mã khác.
@@ -59,3 +59,9 @@ select cron.schedule(
 ```
 
 Rollback (tắt lịch): `select cron.unschedule('ingest-gold-hourly');`
+
+Lưu ý khung 5m: với lịch mỗi giờ ở trên, nến 5m trễ tối đa ~1 giờ (outputsize 15 của job 5m đủ bù
+trọn khoảng trống giữa 2 lần chạy). Muốn chart 5m sát realtime hơn, rút ngắn lịch (vd
+`'*/15 * * * *'` — mỗi 15 phút) NHƯNG tính lại hạn mức Twelve Data free tier trước khi bật:
+4 mã × 3 khung × 96 lần/ngày = 1.152 credits/ngày, VƯỢT hạn mức 800/ngày của free tier — cần
+giảm số mã/khung hoặc nâng gói trả phí.

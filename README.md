@@ -13,7 +13,7 @@ tích kết hợp** (tín hiệu Mua/Bán/Trung lập tham khảo). Cấu hình 
 ## Tính năng
 
 - Chart nến **đa mã** (XAU/USD, XAG/USD — thêm mã mới chỉ cần một mục trong registry
-  `lib/instruments.ts`), khung 1h/4h/1D/1W (4h và 1W tính từ 1h/1D lúc đọc, không lưu trùng lặp).
+  `lib/instruments.ts`), đủ dải khung kiểu TradingView 5m/15m/30m/1h/4h/1D/1W/1M (khung không phải cơ sở tính từ 5m/1h/1D lúc đọc, không lưu trùng lặp).
   Route động `/chart/[symbol]`, chuyển mã ngay trên trang qua SymbolSwitcher.
 - **Multi-MA:** nhiều đường trung bình động (SMA hoặc EMA), mỗi đường tự chọn chu kỳ + màu, chồng
   lên nến.

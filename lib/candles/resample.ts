@@ -1,16 +1,29 @@
 import type { BaseTimeframe, Candle, Timeframe } from '@/lib/candles/types';
 
-/** Khung nào tính từ khung nào — chỉ resample lên (không resample xuống nhỏ hơn). */
-const SOURCE_OF: Record<Timeframe, BaseTimeframe> = {
+/**
+ * Khung nào tính từ khung nào — chỉ resample lên (không resample xuống nhỏ hơn).
+ * 15m/30m gộp từ 5m; 4h gộp từ 1h; 1W/1M gộp từ 1D. Khung cơ sở (5m/1h/1D) trả nguyên dữ liệu.
+ */
+export const SOURCE_TIMEFRAME: Record<Timeframe, BaseTimeframe> = {
+  '5m': '5m',
+  '15m': '5m',
+  '30m': '5m',
   '1h': '1h',
   '4h': '1h',
   '1D': '1D',
   '1W': '1D',
+  '1M': '1D',
 };
+
+const MINUTE_MS = 60 * 1000;
 
 function bucketStartMs(tsMs: number, timeframe: Timeframe): number {
   const d = new Date(tsMs);
   switch (timeframe) {
+    case '15m':
+      return Math.floor(tsMs / (15 * MINUTE_MS)) * (15 * MINUTE_MS);
+    case '30m':
+      return Math.floor(tsMs / (30 * MINUTE_MS)) * (30 * MINUTE_MS);
     case '4h': {
       // Gộp theo khối 4 giờ UTC, mốc 00:00 UTC (00-04, 04-08, ...).
       const hourBucket = Math.floor(d.getUTCHours() / 4) * 4;
@@ -23,18 +36,22 @@ function bucketStartMs(tsMs: number, timeframe: Timeframe): number {
       const monday = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - diffToMonday);
       return monday;
     }
+    case '1M':
+      // Tháng dương lịch UTC, mốc ngày 01 — quy ước nến tháng của TradingView.
+      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
     default:
       return tsMs;
   }
 }
 
 /**
- * Resample nến từ khung cơ sở (1h/1D, lưu trong DB) sang khung hiển thị lớn hơn (4h/1W).
- * Tính lúc đọc (không lưu lại) — tránh trùng lặp/lệch dữ liệu giữa khung gốc và khung tổng hợp.
- * Yêu cầu input đã sắp theo `ts` tăng dần (đúng thứ tự trả về từ CSDL theo khóa chính).
+ * Resample nến từ khung cơ sở (5m/1h/1D, lưu trong DB) sang khung hiển thị lớn hơn
+ * (15m/30m/4h/1W/1M). Tính lúc đọc (không lưu lại) — tránh trùng lặp/lệch dữ liệu giữa khung gốc
+ * và khung tổng hợp. Yêu cầu input đã sắp theo `ts` tăng dần (đúng thứ tự trả về từ CSDL theo khóa
+ * chính).
  */
 export function resample(candles: readonly Candle[], to: Timeframe): Candle[] {
-  if (to === SOURCE_OF[to] && (to === '1h' || to === '1D')) {
+  if (to === SOURCE_TIMEFRAME[to]) {
     return [...candles];
   }
 

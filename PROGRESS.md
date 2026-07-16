@@ -10,7 +10,8 @@
   tích gợi ý mua/bán) + Đợt 9 (đa symbol: XAU/USD + XAG/USD + DXY + USD/VND, ADR-0008/0009) +
   **Đợt 10 (bề mặt phân tích: MTF confluence + Screener + Ratio/Correlation, ADR-0010)** +
   **Đợt 11 (mây Ichimoku R6 + xếp chồng RSI R7 + Entry/SL/TP/Xác suất/Rủi ro, ADR-0011 — LẬT LẠI
-  ranh giới "không entry/SL/TP" của ADR-0007/0010 theo yêu cầu người dùng)** đã xong. Còn lại là
+  ranh giới "không entry/SL/TP" của ADR-0007/0010 theo yêu cầu người dùng)** +
+  **Đợt 12 (dải khung thời gian đầy đủ kiểu TradingView: 5m/15m/30m/1h/4h/1D/1W/1M)** đã xong. Còn lại là
   việc chỉ làm được ngoài sandbox này (deploy Supabase thật, kiểm chứng ingestion) — xem "Tiếp
   theo". Xem lộ trình đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 6 và 9,
   `docs/plans/xgold-development-plan.md`, `docs/plans/xgold-analysis-surface-plan.md`.
@@ -412,6 +413,29 @@
   - Việc chưa làm trong đợt này (có thể cân nhắc sau, không chặn): mở rộng `backtest.ts` để đo tần
     suất R/R đạt TP1/TP2 trên dữ liệu lịch sử; chưa tô màu vùng giữa Span A/B trên chart (v1 chỉ vẽ
     2 đường).
+
+- **Đợt 12 — Dải khung thời gian đầy đủ kiểu TradingView 5m → 1M (2026-07-16):** người dùng yêu cầu
+  "nến Nhật từ m5 → M" theo chuẩn TradingView.
+  - `lib/candles/types.ts`: `TIMEFRAMES` mở rộng thành 8 khung `5m/15m/30m/1h/4h/1D/1W/1M`;
+    `BASE_TIMEFRAMES` thêm `5m` (3 khung cơ sở lưu DB: 5m/1h/1D); thêm `TIMEFRAME_LABELS` — nhãn
+    nút gọn kiểu TradingView (`D`/`W`/`M` cho khung ngày trở lên).
+  - `lib/candles/resample.ts`: export `SOURCE_TIMEFRAME` (nguồn sự thật khung nào gộp từ khung nào —
+    15m/30m từ 5m, 4h từ 1h, 1W/1M từ 1D) + bucket 15m/30m (mốc phút UTC) và 1M (tháng dương lịch
+    UTC mốc ngày 01, đúng cả ranh giới sang năm). `/api/candles` dùng chung map này (bỏ hàm trùng).
+  - Dữ liệu mẫu: `SampleSet` thêm dải `m5` (5 ngày × 288 nến, seed +100 tránh trùng seed mã kế);
+    dải `daily` kéo dài 180 → 1095 nến (3 năm, 2023-07-08→2026-07-06) để khung 1W (~156 nến) và 1M
+    (~37 nến) đủ dày. Cả 4 mã trong registry có đủ 3 dải mẫu.
+  - Nguồn dữ liệu thật: Twelve Data thêm interval `5min`; Edge Function `ingest-gold` thêm job 5m
+    (outputsize 15, đủ bù lịch cron mỗi giờ — README ghi rõ đánh đổi độ trễ ≤1h và cách rút ngắn
+    lịch kèm tính toán hạn mức free tier); `scripts/backfill.ts` thêm task 5m (5000 nến ≈ 17 ngày).
+  - Migration `20260716080000_expand_timeframes_m5_to_1m.sql`: nới CHECK `candles.timeframe` lên đủ
+    8 giá trị (có ghi cách rollback).
+  - Test: resample thêm 5m identity + 5m→15m/30m + 1D→1M (ranh giới năm); route sample thêm 5m/15m/
+    30m/1M; fixtures thêm dải M5; E2E thêm test đủ 8 nút khung + chuyển 2 khung biên (5m, M) chart
+    vẫn render. Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format` ✅ · `test` ✅ (237/237) ·
+    E2E ✅ (88/88 desktop+mobile).
+  - Chưa làm (không chặn): khung giây/phút-1 (Twelve Data free tier không đáng tin cho 1min spot
+    metals); tô khối lượng (volume pane) — cân nhắc đợt UI chart riêng.
 
 ## Đang làm
 

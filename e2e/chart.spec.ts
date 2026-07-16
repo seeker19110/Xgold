@@ -32,6 +32,32 @@ test('đổi khung thời gian cập nhật nút đang chọn (aria-pressed)', a
   await expect(btn1h).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('đủ dải khung thời gian kiểu TradingView (5m → M) và chuyển được khung biên', async ({
+  page,
+}) => {
+  await page.goto('/chart/xauusd');
+
+  const switcher = page.getByRole('group', { name: 'Chọn khung thời gian' });
+  for (const tf of ['5m', '15m', '30m', '1h', '4h', 'D', 'W', 'M']) {
+    await expect(switcher.getByRole('button', { name: tf, exact: true })).toBeVisible();
+  }
+
+  const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
+
+  // Khung nhỏ nhất (5m) — chart vẫn render nến.
+  const btn5m = switcher.getByRole('button', { name: '5m', exact: true });
+  await btn5m.click();
+  await expect(btn5m).toHaveAttribute('aria-pressed', 'true');
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+
+  // Khung lớn nhất (M = 1 tháng) — resample từ nến ngày, chart vẫn render.
+  const btnMonth = switcher.getByRole('button', { name: 'M', exact: true });
+  await btnMonth.click();
+  await expect(btnMonth).toHaveAttribute('aria-pressed', 'true');
+  await expect(btn5m).toHaveAttribute('aria-pressed', 'false');
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+});
+
 test('trang chart không có vi phạm accessibility nghiêm trọng', async ({ page }) => {
   await page.goto('/chart/xauusd');
   await expect(

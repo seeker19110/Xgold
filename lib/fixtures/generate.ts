@@ -59,17 +59,26 @@ export function generateWalk(
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+
+/** Số nến ngày mẫu — 3 năm để khung 1W (~156 nến) và 1M (~36 nến) đủ dày khi resample. */
+export const SAMPLE_DAILY_COUNT = 365 * 3;
+/** Số nến 5 phút mẫu — 5 ngày (288 nến/ngày), dùng cho khung 5m/15m/30m. */
+export const SAMPLE_M5_COUNT = 288 * 5;
 
 export interface SampleSet {
-  /** ~180 nến ngày (khoảng 6 tháng), dùng cho khung 1D/1W mẫu. */
+  /** 3 năm nến ngày (1095 nến), dùng cho khung 1D/1W/1M mẫu. */
   daily: readonly Candle[];
   /** 14 ngày nến giờ (336 nến), dùng cho khung 1h/4h mẫu. */
   hourly: readonly Candle[];
+  /** 5 ngày nến 5 phút (1440 nến), dùng cho khung 5m/15m/30m mẫu. */
+  m5: readonly Candle[];
 }
 
 /**
- * Tạo bộ nến mẫu (ngày + giờ) cho một mã từ giá khởi điểm + cặp seed riêng của mã. Cùng khung thời
- * gian với XAU/USD gốc để mọi mã hiển thị đồng nhất.
+ * Tạo bộ nến mẫu (ngày + giờ + 5 phút) cho một mã từ giá khởi điểm + bộ seed riêng của mã. Cùng
+ * khung thời gian với XAU/USD gốc để mọi mã hiển thị đồng nhất. Cả 3 dải đều kết thúc quanh đầu
+ * tháng 7/2026: daily 2023-07-08→2026-07-06, hourly 2026-06-20→2026-07-04, m5 2026-06-29→2026-07-04.
  */
 export function makeSampleSet(
   dailyStart: number,
@@ -77,7 +86,16 @@ export function makeSampleSet(
   seedBase: number,
 ): SampleSet {
   return {
-    daily: generateWalk(Date.UTC(2026, 0, 1), DAY_MS, 180, dailyStart, seedBase),
+    daily: generateWalk(Date.UTC(2023, 6, 8), DAY_MS, SAMPLE_DAILY_COUNT, dailyStart, seedBase),
     hourly: generateWalk(Date.UTC(2026, 5, 20), HOUR_MS, 24 * 14, hourlyStart, seedBase + 1),
+    // seedBase+100 (không phải +2): các mã đặt seedBase cách nhau 2 (1/3/5/7) nên +2 sẽ trùng seed
+    // với chuỗi daily của mã kế tiếp → hình dạng nến lặp lại giữa các mã.
+    m5: generateWalk(
+      Date.UTC(2026, 5, 29),
+      5 * MINUTE_MS,
+      SAMPLE_M5_COUNT,
+      hourlyStart,
+      seedBase + 100,
+    ),
   };
 }

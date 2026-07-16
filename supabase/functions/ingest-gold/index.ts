@@ -26,10 +26,13 @@ const INSTRUMENTS: ReadonlyArray<{ symbol: string; twelveDataSymbol: string }> =
 // outputsize nhỏ có chủ đích: chạy định kỳ chỉ cần vài nến gần nhất để bắt kịp (đủ bù khi có 1-2
 // lần chạy bị lỡ); backfill lịch sử dài dùng `npm run backfill` (scripts/backfill.ts), không phải ở đây.
 const JOBS: ReadonlyArray<{
-  appTimeframe: '1h' | '1D';
+  appTimeframe: '5m' | '1h' | '1D';
   twelveDataInterval: string;
   outputsize: number;
 }> = [
+  // 5m: outputsize 15 phủ 75 phút — đủ bù trọn khoảng trống giữa 2 lần chạy cron mỗi giờ (chart 5m
+  // trễ tối đa ~1h theo lịch hiện tại; muốn sát realtime hơn thì rút ngắn lịch cron, xem README §4).
+  { appTimeframe: '5m', twelveDataInterval: '5min', outputsize: 15 },
   { appTimeframe: '1h', twelveDataInterval: '1h', outputsize: 10 },
   { appTimeframe: '1D', twelveDataInterval: '1day', outputsize: 2 },
 ];

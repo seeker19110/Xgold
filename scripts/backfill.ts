@@ -5,6 +5,7 @@
  *
  * - Daily ('1D'): Stooq (không cần key) — lấy toàn bộ lịch sử có sẵn.
  * - Hourly ('1h'): Twelve Data — free tier giới hạn outputsize (~5.000 nến/lần), đủ vài tháng gần nhất.
+ * - 5 phút ('5m'): Twelve Data — cùng giới hạn 5.000 nến/lần, đủ ~17 ngày gần nhất.
  *
  * KHÔNG chạy được trong sandbox phát triển (mạng bị chặn tới Twelve Data/Stooq — xem ADR-0003);
  * chạy khi đã deploy hoặc từ máy có mạng bình thường, sau khi đã set biến môi trường ở trên.
@@ -132,6 +133,12 @@ async function main(): Promise<void> {
 
     await runBackfillTask(supabase, instrumentId, 'twelvedata', '1h', () =>
       twelveData.fetchCandles({ symbol, timeframe: '1h', outputsize: 5000 }),
+    );
+
+    // 5m: 5000 nến ≈ 17 ngày gần nhất — đủ cho khung 5m/15m/30m trên chart (giới hạn free tier
+    // Twelve Data, giống lý do outputsize của 1h ở trên).
+    await runBackfillTask(supabase, instrumentId, 'twelvedata', '5m', () =>
+      twelveData.fetchCandles({ symbol, timeframe: '5m', outputsize: 5000 }),
     );
   }
 

@@ -9,3 +9,4 @@ const USDVND_SAMPLE = makeSampleSet(26300, 26310, 7);
 
 export const SAMPLE_USDVND_DAILY = USDVND_SAMPLE.daily;
 export const SAMPLE_USDVND_HOURLY = USDVND_SAMPLE.hourly;
+export const SAMPLE_USDVND_M5 = USDVND_SAMPLE.m5;

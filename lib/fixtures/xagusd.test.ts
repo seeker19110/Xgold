@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { CandleSchema } from '@/lib/candles/types';
-import { SAMPLE_XAGUSD_DAILY, SAMPLE_XAGUSD_HOURLY } from '@/lib/fixtures/xagusd';
+import { SAMPLE_DAILY_COUNT, SAMPLE_M5_COUNT } from '@/lib/fixtures/generate';
+import { SAMPLE_XAGUSD_DAILY, SAMPLE_XAGUSD_HOURLY, SAMPLE_XAGUSD_M5 } from '@/lib/fixtures/xagusd';
 
 describe.each([
-  ['SAMPLE_XAGUSD_DAILY', SAMPLE_XAGUSD_DAILY, 180],
+  ['SAMPLE_XAGUSD_DAILY', SAMPLE_XAGUSD_DAILY, SAMPLE_DAILY_COUNT],
   ['SAMPLE_XAGUSD_HOURLY', SAMPLE_XAGUSD_HOURLY, 24 * 14],
+  ['SAMPLE_XAGUSD_M5', SAMPLE_XAGUSD_M5, SAMPLE_M5_COUNT],
 ])('%s', (_name, candles, expectedLength) => {
   it(`có đúng ${expectedLength} nến`, () => {
     expect(candles).toHaveLength(expectedLength);
