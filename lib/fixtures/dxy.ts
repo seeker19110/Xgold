@@ -9,3 +9,4 @@ const DXY_SAMPLE = makeSampleSet(100, 100.5, 5);
 
 export const SAMPLE_DXY_DAILY = DXY_SAMPLE.daily;
 export const SAMPLE_DXY_HOURLY = DXY_SAMPLE.hourly;
+export const SAMPLE_DXY_M5 = DXY_SAMPLE.m5;

@@ -57,7 +57,7 @@ test('đổi khung thời gian → tín hiệu ghi rõ khung mới đang chọn'
   await page.goto('/chart/xauusd');
   await expect(page.getByText(/khung 1h đang chọn/)).toBeVisible();
 
-  await page.getByRole('button', { name: '1D' }).click();
+  await page.getByRole('button', { name: 'D', exact: true }).click();
   await expect(page.getByText(/khung 1D đang chọn/)).toBeVisible();
 });
 

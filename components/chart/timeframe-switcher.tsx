@@ -1,6 +1,6 @@
 'use client';
 
-import { TIMEFRAMES, type Timeframe } from '@/lib/candles/types';
+import { TIMEFRAME_LABELS, TIMEFRAMES, type Timeframe } from '@/lib/candles/types';
 
 interface TimeframeSwitcherProps {
   value: Timeframe;
@@ -9,7 +9,7 @@ interface TimeframeSwitcherProps {
 
 export function TimeframeSwitcher({ value, onChange }: TimeframeSwitcherProps) {
   return (
-    <div role="group" aria-label="Chọn khung thời gian" className="flex gap-1">
+    <div role="group" aria-label="Chọn khung thời gian" className="flex flex-wrap gap-1">
       {TIMEFRAMES.map((tf) => (
         <button
           key={tf}
@@ -22,7 +22,7 @@ export function TimeframeSwitcher({ value, onChange }: TimeframeSwitcherProps) {
               : 'text-muted-foreground hover:text-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
           }
         >
-          {tf}
+          {TIMEFRAME_LABELS[tf]}
         </button>
       ))}
     </div>

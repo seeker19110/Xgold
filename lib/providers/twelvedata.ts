@@ -42,6 +42,7 @@ const SYMBOL_MAP: Record<string, string> = {
 };
 
 const INTERVAL_MAP: Record<FetchCandlesParams['timeframe'], string> = {
+  '5m': '5min',
   '1h': '1h',
   '1D': '1day',
 };

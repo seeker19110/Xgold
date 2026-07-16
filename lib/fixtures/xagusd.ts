@@ -9,3 +9,4 @@ const XAGUSD_SAMPLE = makeSampleSet(40, 41, 3);
 
 export const SAMPLE_XAGUSD_DAILY = XAGUSD_SAMPLE.daily;
 export const SAMPLE_XAGUSD_HOURLY = XAGUSD_SAMPLE.hourly;
+export const SAMPLE_XAGUSD_M5 = XAGUSD_SAMPLE.m5;

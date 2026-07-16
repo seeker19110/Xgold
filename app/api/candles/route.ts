@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { resample } from '@/lib/candles/resample';
-import { TIMEFRAMES, type BaseTimeframe, type Candle, type Timeframe } from '@/lib/candles/types';
+import { resample, SOURCE_TIMEFRAME } from '@/lib/candles/resample';
+import { TIMEFRAMES, type BaseTimeframe, type Candle } from '@/lib/candles/types';
 import { getInstrumentBySymbol, type Instrument } from '@/lib/instruments';
 
 export const dynamic = 'force-dynamic';
@@ -26,13 +26,15 @@ const SupabaseCandleRowSchema = z.object({
   volume: z.coerce.number().nullable(),
 });
 
-/** Khung hiển thị nào tính từ khung cơ sở nào (khớp lib/candles/resample.ts). */
-function baseTimeframeOf(timeframe: Timeframe): BaseTimeframe {
-  return timeframe === '4h' ? '1h' : timeframe === '1W' ? '1D' : timeframe;
-}
-
 function sampleBaseCandles(instrument: Instrument, base: BaseTimeframe): Candle[] {
-  return base === '1h' ? [...instrument.sample.hourly] : [...instrument.sample.daily];
+  switch (base) {
+    case '5m':
+      return [...instrument.sample.m5];
+    case '1h':
+      return [...instrument.sample.hourly];
+    case '1D':
+      return [...instrument.sample.daily];
+  }
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -53,7 +55,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: `Không tìm thấy symbol '${symbol}'` }, { status: 404 });
   }
 
-  const base = baseTimeframeOf(timeframe);
+  const base = SOURCE_TIMEFRAME[timeframe];
   const supabase = getSupabaseClient();
 
   let baseCandles: Candle[];

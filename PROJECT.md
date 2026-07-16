@@ -22,7 +22,7 @@
 
 - **Must have:**
   1. Thu thập & lưu OHLC XAU/USD khung 1h + 1D vào Postgres; backfill lịch sử ≥ 5 năm daily; upsert idempotent; log mỗi lần chạy (`ingest_runs`). _Tiêu chí chấp nhận:_ chạy ingest 2 lần liên tiếp không tạo dữ liệu trùng; `ingest_runs` phản ánh đúng thành công/thất bại.
-  2. Chart nến kiểu TradingView (lightweight-charts): zoom/pan, crosshair, chuyển khung 1h/4h/1D/1W (4h & 1W resample từ 1h & 1D). _Tiêu chí:_ mở `/chart/xauusd` thấy nến render đúng thứ tự thời gian; đổi khung không vỡ layout.
+  2. Chart nến kiểu TradingView (lightweight-charts): zoom/pan, crosshair, chuyển đủ dải khung kiểu TradingView 5m/15m/30m/1h/4h/1D/1W/1M (khung không phải cơ sở resample từ 5m/1h/1D). _Tiêu chí:_ mở `/chart/xauusd` thấy nến render đúng thứ tự thời gian; đổi khung không vỡ layout.
   3. **Multi-MA:** nhiều đường trung bình động (SMA và/hoặc EMA), mỗi đường tự chọn loại + chu kỳ + màu, vẽ chồng lên nến (mặc định SMA 20/50/200). _Tiêu chí:_ thêm/xóa/sửa một đường cập nhật chart ngay; giá trị khớp công thức chuẩn (sai số < 1e-6 trong unit test).
   4. **Multi-RSI:** nhiều đường RSI chu kỳ khác nhau trên cùng pane phụ (mặc định RSI 14) + 2 vạch ngưỡng 30/70. _Tiêu chí:_ tương tự Multi-MA; pane RSI tách khỏi pane giá.
   5. Lưu cấu hình chỉ báo (localStorage + URL chia sẻ được) — chưa cần tài khoản. _Tiêu chí:_ reload giữ nguyên cấu hình; dán URL đã chia sẻ khôi phục đúng cấu hình.
@@ -74,7 +74,7 @@
 
 1. Vào trang chủ → thấy tiêu đề + mô tả + danh sách mã để xem chart (XAU/USD, XAG/USD).
 2. Vào `/chart/xauusd` (hoặc `/chart/xagusd`) → thấy chart nến của mã đó, khung mặc định (1h), có 3 đường MA mặc định (Multi-MA) và pane RSI (Multi-RSI) bên dưới; chuyển mã ngay trên trang qua SymbolSwitcher.
-3. Đổi khung thời gian (1h/4h/1D/1W) → chart cập nhật, resample đúng.
+3. Đổi khung thời gian (5m/15m/30m/1h/4h/1D/1W/1M) → chart cập nhật, resample đúng.
 4. Mở panel chỉ báo → thêm một đường MA mới (chọn SMA/EMA, chu kỳ, màu) → thấy đường mới trên pane giá; thêm một đường RSI mới (chu kỳ khác) → thấy đường mới trên pane RSI.
 5. Reload trang hoặc dán lại URL đã chia sẻ → cấu hình chỉ báo giữ nguyên.
 6. Chuyển theme Dark blue ↔ Light → chart và toàn bộ UI đổi theo, không mất tương phản.

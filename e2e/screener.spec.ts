@@ -20,7 +20,10 @@ test('render bảng đủ mã, đổi khung cập nhật', async ({ page }) => {
   await expect(table.getByRole('link', { name: 'XAG/USD' })).toBeVisible();
 
   // Mặc định khung 1D đang chọn.
-  await expect(page.getByRole('button', { name: '1D' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'D', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 
   await page.getByRole('button', { name: '1h' }).click();
   await expect(page.getByRole('button', { name: '1h' })).toHaveAttribute('aria-pressed', 'true');
