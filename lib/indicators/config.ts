@@ -93,6 +93,8 @@ export const ChartConfigSchema = z
     bollinger: BollingerSettingsSchema.default(DEFAULT_BOLLINGER_SETTINGS),
     ichimoku: IchimokuSettingsSchema.default(DEFAULT_ICHIMOKU_SETTINGS),
     analysis: AnalysisConfigSchema.default(DEFAULT_ANALYSIS_CONFIG),
+    // Thang giá: 'normal' (tuyến tính) hoặc 'logarithmic' — W-503.
+    priceScaleMode: z.enum(['normal', 'logarithmic']).default('normal'),
   })
   .refine((c) => hasUniqueIds(c.maLines), { message: 'maLines có id trùng nhau' })
   .refine((c) => hasUniqueIds(c.rsiLines), { message: 'rsiLines có id trùng nhau' });
@@ -111,6 +113,7 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
   bollinger: DEFAULT_BOLLINGER_SETTINGS,
   ichimoku: DEFAULT_ICHIMOKU_SETTINGS,
   analysis: DEFAULT_ANALYSIS_CONFIG,
+  priceScaleMode: 'normal',
 };
 
 /** Mã hóa cấu hình chỉ báo thành 1 chuỗi query param — nền tảng cho "URL chia sẻ được". */

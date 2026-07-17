@@ -121,6 +121,24 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
 
       <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
         <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
+        <button
+          type="button"
+          onClick={() =>
+            setConfig({
+              ...config,
+              priceScaleMode: config.priceScaleMode === 'logarithmic' ? 'normal' : 'logarithmic',
+            })
+          }
+          aria-pressed={config.priceScaleMode === 'logarithmic'}
+          aria-label="Chuyển thang giá Log/Linear"
+          className={
+            config.priceScaleMode === 'logarithmic'
+              ? 'bg-primary text-primary-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
+              : 'text-muted-foreground hover:text-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
+          }
+        >
+          Log
+        </button>
         <ThemeToggle />
       </div>
     </main>

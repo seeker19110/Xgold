@@ -7,6 +7,7 @@ import {
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
+  PriceScaleMode,
   type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
@@ -213,6 +214,19 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     setHoveredIndex(null);
     chartRef.current?.timeScale().fitContent();
   }, [candles]);
+
+  // Effect 2a: thang giá Log/Linear (W-503) — áp lên price scale phải (thang giá nến), tách khỏi
+  // thang giá 'volume' riêng (Effect 2b) để không kéo méo cột khối lượng khi bật log.
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    if (!series) return;
+    series.priceScale().applyOptions({
+      mode:
+        config.priceScaleMode === 'logarithmic'
+          ? PriceScaleMode.Logarithmic
+          : PriceScaleMode.Normal,
+    });
+  }, [config.priceScaleMode]);
 
   // Effect 2b: thanh khối lượng — overlay 20% đáy pane giá (bố cục TradingView), thang giá riêng
   // 'volume' để không kéo méo thang giá nến. Nến thiếu volume (null) thì bỏ qua điểm đó.
@@ -541,6 +555,12 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     markersRef.current.setMarkers(markers);
   }, [candles, config.analysis]);
 
+  // Auto-fit CHỈ chạy khi người dùng chủ động bấm — khác Effect 2 (tự fit khi đổi bộ dữ liệu nến),
+  // dùng sau khi zoom/pan để đưa toàn bộ dữ liệu đang có trở lại vào khung nhìn.
+  function handleAutoFit() {
+    chartRef.current?.timeScale().fitContent();
+  }
+
   const legend = legendAt(candles, hoveredIndex ?? candles.length - 1);
   const legendColorClass =
     legend?.direction === 'up'
@@ -557,6 +577,14 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
         role="group"
         aria-label={`Chart nến ${label} với Multi-MA và Multi-RSI`}
       />
+      <button
+        type="button"
+        onClick={handleAutoFit}
+        aria-label="Đưa toàn bộ dữ liệu vào khung nhìn (auto fit)"
+        className="text-foreground bg-surface/70 hover:bg-surface border-border absolute top-2 right-2 z-10 min-h-11 min-w-11 rounded-md border px-2 py-1 text-xs font-medium"
+      >
+        Auto fit
+      </button>
       {legend && (
         <div
           aria-label={`Chú giải OHLC ${label}`}
