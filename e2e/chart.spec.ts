@@ -234,6 +234,39 @@ test('nút Auto fit đưa dữ liệu về đủ khung nhìn sau khi zoom (W-503
   await expect(canvas).toBeVisible();
 });
 
+test('chọn mã so sánh → đường % hiện (2 series), bỏ chọn thì mất; axe 0 vi phạm (W-507)', async ({
+  page,
+}) => {
+  await page.goto('/chart/xauusd');
+
+  const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
+  // Series 1 = nến chính đang hiển thị trên canvas.
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+
+  // Chọn XAG/USD làm mã so sánh (series 2). aria-label đổi khi active nên khớp bằng regex nhãn mã.
+  const compareGroup = page.getByRole('group', { name: 'So sánh mã' });
+  const compareBtn = compareGroup.getByRole('button', { name: /XAG\/USD/ });
+  await expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+  await compareBtn.click();
+  await expect(compareBtn).toHaveAttribute('aria-pressed', 'true');
+
+  // Chú giải mã so sánh xuất hiện = đường % (series thứ 2) đã render (series vẽ trên canvas nên
+  // dùng chú giải DOM làm bằng chứng "2 series cùng hiển thị").
+  const compareLegend = page.getByLabel('So sánh XAG/USD');
+  await expect(compareLegend).toBeVisible();
+  await expect(compareLegend).toContainText('XAG/USD');
+  await expect(compareLegend).toContainText('%');
+
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations).toEqual([]);
+
+  // Bỏ chọn → đường biến mất (chú giải mất, GoldChart gọi removeSeries), chart không vỡ.
+  await compareBtn.click();
+  await expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+  await expect(compareLegend).toHaveCount(0);
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+});
+
 test('chuyển theme Dark blue ↔ Light ngay trên trang chart (không cần rời trang)', async ({
   page,
 }) => {
