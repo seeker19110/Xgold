@@ -464,6 +464,32 @@
 
 ## Đang làm
 
+- ✅ **Đợt 14 — TradingView parity: kiểu chart + tiện ích thang giá (2026-07-17, PLAN.md/ADR-0012,
+  điều phối qua Kiến trúc 3 tầng — coordinator + 5 worker):**
+  - **W-501** `lib/candles/heikin-ashi.ts` (`toHeikinAshi`, pure fn, 4 test tính tay, coverage 100%).
+  - **W-503** thang giá Log/Linear (`ChartConfig.priceScaleMode`, `.default('normal')`) + nút Auto
+    fit (`timeScale().fitContent()`).
+  - **W-504** countdown nến hiện tại trong legend (`candleCountdown` + `timeframeDurationSeconds`,
+    test tính tay khung 1h → 44:30).
+  - **W-505** fullscreen (Fullscreen API + fallback không throw) + chụp ảnh chart PNG
+    (`chart.takeScreenshot()`, đúng pattern appendChild/click/removeChild — tránh lặp lại F-011).
+  - **W-502** (route:complex, việc khó nhất) — chọn 5 kiểu chart (Nến/Heikin Ashi/Bar/Line/Area):
+    refactor `gold-chart.tsx` sang union `ISeriesApi<SeriesType>` + Effect quản lý vòng đời series
+    chính khi đổi kiểu, giữ nguyên markers/legend/priceScale/countdown/overlay hoạt động đúng qua
+    mọi kiểu; không `as any`/cast bừa.
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (308/308, 45 file). Review (code-review) 0 phát hiện chặn (1 mục comment sai đã sửa).
+    **Lighthouse thật cả 5 URL** không tụt ngưỡng sau khi thêm JS (performance 0.98–1.0, a11y 1.0,
+    CLS 0.000, LCP 446–1069ms).
+  - **Cần kiểm chứng thủ công ngoài sandbox** (E2E chưa chạy được — Playwright browser bị chặn tải,
+    giới hạn môi trường đã biết): screenshot 5 kiểu chart × 2 theme, markers/legend đúng sau đổi
+    kiểu, nội dung file PNG chụp được, thang log giãn không đều bằng mắt.
+  - **Điểm cần chốt sản phẩm (không chặn, chỉ ghi nhận):** legend OHLC ở chế độ Heikin Ashi hiển thị
+    giá GỐC (không phải giá HA đã làm mượt) — quyết định có chủ đích, cần xác nhận đúng ý đồ khi có
+    dịp kiểm chứng thật.
+  - Còn lại theo `docs/plans/xgold-tradingview-parity-plan.md`: Đợt 15 (symbol search/watchlist/so
+    sánh mã), Đợt 16 (công cụ vẽ, ADR-0012 đã chốt), Đợt 17 (alerts v1 client-side).
+
 - ✅ **Vòng `/completion` thứ 2 ĐÃ ĐÓNG HẲN (2026-07-17):** PR #31/#32/#33/#34 đều đã merge vào
   `main` (`6989fb2`). Đã chạy lại toàn bộ 5 cổng local trên trạng thái `main` này: `type-check` ✅ ·
   `lint` ✅ (0 cảnh báo) · `format:check` ✅ · `test` ✅ (282/282, 44 file) · `build` ✅ (13 route,
