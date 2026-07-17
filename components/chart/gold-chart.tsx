@@ -815,44 +815,52 @@ export function GoldChart({
       >
         Auto fit
       </button>
-      {hasCompare && compareLatest && (
-        <div
-          aria-label={`So sánh ${compareLabel}`}
-          className="text-foreground bg-surface/70 pointer-events-none absolute top-10 left-2 z-10 flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs"
-        >
-          {/* Ô màu khớp ĐÚNG màu đường vẽ trên canvas (COMPARE_COLOR) — dùng biến làm nguồn sự thật
-              duy nhất thay vì hard-code lại; đây là swatch chú giải, không phải màu giao diện. */}
-          <span
-            aria-hidden="true"
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ backgroundColor: COMPARE_COLOR }}
-          />
-          <span>{compareLabel}</span>
-          <span>{formatComparePercent(compareLatest.value)}</span>
-        </div>
-      )}
-      {legend && (
-        <div
-          aria-label={`Chú giải OHLC ${label}`}
-          className="text-foreground bg-surface/70 pointer-events-none absolute top-2 left-2 z-10 flex flex-wrap gap-x-3 rounded px-2 py-1 font-mono text-xs"
-        >
-          <span>
-            O <span className={legendColorClass}>{formatLegendPrice(legend.open)}</span>
-          </span>
-          <span>
-            H <span className={legendColorClass}>{formatLegendPrice(legend.high)}</span>
-          </span>
-          <span>
-            L <span className={legendColorClass}>{formatLegendPrice(legend.low)}</span>
-          </span>
-          <span>
-            C <span className={legendColorClass}>{formatLegendPrice(legend.close)}</span>
-          </span>
-          <span className={legendColorClass}>{formatLegendChange(legend)}</span>
-          {countdown && (
-            <span aria-label="Thời gian còn lại tới khi nến hiện tại đóng">
-              ⏱ {countdown.label}
-            </span>
+      {(legend || (hasCompare && compareLatest)) && (
+        // Legend OHLC + badge so sánh cùng nằm trong MỘT container flow (flex-col) thay vì mỗi cái
+        // một vị trí `absolute` riêng cố định — legend có thể wrap 2 dòng khi bật nhiều chỉ báo/màn
+        // hẹp, badge dưới sẽ tự đẩy xuống theo chiều cao thật của legend thay vì bị chồng lên.
+        <div className="pointer-events-none absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+          {legend && (
+            <div
+              aria-label={`Chú giải OHLC ${label}`}
+              className="text-foreground bg-surface/70 flex flex-wrap gap-x-3 rounded px-2 py-1 font-mono text-xs"
+            >
+              <span>
+                O <span className={legendColorClass}>{formatLegendPrice(legend.open)}</span>
+              </span>
+              <span>
+                H <span className={legendColorClass}>{formatLegendPrice(legend.high)}</span>
+              </span>
+              <span>
+                L <span className={legendColorClass}>{formatLegendPrice(legend.low)}</span>
+              </span>
+              <span>
+                C <span className={legendColorClass}>{formatLegendPrice(legend.close)}</span>
+              </span>
+              <span className={legendColorClass}>{formatLegendChange(legend)}</span>
+              {countdown && (
+                <span aria-label="Thời gian còn lại tới khi nến hiện tại đóng">
+                  ⏱ {countdown.label}
+                </span>
+              )}
+            </div>
+          )}
+          {hasCompare && compareLatest && (
+            <div
+              aria-label={`So sánh ${compareLabel}`}
+              className="text-foreground bg-surface/70 flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs"
+            >
+              {/* Ô màu khớp ĐÚNG màu đường vẽ trên canvas (COMPARE_COLOR) — dùng biến làm nguồn sự
+                  thật duy nhất thay vì hard-code lại; đây là swatch chú giải, không phải màu giao
+                  diện. */}
+              <span
+                aria-hidden="true"
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: COMPARE_COLOR }}
+              />
+              <span>{compareLabel}</span>
+              <span>{formatComparePercent(compareLatest.value)}</span>
+            </div>
           )}
         </div>
       )}
