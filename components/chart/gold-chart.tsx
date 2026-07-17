@@ -336,8 +336,9 @@ export function GoldChart({
     mainSeriesTypeRef.current = CHART_TYPE_TO_SERIES[config.chartType];
   }, [config.chartType]);
 
-  // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount/đổi symbol
-  // (component gold-chart được remount theo `key` ở nơi gọi khi đổi symbol/timeframe).
+  // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount/đổi symbol.
+  // (interval được clearInterval trong cleanup của chính effect này khi deps đổi; gold-chart KHÔNG
+  // được remount theo `key` — chart-page-client render <GoldChart> không truyền prop `key`.)
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
