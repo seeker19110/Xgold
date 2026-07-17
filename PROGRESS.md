@@ -490,6 +490,32 @@
   - Còn lại theo `docs/plans/xgold-tradingview-parity-plan.md`: Đợt 15 (symbol search/watchlist/so
     sánh mã), Đợt 16 (công cụ vẽ, ADR-0012 đã chốt), Đợt 17 (alerts v1 client-side).
 
+- ✅ **Đợt 15 — TradingView parity: symbol search + watchlist + so sánh mã (2026-07-17, PLAN.md,
+  điều phối qua coordinator + 4 worker + 1 fix a11y):**
+  - **W-506** `lib/candles/percent-normalize.ts` (`normalizeToPercent`, pure fn, guard chia 0).
+  - **W-507** (route:complex) so sánh mã trên chart — overlay % mã phụ (`priceScaleId: 'compare'`
+    riêng, không méo thang nến chính giữ giá thật), tối đa 2 mã, không lưu URL/config ở v1.
+  - **W-508** symbol search (Ctrl+K/Cmd+K), lọc registry (`filterInstruments`), dialog
+    `role="dialog"`/`aria-modal`, `SymbolSwitcher` giữ nguyên.
+  - **W-509** (route:complex, retry qua 1 lần session limit API) watchlist ghim mã — cột phải
+    desktop (sticky) + sheet mobile, tái dùng logic `use-screener` (tách `lib/screener/row.ts`
+    không đổi hành vi, `use-screener.test.ts` xanh nguyên), localStorage SSR-safe.
+  - **Fix a11y sau review** (2 mục NÊN SỬA, không phải phát hiện chặn nhưng a11y là nguyên tắc bất
+    biến CLAUDE.md §8 nên bắt sửa trước khi chốt): badge "So sánh …%" từng đè legend OHLC khi wrap 2
+    dòng → gộp vào 1 container `flex-col`; focus trap trong dialog symbol-search chưa đủ (Tab thoát
+    ra ngoài, vi phạm WCAG 2.4.3) → thêm bẫy Tab/Shift+Tab đầy đủ + 2 unit test.
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (369/369, 53 file). Review 0 phát hiện chặn. **Lighthouse thật cả 5 URL sau merge cuối**
+    (kể cả sau fix a11y) không tụt ngưỡng — watchlist cột phải không gây CLS (0.000 mọi trang).
+  - **Cần kiểm chứng thủ công ngoài sandbox** (E2E chưa chạy được — giới hạn môi trường đã biết):
+    ghim/reload giữ trạng thái, bố cục desktop/mobile × 2 theme, đường % compare + thang giá không
+    méo, Ctrl+K từ mọi vị trí + focus trap không thoát dialog, badge compare không đè legend khi
+    wrap 2 dòng.
+  - **Nợ kỹ thuật nhỏ chấp nhận được (không chặn):** màu đường compare cố định (không theo token —
+    màu vẽ canvas, có giải thích trong code); breakpoint 768px chart co lại khi mở cột watchlist.
+  - Còn lại theo kế hoạch: Đợt 16 (công cụ vẽ, ADR-0012 đã chốt, rủi ro cao nhất), Đợt 17 (alerts v1
+    client-side).
+
 - ✅ **Vòng `/completion` thứ 2 ĐÃ ĐÓNG HẲN (2026-07-17):** PR #31/#32/#33/#34 đều đã merge vào
   `main` (`6989fb2`). Đã chạy lại toàn bộ 5 cổng local trên trạng thái `main` này: `type-check` ✅ ·
   `lint` ✅ (0 cảnh báo) · `format:check` ✅ · `test` ✅ (282/282, 44 file) · `build` ✅ (13 route,
