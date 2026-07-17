@@ -7,7 +7,9 @@ import { AnalysisPanel } from '@/components/chart/analysis-panel';
 import { ChartTypeSwitcher } from '@/components/chart/chart-type-switcher';
 import { CompareSwitcher } from '@/components/chart/compare-switcher';
 import { ConfluencePanel } from '@/components/chart/confluence-panel';
+import { DrawingToolbar } from '@/components/chart/drawing-toolbar';
 import { GoldChart } from '@/components/chart/gold-chart';
+import { useDrawings } from '@/components/chart/use-drawings';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
 import { SymbolSearch } from '@/components/chart/symbol-search';
 import { SymbolSwitcher } from '@/components/chart/symbol-switcher';
@@ -43,6 +45,17 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   // CHUNG một nguồn. Bắt đầu rỗng khớp SSR, đọc localStorage sau mount (xem `use-watchlist.ts`).
   const { watchlist, isPinned, toggle, unpin } = useWatchlist();
   const pinned = isPinned(symbol);
+
+  // Công cụ vẽ (W-511): state theo từng symbol (đổi mã = route mới remount → tự nạp lại nét của mã).
+  const {
+    drawings,
+    selectedId: selectedDrawingId,
+    activeTool,
+    toggleTool,
+    commitDrawing,
+    selectDrawing,
+    deleteSelected,
+  } = useDrawings(symbol);
 
   // So sánh mã (W-507): mã phụ chỉ tồn tại trong phiên xem (không lưu vào ChartConfig/URL ở v1 —
   // giảm độ phức tạp, mất khi reload; xem ghi chú PR). Đổi mã chính = điều hướng route mới → remount
@@ -232,24 +245,32 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
                   : 'flex flex-col gap-2'
               }
             >
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={handleToggleFullscreen}
-                  aria-pressed={isFullscreen}
-                  aria-label="Toàn màn hình"
-                  className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
-                >
-                  {isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleScreenshot}
-                  aria-label="Chụp ảnh chart"
-                  className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
-                >
-                  Chụp ảnh chart
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <DrawingToolbar
+                  activeTool={activeTool}
+                  hasSelection={selectedDrawingId !== null}
+                  onToggleTool={toggleTool}
+                  onDeleteSelected={deleteSelected}
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleToggleFullscreen}
+                    aria-pressed={isFullscreen}
+                    aria-label="Toàn màn hình"
+                    className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+                  >
+                    {isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleScreenshot}
+                    aria-label="Chụp ảnh chart"
+                    className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+                  >
+                    Chụp ảnh chart
+                  </button>
+                </div>
               </div>
               <GoldChart
                 candles={candles}
@@ -259,6 +280,11 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
                 fullscreenActive={isFullscreen}
                 compareData={compareData}
                 compareLabel={compareLabel}
+                drawings={drawings}
+                selectedDrawingId={selectedDrawingId}
+                activeTool={activeTool}
+                onCommitDrawing={commitDrawing}
+                onSelectDrawing={selectDrawing}
                 onChartReady={(chart) => {
                   chartApiRef.current = chart;
                 }}
