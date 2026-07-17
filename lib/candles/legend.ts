@@ -1,4 +1,5 @@
-import type { Candle } from '@/lib/candles/types';
+import type { Candle, Timeframe } from '@/lib/candles/types';
+import { timeframeDurationSeconds } from '@/lib/candles/resample';
 
 /**
  * Dữ liệu chú giải OHLC kiểu TradingView cho MỘT nến: giá mở/cao/thấp/đóng + mức thay đổi so với
@@ -47,4 +48,47 @@ export function formatLegendChange(legend: OhlcLegend): string {
   const abs = Math.abs(legend.change).toFixed(2);
   const absPct = Math.abs(legend.changePct).toFixed(2);
   return `${sign}${abs} (${sign}${absPct}%)`;
+}
+
+/** Kết quả countdown nến hiện tại — `label` đã định dạng sẵn cho legend. */
+export interface CandleCountdown {
+  label: string;
+  secondsRemaining: number;
+}
+
+/** `mm:ss` khi còn dưới 1 giờ, `hh:mm:ss` khi còn từ 1 giờ trở lên (2 chữ số mỗi phần). */
+function formatCountdownLabel(secondsRemaining: number): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const hours = Math.floor(secondsRemaining / 3600);
+  const minutes = Math.floor((secondsRemaining % 3600) / 60);
+  const seconds = secondsRemaining % 60;
+
+  if (secondsRemaining >= 3600) {
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${pad(minutes)}:${pad(seconds)}`;
+}
+
+/**
+ * Thời gian còn lại tới khi nến hiện tại (nến đang mở, mới nhất) đóng lại — cho countdown ở legend
+ * chart. Mốc đóng = thời điểm mở của nến (`latestCandleTs`) + độ dài khung (`timeframeDurationSeconds`).
+ * Trả `null` khi không tính được (khung không có độ dài cố định — vd `1M` — hoặc `latestCandleTs`
+ * không parse được), KHÔNG throw. Nhận `now` từ tham số (không đọc `Date.now()`) để hàm thuần, test
+ * tất định.
+ */
+export function candleCountdown(
+  timeframe: Timeframe,
+  latestCandleTs: string,
+  now: Date,
+): CandleCountdown | null {
+  const durationSeconds = timeframeDurationSeconds(timeframe);
+  if (durationSeconds === null) return null;
+
+  const openMs = Date.parse(latestCandleTs);
+  if (Number.isNaN(openMs)) return null;
+
+  const closeMs = openMs + durationSeconds * 1000;
+  const secondsRemaining = Math.max(0, Math.round((closeMs - now.getTime()) / 1000));
+
+  return { label: formatCountdownLabel(secondsRemaining), secondsRemaining };
 }

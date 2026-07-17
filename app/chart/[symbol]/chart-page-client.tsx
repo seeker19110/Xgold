@@ -107,7 +107,7 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
               Xuất CSV
             </button>
           </div>
-          <GoldChart candles={candles} config={config} label={chartLabel} />
+          <GoldChart candles={candles} config={config} label={chartLabel} timeframe={timeframe} />
           <AnalysisPanel
             candles={candles}
             timeframe={timeframe}

@@ -73,6 +73,15 @@ test('legend OHLC kiểu TradingView hiển thị trên chart (O/H/L/C + mức t
   await expect(legend).toContainText('%');
 });
 
+test('legend hiển thị countdown nến hiện tại (mm:ss hoặc hh:mm:ss)', async ({ page }) => {
+  await page.goto('/chart/xauusd');
+
+  const countdown = page.getByLabel('Thời gian còn lại tới khi nến hiện tại đóng');
+  await expect(countdown).toBeVisible();
+  // Khung mặc định (1h): còn lại luôn < 1h → mm:ss; chấp nhận cả hh:mm:ss cho tổng quát nếu đổi mặc định.
+  await expect(countdown).toHaveText(/^⏱ (\d{2}:)?\d{2}:\d{2}$/);
+});
+
 test('bấm nút "Xuất CSV" tải file nến đúng tên + nội dung (F-011)', async ({ page }) => {
   await page.goto('/chart/xauusd');
 
