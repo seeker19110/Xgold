@@ -52,9 +52,11 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
     selectedId: selectedDrawingId,
     activeTool,
     toggleTool,
+    cancelTool,
     commitDrawing,
     selectDrawing,
     deleteSelected,
+    clearAll,
   } = useDrawings(symbol);
 
   // So sánh mã (W-507): mã phụ chỉ tồn tại trong phiên xem (không lưu vào ChartConfig/URL ở v1 —
@@ -241,18 +243,22 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
               ref={fullscreenContainerRef}
               className={
                 isFullscreen
-                  ? 'bg-background flex h-full w-full flex-col gap-2 p-2'
-                  : 'flex flex-col gap-2'
+                  ? 'bg-background flex h-full w-full flex-col gap-2 p-2 md:flex-row'
+                  : 'flex flex-col gap-2 md:flex-row'
               }
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <DrawingToolbar
-                  activeTool={activeTool}
-                  hasSelection={selectedDrawingId !== null}
-                  onToggleTool={toggleTool}
-                  onDeleteSelected={deleteSelected}
-                />
-                <div className="flex gap-2">
+              {/* W-512: desktop — cột dọc bên trái chart; mobile — thanh ngang phía trên chart
+                  (order-first trên cả hai kích thước qua flex-col/flex-row mặc định). */}
+              <DrawingToolbar
+                activeTool={activeTool}
+                hasSelection={selectedDrawingId !== null}
+                onToggleTool={toggleTool}
+                onSelectMode={cancelTool}
+                onDeleteSelected={deleteSelected}
+                onClearAll={clearAll}
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={handleToggleFullscreen}
@@ -271,24 +277,24 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
                     Chụp ảnh chart
                   </button>
                 </div>
+                <GoldChart
+                  candles={candles}
+                  config={config}
+                  label={chartLabel}
+                  timeframe={timeframe}
+                  fullscreenActive={isFullscreen}
+                  compareData={compareData}
+                  compareLabel={compareLabel}
+                  drawings={drawings}
+                  selectedDrawingId={selectedDrawingId}
+                  activeTool={activeTool}
+                  onCommitDrawing={commitDrawing}
+                  onSelectDrawing={selectDrawing}
+                  onChartReady={(chart) => {
+                    chartApiRef.current = chart;
+                  }}
+                />
               </div>
-              <GoldChart
-                candles={candles}
-                config={config}
-                label={chartLabel}
-                timeframe={timeframe}
-                fullscreenActive={isFullscreen}
-                compareData={compareData}
-                compareLabel={compareLabel}
-                drawings={drawings}
-                selectedDrawingId={selectedDrawingId}
-                activeTool={activeTool}
-                onCommitDrawing={commitDrawing}
-                onSelectDrawing={selectDrawing}
-                onChartReady={(chart) => {
-                  chartApiRef.current = chart;
-                }}
-              />
             </div>
             <AnalysisPanel
               candles={candles}
