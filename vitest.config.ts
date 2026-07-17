@@ -61,6 +61,11 @@ export default defineConfig({
         'components/screener/screener-table.tsx',
         'components/screener/market-context.tsx',
         'app/quet-tin-hieu/page-client.tsx',
+        // Watchlist (W-509, Đợt 15): container đáp ứng (cột phải desktop + sheet mobile + nút nổi) —
+        // hook persistence/fetch + panel trình bày đã có unit test riêng (use-watchlist.test.ts,
+        // use-watchlist-rows.test.ts, watchlist-panel.test.tsx). Che phần lắp ráp bằng E2E:
+        // e2e/watchlist.spec.ts.
+        'components/watchlist/watchlist.tsx',
       ],
     },
   },

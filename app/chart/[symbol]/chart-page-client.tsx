@@ -16,6 +16,8 @@ import { useCandles } from '@/components/chart/use-candles';
 import { useCompareCandles } from '@/components/chart/use-compare-candles';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Watchlist } from '@/components/watchlist/watchlist';
+import { useWatchlist } from '@/components/watchlist/use-watchlist';
 import { candlesCsvFileName, candlesToCsv } from '@/lib/candles/csv';
 import { normalizeToPercent } from '@/lib/candles/percent-normalize';
 import type { Timeframe } from '@/lib/candles/types';
@@ -36,6 +38,11 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   const [timeframe, setTimeframe] = useState<Timeframe>('1h');
   const { status, candles, source, error } = useCandles(symbol, timeframe);
   const [config, setConfig] = useIndicatorConfig();
+
+  // Watchlist (W-509): state ghim nằm ở đây để nút ghim trên header và cột/sheet watchlist dùng
+  // CHUNG một nguồn. Bắt đầu rỗng khớp SSR, đọc localStorage sau mount (xem `use-watchlist.ts`).
+  const { watchlist, isPinned, toggle, unpin } = useWatchlist();
+  const pinned = isPinned(symbol);
 
   // So sánh mã (W-507): mã phụ chỉ tồn tại trong phiên xem (không lưu vào ChartConfig/URL ở v1 —
   // giảm độ phức tạp, mất khi reload; xem ghi chú PR). Đổi mã chính = điều hướng route mới → remount
@@ -110,170 +117,193 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-4 p-6">
-      <div className="flex items-center gap-3">
-        <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
-          ← Xgold
-        </Link>
-        <h1 className="text-2xl font-semibold">{label}</h1>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <SymbolSwitcher currentSlug={slug} />
-        <SymbolSearch />
-      </div>
-
-      {source === 'sample' && (
-        <p
-          role="status"
-          className="bg-warning/10 border-warning/40 text-foreground rounded-md border px-3 py-2 text-sm"
-        >
-          Đang hiển thị <strong>dữ liệu mẫu</strong> (chưa kết nối Supabase) — không phải giá thật.
-        </p>
-      )}
-
-      {status === 'loading' && (
-        // min-h khớp xấp xỉ chiều cao chart (560px) + IndicatorPanel (~320px, xem gold-chart.tsx +
-        // indicator-panel.tsx) — thiếu bước này, chuyển từ trạng thái tải sang thành công làm cả
-        // trang giãn ra đột ngột, đo thật bằng Lighthouse ra CLS 0.324 (ngưỡng 0.1), xem F-010
-        // (docs/ops/COMPLETION-PLAN.md).
-        <div
-          role="status"
-          aria-live="polite"
-          className="text-muted-foreground flex min-h-[900px] items-center justify-center"
-        >
-          Đang tải dữ liệu…
-        </div>
-      )}
-
-      {status === 'error' && (
-        <div
-          role="alert"
-          className="border-danger text-danger flex min-h-[900px] items-center justify-center rounded-lg border"
-        >
-          Không tải được dữ liệu: {error}
-        </div>
-      )}
-
-      {status === 'success' && candles.length === 0 && (
-        <div
-          role="status"
-          className="text-muted-foreground border-border flex min-h-[900px] items-center justify-center rounded-lg border border-dashed"
-        >
-          Chưa có dữ liệu cho khung thời gian này.
-        </div>
-      )}
-
-      {status === 'success' && candles.length > 0 && (
-        <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <CompareSwitcher
-                currentSymbol={symbol}
-                value={compareSymbol}
-                onChange={setCompareSymbol}
-              />
-              {compare.status === 'loading' && (
-                <p role="status" aria-live="polite" className="text-muted-foreground text-xs">
-                  Đang tải mã so sánh…
-                </p>
-              )}
-              {compare.status === 'error' && (
-                <p role="alert" className="text-danger text-xs">
-                  Không tải được mã so sánh: {compare.error}
-                </p>
-              )}
-              {compare.status === 'success' && compare.candles.length === 0 && (
-                <p role="status" className="text-muted-foreground text-xs">
-                  Mã so sánh chưa có dữ liệu cho khung này.
-                </p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              className="border-border text-foreground hover:bg-surface rounded-md border px-3 py-1.5 text-sm"
-            >
-              Xuất CSV
-            </button>
-          </div>
-          <div
-            ref={fullscreenContainerRef}
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl gap-4 p-6">
+      <main className="flex max-w-5xl min-w-0 flex-1 flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
+            ← Xgold
+          </Link>
+          <h1 className="text-2xl font-semibold">{label}</h1>
+          <button
+            type="button"
+            onClick={() => toggle(symbol)}
+            aria-pressed={pinned}
+            aria-label={
+              pinned
+                ? `Bỏ ghim ${label} khỏi danh sách theo dõi`
+                : `Ghim ${label} vào danh sách theo dõi`
+            }
+            title={pinned ? 'Bỏ ghim' : 'Ghim vào danh sách theo dõi'}
             className={
-              isFullscreen
-                ? 'bg-background flex h-full w-full flex-col gap-2 p-2'
-                : 'flex flex-col gap-2'
+              pinned
+                ? 'border-primary bg-primary/10 text-foreground flex min-h-11 min-w-11 items-center justify-center rounded-md border text-lg'
+                : 'border-border text-foreground hover:bg-surface flex min-h-11 min-w-11 items-center justify-center rounded-md border text-lg'
             }
           >
-            <div className="flex justify-end gap-2">
+            <span aria-hidden="true">{pinned ? '★' : '☆'}</span>
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <SymbolSwitcher currentSlug={slug} />
+          <SymbolSearch />
+        </div>
+
+        {source === 'sample' && (
+          <p
+            role="status"
+            className="bg-warning/10 border-warning/40 text-foreground rounded-md border px-3 py-2 text-sm"
+          >
+            Đang hiển thị <strong>dữ liệu mẫu</strong> (chưa kết nối Supabase) — không phải giá
+            thật.
+          </p>
+        )}
+
+        {status === 'loading' && (
+          // min-h khớp xấp xỉ chiều cao chart (560px) + IndicatorPanel (~320px, xem gold-chart.tsx +
+          // indicator-panel.tsx) — thiếu bước này, chuyển từ trạng thái tải sang thành công làm cả
+          // trang giãn ra đột ngột, đo thật bằng Lighthouse ra CLS 0.324 (ngưỡng 0.1), xem F-010
+          // (docs/ops/COMPLETION-PLAN.md).
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-muted-foreground flex min-h-[900px] items-center justify-center"
+          >
+            Đang tải dữ liệu…
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div
+            role="alert"
+            className="border-danger text-danger flex min-h-[900px] items-center justify-center rounded-lg border"
+          >
+            Không tải được dữ liệu: {error}
+          </div>
+        )}
+
+        {status === 'success' && candles.length === 0 && (
+          <div
+            role="status"
+            className="text-muted-foreground border-border flex min-h-[900px] items-center justify-center rounded-lg border border-dashed"
+          >
+            Chưa có dữ liệu cho khung thời gian này.
+          </div>
+        )}
+
+        {status === 'success' && candles.length > 0 && (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <CompareSwitcher
+                  currentSymbol={symbol}
+                  value={compareSymbol}
+                  onChange={setCompareSymbol}
+                />
+                {compare.status === 'loading' && (
+                  <p role="status" aria-live="polite" className="text-muted-foreground text-xs">
+                    Đang tải mã so sánh…
+                  </p>
+                )}
+                {compare.status === 'error' && (
+                  <p role="alert" className="text-danger text-xs">
+                    Không tải được mã so sánh: {compare.error}
+                  </p>
+                )}
+                {compare.status === 'success' && compare.candles.length === 0 && (
+                  <p role="status" className="text-muted-foreground text-xs">
+                    Mã so sánh chưa có dữ liệu cho khung này.
+                  </p>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={handleToggleFullscreen}
-                aria-pressed={isFullscreen}
-                aria-label="Toàn màn hình"
-                className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+                onClick={handleExportCsv}
+                className="border-border text-foreground hover:bg-surface rounded-md border px-3 py-1.5 text-sm"
               >
-                {isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-              </button>
-              <button
-                type="button"
-                onClick={handleScreenshot}
-                aria-label="Chụp ảnh chart"
-                className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
-              >
-                Chụp ảnh chart
+                Xuất CSV
               </button>
             </div>
-            <GoldChart
+            <div
+              ref={fullscreenContainerRef}
+              className={
+                isFullscreen
+                  ? 'bg-background flex h-full w-full flex-col gap-2 p-2'
+                  : 'flex flex-col gap-2'
+              }
+            >
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleToggleFullscreen}
+                  aria-pressed={isFullscreen}
+                  aria-label="Toàn màn hình"
+                  className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+                >
+                  {isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleScreenshot}
+                  aria-label="Chụp ảnh chart"
+                  className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+                >
+                  Chụp ảnh chart
+                </button>
+              </div>
+              <GoldChart
+                candles={candles}
+                config={config}
+                label={chartLabel}
+                timeframe={timeframe}
+                fullscreenActive={isFullscreen}
+                compareData={compareData}
+                compareLabel={compareLabel}
+                onChartReady={(chart) => {
+                  chartApiRef.current = chart;
+                }}
+              />
+            </div>
+            <AnalysisPanel
               candles={candles}
-              config={config}
-              label={chartLabel}
               timeframe={timeframe}
-              fullscreenActive={isFullscreen}
-              compareData={compareData}
-              compareLabel={compareLabel}
-              onChartReady={(chart) => {
-                chartApiRef.current = chart;
-              }}
+              config={config.analysis}
+              onChange={(analysis) => setConfig({ ...config, analysis })}
             />
-          </div>
-          <AnalysisPanel
-            candles={candles}
-            timeframe={timeframe}
-            config={config.analysis}
-            onChange={(analysis) => setConfig({ ...config, analysis })}
-          />
-          <ConfluencePanel symbol={symbol} label={label} config={config.analysis} />
-          <IndicatorPanel config={config} onChange={setConfig} />
-        </>
-      )}
+            <ConfluencePanel symbol={symbol} label={label} config={config.analysis} />
+            <IndicatorPanel config={config} onChange={setConfig} />
+          </>
+        )}
 
-      <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
-        <ChartTypeSwitcher
-          value={config.chartType}
-          onChange={(chartType) => setConfig({ ...config, chartType })}
-        />
-        <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
-        <button
-          type="button"
-          onClick={() =>
-            setConfig({
-              ...config,
-              priceScaleMode: config.priceScaleMode === 'logarithmic' ? 'normal' : 'logarithmic',
-            })
-          }
-          aria-pressed={config.priceScaleMode === 'logarithmic'}
-          aria-label="Chuyển thang giá Log/Linear"
-          className={
-            config.priceScaleMode === 'logarithmic'
-              ? 'bg-primary text-primary-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
-              : 'text-muted-foreground hover:text-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
-          }
-        >
-          Log
-        </button>
-        <ThemeToggle />
-      </div>
-    </main>
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+          <ChartTypeSwitcher
+            value={config.chartType}
+            onChange={(chartType) => setConfig({ ...config, chartType })}
+          />
+          <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
+          <button
+            type="button"
+            onClick={() =>
+              setConfig({
+                ...config,
+                priceScaleMode: config.priceScaleMode === 'logarithmic' ? 'normal' : 'logarithmic',
+              })
+            }
+            aria-pressed={config.priceScaleMode === 'logarithmic'}
+            aria-label="Chuyển thang giá Log/Linear"
+            className={
+              config.priceScaleMode === 'logarithmic'
+                ? 'bg-primary text-primary-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
+                : 'text-muted-foreground hover:text-foreground min-h-11 rounded-md px-3 py-1.5 text-sm font-medium'
+            }
+          >
+            Log
+          </button>
+          <ThemeToggle />
+        </div>
+      </main>
+
+      <Watchlist symbols={watchlist} timeframe={timeframe} onUnpin={unpin} />
+    </div>
   );
 }
