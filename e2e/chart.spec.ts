@@ -99,6 +99,48 @@ test('trang chart không có vi phạm accessibility nghiêm trọng', async ({ 
   expect(results.violations).toEqual([]);
 });
 
+test('bật thang giá Log không làm vỡ chart; axe 0 vi phạm (W-503)', async ({ page }) => {
+  await page.goto('/chart/xauusd');
+
+  const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+
+  const logToggle = page.getByRole('button', { name: 'Chuyển thang giá Log/Linear' });
+  await expect(logToggle).toHaveAttribute('aria-pressed', 'false');
+
+  await logToggle.click();
+  await expect(logToggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations).toEqual([]);
+
+  // Chuyển lại Linear — không vỡ chart.
+  await logToggle.click();
+  await expect(logToggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(chartContainer.locator('canvas').first()).toBeVisible();
+});
+
+test('nút Auto fit đưa dữ liệu về đủ khung nhìn sau khi zoom (W-503)', async ({ page }) => {
+  await page.goto('/chart/xauusd');
+
+  const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
+  const canvas = chartContainer.locator('canvas').first();
+  await expect(canvas).toBeVisible();
+
+  const autoFitButton = page.getByRole('button', { name: /Đưa toàn bộ dữ liệu vào khung nhìn/ });
+  await expect(autoFitButton).toBeVisible();
+
+  // Zoom (thu hẹp khung nhìn) bằng wheel trên canvas rồi bấm Auto fit — chart vẫn còn nguyên vẹn.
+  const box = await canvas.boundingBox();
+  if (box) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(0, -200);
+  }
+  await autoFitButton.click();
+  await expect(canvas).toBeVisible();
+});
+
 test('chuyển theme Dark blue ↔ Light ngay trên trang chart (không cần rời trang)', async ({
   page,
 }) => {
