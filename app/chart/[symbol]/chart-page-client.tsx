@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import type { IChartApi } from 'lightweight-charts';
 import { AnalysisPanel } from '@/components/chart/analysis-panel';
 import { ConfluencePanel } from '@/components/chart/confluence-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
@@ -30,6 +31,32 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   const { status, candles, source, error } = useCandles(symbol, timeframe);
   const [config, setConfig] = useIndicatorConfig();
 
+  // Fullscreen (W-505): áp lên container bọc GoldChart (không phải cả trang) — trình duyệt tự ẩn
+  // header/breadcrumb vì chúng nằm ngoài subtree được fullscreen. `isFullscreen` đồng bộ qua sự kiện
+  // 'fullscreenchange' (bấm nút, Esc, hoặc trình duyệt tự thoát đều cập nhật đúng).
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const chartApiRef = useRef<IChartApi | null>(null);
+
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsFullscreen(document.fullscreenElement === fullscreenContainerRef.current);
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  function handleToggleFullscreen() {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen?.();
+      return;
+    }
+    const container = fullscreenContainerRef.current;
+    // Fallback nếu trình duyệt không hỗ trợ Fullscreen API: nút vẫn hiện nhưng bấm không có tác dụng.
+    if (!container || typeof container.requestFullscreen !== 'function') return;
+    void container.requestFullscreen();
+  }
+
   function handleExportCsv() {
     const blob = new Blob([candlesToCsv(candles)], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -42,6 +69,25 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+  }
+
+  function handleScreenshot() {
+    const chart = chartApiRef.current;
+    // Guard: chart chưa sẵn sàng hoặc typings/runtime thiếu takeScreenshot → không throw.
+    if (!chart || typeof chart.takeScreenshot !== 'function') return;
+    const canvas = chart.takeScreenshot();
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${symbol.toLowerCase()}-${timeframe}-chart.png`;
+      // Cùng thứ tự appendChild → click → removeChild đã sửa ở F-011 (xem handleExportCsv).
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    });
   }
 
   return (
@@ -107,7 +153,44 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
               Xuất CSV
             </button>
           </div>
-          <GoldChart candles={candles} config={config} label={chartLabel} timeframe={timeframe} />
+          <div
+            ref={fullscreenContainerRef}
+            className={
+              isFullscreen
+                ? 'bg-background flex h-full w-full flex-col gap-2 p-2'
+                : 'flex flex-col gap-2'
+            }
+          >
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleToggleFullscreen}
+                aria-pressed={isFullscreen}
+                aria-label="Toàn màn hình"
+                className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+              >
+                {isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+              </button>
+              <button
+                type="button"
+                onClick={handleScreenshot}
+                aria-label="Chụp ảnh chart"
+                className="border-border text-foreground hover:bg-surface min-h-11 min-w-11 rounded-md border px-3 py-1.5 text-sm"
+              >
+                Chụp ảnh chart
+              </button>
+            </div>
+            <GoldChart
+              candles={candles}
+              config={config}
+              label={chartLabel}
+              timeframe={timeframe}
+              fullscreenActive={isFullscreen}
+              onChartReady={(chart) => {
+                chartApiRef.current = chart;
+              }}
+            />
+          </div>
           <AnalysisPanel
             candles={candles}
             timeframe={timeframe}
