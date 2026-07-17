@@ -28,19 +28,17 @@ không cần việc riêng.)_
 
 ## Definition of Complete (đề xuất — chỉnh theo phản hồi của bạn)
 
-- [ ] 0 phát hiện mức Cao còn mở (F-012 phải đóng hoặc có quyết định ghi nhận rõ ràng).
-- [ ] `analysis-panel.tsx` có unit test cho mọi nhánh hiển thị (đủ tín hiệu, thiếu dữ liệu — ca F-018,
+- [x] 0 phát hiện mức Cao còn mở (F-012 đã đóng — coverage 0%→96.29%).
+- [x] `analysis-panel.tsx` có unit test cho mọi nhánh hiển thị (đủ tín hiệu, thiếu dữ liệu — ca F-018,
       không có tín hiệu/tắt phân tích).
-- [ ] Nút "Xuất CSV" hoạt động đúng chuẩn trên mọi trình duyệt (F-011 vá) + có E2E xác nhận tải file.
-- [ ] `trade-levels.ts` nhất quán: hoặc sửa để `confidence` cũng `null` khi thiếu cloud/ATR, hoặc sửa
-      docstring + đảm bảo UI xử lý đúng ca nửa vời — quyết định cụ thể ghi ở W-403.
-- [ ] Coverage các trang client chính (`chart-page-client.tsx`, `app/gia-vang-trong-nuoc/page-client.tsx`,
-      `app/so-sanh-gia-vang/page-client.tsx`, `compare-table.tsx`) không bắt buộc 100%, nhưng có ít nhất
-      test smoke render + interaction chính (không còn 0%).
-- [ ] Lighthouse CI đo cả `/quet-tin-hieu` và `/so-sanh-gia-vang`, đạt ngân sách đã đặt.
-- [ ] `CLAUDE.md` mục 10 khớp cấu trúc thư mục thật.
-- [ ] F-019 có quyết định ghi nhận (nâng cấp ngay hay hoãn có lý do) — không bắt buộc nâng cấp thật.
-- [ ] `PROGRESS.md` phản ánh đúng trạng thái cuối vòng 2 + nợ kỹ thuật còn lại đều có chủ đích.
+- [x] Nút "Xuất CSV" hoạt động đúng chuẩn trên mọi trình duyệt (F-011 vá) + có E2E xác nhận tải file.
+- [x] `trade-levels.ts` nhất quán: sửa để `confidence` cũng `null` khi thiếu cloud/ATR (W-401).
+- [x] Coverage các trang client chính (`chart-page-client.tsx`, `app/gia-vang-trong-nuoc/page-client.tsx`,
+      `app/so-sanh-gia-vang/page-client.tsx`, `compare-table.tsx`) không còn 0% (93.33%/8 test/88.88%/100%).
+- [x] Lighthouse CI đo cả `/quet-tin-hieu` và `/so-sanh-gia-vang`, đạt ngân sách đã đặt.
+- [x] `CLAUDE.md` mục 10 khớp cấu trúc thư mục thật.
+- [x] F-019 có quyết định ghi nhận (hoãn có lý do, xem `PROGRESS.md` "Nợ kỹ thuật").
+- [x] `PROGRESS.md` phản ánh đúng trạng thái cuối vòng 2 + nợ kỹ thuật còn lại đều có chủ đích.
 
 ## Đợt 1 — Đúng-sai hiển thị rủi ro cao nhất (✅)
 
@@ -59,16 +57,18 @@ không cần việc riêng.)_
 | W-406 | F-015        | Thêm `/quet-tin-hieu` và `/so-sanh-gia-vang` vào `lighthouserc.json` (`collect.url`)                                              | Lighthouse CI chạy thật trên cả 5 URL, đạt ngưỡng đã đặt (hoặc điều chỉnh có lý do nếu trang nặng hơn) | –         | S         | ✅         | Chạy `lhci autorun` thật (Chromium sẵn có, `--collect.settings.chromeFlags="--no-sandbox"` cho môi trường root): cả 5 URL đạt ngân sách gốc — performance ≥0.98, CLS 0, LCP 451–1055ms. Không cần nới ngưỡng.                                                                                                                     |
 | W-407 | F-020        | Thêm test trực tiếp cho nhánh `default` trong `bucketStartMs` (`resample.ts:43`) hoặc xác nhận + xóa nếu là dead code             | Coverage `resample.ts` 100% branch, hoặc dead code bị xóa với lý do ghi rõ                             | –         | S         | ✅         | Xác nhận: nhánh `default` đúng ngữ nghĩa phòng thủ (khung cơ sở trả nguyên `tsMs`), không phải dead code thật — chỉ unreachable qua API công khai vì `resample()` early-return trước khi gọi. Export `bucketStartMs` + test trực tiếp 3 ca (5m/1h/1D) — coverage 100% statement/lines, 92.3% branch (từ 96.77%).                  |
 
-## Đợt 3 — Dọn dẹp tài liệu + quyết định dependency (⬜)
+## Đợt 3 — Dọn dẹp tài liệu + quyết định dependency (✅)
 
-| ID    | Từ phát hiện | Việc                                                                                                                                                                                             | Tiêu chí nghiệm thu                                                      | Phụ thuộc | Ước lượng | Trạng thái |
-| ----- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | --------- | --------- | ---------- |
-| W-408 | F-016        | Cập nhật `CLAUDE.md` mục 10 — danh sách thư mục khớp cấu trúc thật hiện tại                                                                                                                      | Đối chiếu bằng mắt với `find app components lib -type d`, không cần test | –         | S         | ⬜         |
-| W-409 | F-019        | Ghi quyết định vào `PROGRESS.md`: hoãn nâng cấp major (TypeScript 7/ESLint 10/@types/node 26) — lý do rủi ro thay đổi lớn ngoài phạm vi hoàn thiện lần này, hay nâng cấp thử nếu người dùng muốn | Quyết định + lý do ghi rõ; nếu chọn nâng cấp, chạy đủ cổng sau khi nâng  | –         | S         | ⬜         |
+| ID    | Từ phát hiện | Việc                                                                                                                                                                                             | Tiêu chí nghiệm thu                                                      | Phụ thuộc | Ước lượng | Trạng thái | PR / bằng chứng                                                                                                                                                                                                                                                                                                                                                            |
+| ----- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | --------- | --------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W-408 | F-016        | Cập nhật `CLAUDE.md` mục 10 — danh sách thư mục khớp cấu trúc thật hiện tại                                                                                                                      | Đối chiếu bằng mắt với `find app components lib -type d`, không cần test | –         | S         | ✅         | Đối chiếu `find app components lib -type d` thật — bổ sung `app/gia-vang-trong-nuoc/`, `app/quet-tin-hieu/`, `app/so-sanh-gia-vang/`, `components/domestic-gold/`, `components/gold-compare/`, `components/screener/`, `lib/analysis/rules/`, `lib/providers-domestic/`, `lib/gold-compare/`, chi tiết hóa `lib/candles/` (legend/csv) + `lib/indicators/` (Ichimoku/ATR). |
+| W-409 | F-019        | Ghi quyết định vào `PROGRESS.md`: hoãn nâng cấp major (TypeScript 7/ESLint 10/@types/node 26) — lý do rủi ro thay đổi lớn ngoài phạm vi hoàn thiện lần này, hay nâng cấp thử nếu người dùng muốn | Quyết định + lý do ghi rõ; nếu chọn nâng cấp, chạy đủ cổng sau khi nâng  | –         | S         | ✅         | Quyết định: **hoãn có chủ đích** (không phải lỗ hổng bảo mật, `npm audit --omit=dev` sạch; 3 gói nền tảng nâng cùng lúc rủi ro cao hơn giá trị nhận lại ở phạm vi hoàn thiện này). Ghi ở `PROGRESS.md` mục "Nợ kỹ thuật".                                                                                                                                                  |
 
 ## Nhật ký hội tụ (Pha 4)
 
-_(chưa có — điền sau khi Đợt 3 xong, quét lại đủ 12 nhóm)_
+| Ngày       | Phạm vi quét lại                                                                                                                                                                                | Kết quả (phát hiện mới? đóng được gì?)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-07-16 | Quét lại toàn bộ 12 nhóm sau khi gộp Đợt 1+2+3 trên cùng một nhánh (`completion/batch3-docs-deps`, kế thừa `fix/trade-levels-confidence-consistency` + `completion/batch2-coverage-lighthouse`) | **0 phát hiện Cao mới.** Đo thật: `npm audit --omit=dev` 0 lỗ hổng; `npm run test:coverage` 94.61%/86.09%/94.38%/96.79% (từ 89%/-/-/- đầu vòng 2); `lint`/`type-check`/`format:check`/`build` đều xanh; 282/282 unit test xanh (từ 257 đầu vòng 2, +25 test mới); `scripts/check-docs-consistency.sh` sạch. F-011/F-012/F-018 (Cao/Trung) đã vá tận gốc có test hồi quy; F-013/F-014/F-015/F-020 (Trung/Thấp) đã lấp; F-016 (tài liệu) + F-019 (dependency, quyết định hoãn có lý do) đã xử lý. **Tiêu chí thoát Pha 4 đạt** — đóng kế hoạch hoàn thiện vòng 2. Chưa xác nhận lại bằng Lighthouse trên trạng thái merge cuối vào `main` (đã chạy thật ở W-406 trên nhánh riêng) — khuyến nghị chạy lại 1 lần sau khi cả 3 PR merge, trước khi coi vòng 2 đóng hẳn. |
 
 ## Phát hiện chấp nhận rủi ro / dời đợt sau (phải có lý do)
 
