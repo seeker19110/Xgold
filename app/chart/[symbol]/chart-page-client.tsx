@@ -1,20 +1,24 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { IChartApi } from 'lightweight-charts';
 import { AnalysisPanel } from '@/components/chart/analysis-panel';
 import { ChartTypeSwitcher } from '@/components/chart/chart-type-switcher';
+import { CompareSwitcher } from '@/components/chart/compare-switcher';
 import { ConfluencePanel } from '@/components/chart/confluence-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
 import { SymbolSwitcher } from '@/components/chart/symbol-switcher';
 import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
 import { useCandles } from '@/components/chart/use-candles';
+import { useCompareCandles } from '@/components/chart/use-compare-candles';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { candlesCsvFileName, candlesToCsv } from '@/lib/candles/csv';
+import { normalizeToPercent } from '@/lib/candles/percent-normalize';
 import type { Timeframe } from '@/lib/candles/types';
+import { getInstrumentBySymbol } from '@/lib/instruments';
 
 interface ChartPageClientProps {
   /** Mã chuẩn (CSDL/provider), vd 'XAUUSD'. */
@@ -31,6 +35,19 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   const [timeframe, setTimeframe] = useState<Timeframe>('1h');
   const { status, candles, source, error } = useCandles(symbol, timeframe);
   const [config, setConfig] = useIndicatorConfig();
+
+  // So sánh mã (W-507): mã phụ chỉ tồn tại trong phiên xem (không lưu vào ChartConfig/URL ở v1 —
+  // giảm độ phức tạp, mất khi reload; xem ghi chú PR). Đổi mã chính = điều hướng route mới → remount
+  // → compareSymbol tự về null. Không cần đồng bộ thủ công.
+  const [compareSymbol, setCompareSymbol] = useState<string | null>(null);
+  const compare = useCompareCandles(compareSymbol, timeframe);
+  const compareLabel = compareSymbol ? getInstrumentBySymbol(compareSymbol)?.label : undefined;
+  // Chuẩn hoá % trên TOÀN BỘ mảng nến mã phụ đang có (khung nhìn hiện tại, không phải phần zoom) —
+  // đúng phạm vi v1. Chỉ tính khi fetch thành công; các trạng thái khác → rỗng (đường bị gỡ).
+  const compareData = useMemo(
+    () => (compare.status === 'success' ? normalizeToPercent(compare.candles) : []),
+    [compare.status, compare.candles],
+  );
 
   // Fullscreen (W-505): áp lên container bọc GoldChart (không phải cả trang) — trình duyệt tự ẩn
   // header/breadcrumb vì chúng nằm ngoài subtree được fullscreen. `isFullscreen` đồng bộ qua sự kiện
@@ -145,7 +162,29 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
 
       {status === 'success' && candles.length > 0 && (
         <>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <CompareSwitcher
+                currentSymbol={symbol}
+                value={compareSymbol}
+                onChange={setCompareSymbol}
+              />
+              {compare.status === 'loading' && (
+                <p role="status" aria-live="polite" className="text-muted-foreground text-xs">
+                  Đang tải mã so sánh…
+                </p>
+              )}
+              {compare.status === 'error' && (
+                <p role="alert" className="text-danger text-xs">
+                  Không tải được mã so sánh: {compare.error}
+                </p>
+              )}
+              {compare.status === 'success' && compare.candles.length === 0 && (
+                <p role="status" className="text-muted-foreground text-xs">
+                  Mã so sánh chưa có dữ liệu cho khung này.
+                </p>
+              )}
+            </div>
             <button
               type="button"
               onClick={handleExportCsv}
@@ -187,6 +226,8 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
               label={chartLabel}
               timeframe={timeframe}
               fullscreenActive={isFullscreen}
+              compareData={compareData}
+              compareLabel={compareLabel}
               onChartReady={(chart) => {
                 chartApiRef.current = chart;
               }}

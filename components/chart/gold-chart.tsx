@@ -56,6 +56,14 @@ interface GoldChartProps {
    * chụp ảnh chart (`chart.takeScreenshot()`, W-505) từ component cha.
    */
   onChartReady?: (chart: IChartApi | null) => void;
+  /**
+   * Chuỗi % của MÃ SO SÁNH đã chuẩn hoá bằng `normalizeToPercent` (W-506/W-507) trên toàn bộ khung
+   * nhìn hiện có. Rỗng/undefined = không so sánh (đường bị gỡ). Vẽ trên thang giá riêng `'compare'`
+   * để KHÔNG làm méo thang giá nến chính (nến vẫn hiển thị giá thật).
+   */
+  compareData?: readonly { ts: string; value: number }[];
+  /** Nhãn mã so sánh (vd 'XAG/USD') cho chú giải % — chỉ hiển thị khi có `compareData`. */
+  compareLabel?: string;
 }
 
 interface ThemeColors {
@@ -98,6 +106,9 @@ const MARKER_BUY_COLOR = '#4ade80';
 const MARKER_SELL_COLOR = '#f87171';
 const ICHIMOKU_SPAN_A_COLOR = '#f5cf0e';
 const ICHIMOKU_SPAN_B_COLOR = '#f10f0f';
+// Màu cố định đường so sánh mã (W-507) — tím, tách biệt rõ với nến (success/danger) và các overlay
+// khác (BB xám, MACD xanh/cam, Ichimoku vàng/đỏ); tương phản đủ trên cả Dark blue lẫn Light.
+const COMPARE_COLOR = '#c084fc';
 // Thanh khối lượng mờ để không lấn át nến (overlay 20% đáy pane giá — bố cục mặc định TradingView).
 const VOLUME_UP_COLOR = 'rgba(74, 222, 128, 0.35)';
 const VOLUME_DOWN_COLOR = 'rgba(248, 113, 113, 0.35)';
@@ -196,6 +207,11 @@ function toLineData(points: readonly IndicatorPoint[]): { time: UTCTimestamp; va
  * Chart nến (lightweight-charts v5) + Multi-MA chồng lên pane giá + Multi-RSI ở pane phụ.
  * Tự đồng bộ màu theo theme Dark blue/Light đang chọn.
  */
+/** Định dạng % có dấu cho chú giải mã so sánh (vd +1.23% / -0.80%). */
+function formatComparePercent(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+
 export function GoldChart({
   candles,
   config,
@@ -203,6 +219,8 @@ export function GoldChart({
   timeframe,
   fullscreenActive,
   onChartReady,
+  compareData,
+  compareLabel,
 }: GoldChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -239,6 +257,7 @@ export function GoldChart({
   }>({ line: null, signal: null, histogram: null, paneIndex: -1 });
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const compareSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   // Tra chỉ số nến theo mốc thời gian cho crosshair → legend OHLC (cập nhật ở Effect 2).
   const timeToIndexRef = useRef<Map<number, number>>(new Map());
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -301,6 +320,7 @@ export function GoldChart({
       chartRef.current = null;
       mainSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      compareSeriesRef.current = null;
       // maSeriesRef/rsiSeriesRef là Map bền vững suốt vòng đời component (không phải node DOM) —
       // muốn đọc nội dung MỚI NHẤT lúc dọn dẹp (chart.remove() đã tự hủy mọi series bên trong nó),
       // không phải chụp nhanh lúc effect chạy — cảnh báo exhaustive-deps không áp dụng ở đây.
@@ -627,6 +647,42 @@ export function GoldChart({
     state.spanB.setData(spanBData);
   }, [candles, config.ichimoku]);
 
+  // Effect so sánh mã (W-507): 1 đường % của mã phụ chồng lên pane giá (0), THANG GIÁ RIÊNG
+  // 'compare' (overlay như 'volume' — không hiển thị trục, không kéo méo thang giá nến chính giữ
+  // giá thật). Không có `compareData` → gỡ series (removeSeries) để không rò rỉ khi bỏ chọn/đổi mã.
+  // Dữ liệu % đã được component cha chuẩn hoá sẵn bằng `normalizeToPercent`; ở đây chỉ đổi ts→time.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    if (!compareData || compareData.length === 0) {
+      if (compareSeriesRef.current) {
+        chart.removeSeries(compareSeriesRef.current);
+        compareSeriesRef.current = null;
+      }
+      return;
+    }
+
+    if (!compareSeriesRef.current) {
+      const series = chart.addSeries(LineSeries, {
+        color: COMPARE_COLOR,
+        lineWidth: 2,
+        priceScaleId: 'compare',
+        priceFormat: { type: 'percent' },
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      // Chừa lề trên/dưới để đường % không dính sát mép pane (giống scaleMargins của volume).
+      series.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.1 } });
+      compareSeriesRef.current = series;
+    }
+
+    compareSeriesRef.current.setData(
+      compareData.map((p) => ({ time: toUtcTimestamp(p.ts), value: p.value })),
+    );
+  }, [compareData]);
+
   // Effect 6: MACD — pane phụ riêng (sau pane RSI nếu có). Không có API dời series giữa các pane
   // trong lightweight-charts v5 nên khi bố cục pane đổi (thêm/bỏ RSI) thì gỡ và tạo lại series —
   // sự kiện hiếm, dữ liệu nhỏ, đổi lấy code đơn giản đúng.
@@ -738,6 +794,10 @@ export function GoldChart({
   // trả lời "khi nào nến hiện tại đóng lại", không phải nến dưới con trỏ.
   const latestCandle = candles[candles.length - 1];
   const countdown = latestCandle ? candleCountdown(timeframe, latestCandle.ts, now) : null;
+  // Chú giải mã so sánh: % mới nhất của mã phụ (chỉ khi đang so sánh). Cũng là điểm móc DOM cho E2E
+  // xác nhận đường so sánh đã hiện (series vẽ trên canvas nên không truy vấn trực tiếp được).
+  const hasCompare = !!compareLabel && !!compareData && compareData.length > 0;
+  const compareLatest = hasCompare ? compareData[compareData.length - 1] : undefined;
 
   return (
     <div className={fullscreenActive ? 'relative min-w-0 flex-1' : 'relative min-w-0'}>
@@ -755,6 +815,22 @@ export function GoldChart({
       >
         Auto fit
       </button>
+      {hasCompare && compareLatest && (
+        <div
+          aria-label={`So sánh ${compareLabel}`}
+          className="text-foreground bg-surface/70 pointer-events-none absolute top-10 left-2 z-10 flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs"
+        >
+          {/* Ô màu khớp ĐÚNG màu đường vẽ trên canvas (COMPARE_COLOR) — dùng biến làm nguồn sự thật
+              duy nhất thay vì hard-code lại; đây là swatch chú giải, không phải màu giao diện. */}
+          <span
+            aria-hidden="true"
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ backgroundColor: COMPARE_COLOR }}
+          />
+          <span>{compareLabel}</span>
+          <span>{formatComparePercent(compareLatest.value)}</span>
+        </div>
+      )}
       {legend && (
         <div
           aria-label={`Chú giải OHLC ${label}`}
