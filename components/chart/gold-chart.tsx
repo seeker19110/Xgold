@@ -38,6 +38,14 @@ import {
   type IndicatorPoint,
 } from '@/lib/indicators';
 import { signalEvents } from '@/lib/analysis';
+import type { Drawing } from '@/lib/drawings/types';
+import {
+  DEFAULT_HORIZONTAL_LINE_COLOR,
+  DEFAULT_TRENDLINE_COLOR,
+  newDrawingId,
+} from '@/lib/drawings/style';
+import { DrawingsPrimitive } from './drawings-primitive';
+import type { DrawingTool } from './use-drawings';
 
 interface GoldChartProps {
   candles: readonly Candle[];
@@ -64,6 +72,26 @@ interface GoldChartProps {
   compareData?: readonly { ts: string; value: number }[];
   /** Nhãn mã so sánh (vd 'XAG/USD') cho chú giải % — chỉ hiển thị khi có `compareData`. */
   compareLabel?: string;
+  /**
+   * Công cụ vẽ (W-511). Truyền `drawings` (dù rỗng) để BẬT tính năng vẽ: chart tự gắn primitive vào
+   * series chính, xử lý click chuột (vẽ mới / chọn) và chuyển toạ độ pixel↔time/price. Không truyền
+   * (`undefined`) = tắt hẳn, không gắn primitive (không phát sinh chi phí).
+   */
+  drawings?: readonly Drawing[];
+  /** Id nét đang được chọn (highlight) — `null` = không chọn. */
+  selectedDrawingId?: string | null;
+  /** Công cụ đang bật; `null` = chế độ CHỌN (click nét để chọn). */
+  activeTool?: DrawingTool;
+  /** Gọi khi người dùng vẽ xong một nét mới (đủ điểm) — cha lưu localStorage + chọn nét vừa vẽ. */
+  onCommitDrawing?: (drawing: Drawing) => void;
+  /** Gọi khi click ở chế độ CHỌN — `id` nét trúng hoặc `null` nếu click vùng trống. */
+  onSelectDrawing?: (id: string | null) => void;
+}
+
+/** Một điểm neo (time+price) đang chờ điểm thứ hai của trendline/fib. */
+interface PendingPoint {
+  time: number;
+  price: number;
 }
 
 interface ThemeColors {
@@ -221,6 +249,11 @@ export function GoldChart({
   onChartReady,
   compareData,
   compareLabel,
+  drawings,
+  selectedDrawingId,
+  activeTool,
+  onCommitDrawing,
+  onSelectDrawing,
 }: GoldChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -269,6 +302,45 @@ export function GoldChart({
     spanB: ISeriesApi<'Line'> | null;
   }>({ spanA: null, spanB: null });
 
+  // Công cụ vẽ (W-511). Primitive gắn vào SERIES CHÍNH — vẽ lại theo time/price mỗi khung hình nên
+  // sống sót zoom/pan/đổi timeframe. Các ref "giá trị mới nhất" để handler click (đăng ký MỘT lần ở
+  // Effect 1) luôn đọc state hiện tại mà không phải đăng ký lại mỗi lần đổi công cụ/danh sách nét.
+  const drawingsEnabled = drawings !== undefined;
+  const drawingsPrimitiveRef = useRef<DrawingsPrimitive | null>(null);
+  const pendingPointRef = useRef<PendingPoint | null>(null);
+  const drawingsEnabledRef = useRef(drawingsEnabled);
+  const activeToolRef = useRef<DrawingTool>(activeTool ?? null);
+  const onCommitDrawingRef = useRef(onCommitDrawing);
+  const onSelectDrawingRef = useRef(onSelectDrawing);
+
+  // Đồng bộ các ref "giá trị mới nhất" cho handler click (đăng ký một lần ở Effect 1).
+  useEffect(() => {
+    drawingsEnabledRef.current = drawingsEnabled;
+    activeToolRef.current = activeTool ?? null;
+    onCommitDrawingRef.current = onCommitDrawing;
+    onSelectDrawingRef.current = onSelectDrawing;
+  }, [drawingsEnabled, activeTool, onCommitDrawing, onSelectDrawing]);
+
+  // Đổi công cụ (hoặc về chế độ chọn) → huỷ điểm neo đang chờ, tránh nối nhầm p1 cũ với p2 công cụ mới.
+  useEffect(() => {
+    pendingPointRef.current = null;
+  }, [activeTool]);
+
+  // Đẩy danh sách nét + nét đang chọn xuống primitive (đã tự requestUpdate để chart vẽ lại).
+  useEffect(() => {
+    drawingsPrimitiveRef.current?.setDrawings(drawings ?? []);
+  }, [drawings]);
+  useEffect(() => {
+    drawingsPrimitiveRef.current?.setSelected(selectedDrawingId ?? null);
+  }, [selectedDrawingId]);
+
+  // Con trỏ chữ thập khi đang ở chế độ vẽ (gợi ý thị giác); về mặc định ở chế độ chọn.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.style.cursor = drawingsEnabled && activeTool != null ? 'crosshair' : '';
+  }, [drawingsEnabled, activeTool]);
+
   // Effect 1: dựng chart một lần (series chính do Effect 1a quản lý vòng đời); dọn khi unmount.
   useEffect(() => {
     const container = containerRef.current;
@@ -285,6 +357,15 @@ export function GoldChart({
     chartRef.current = chart;
     onChartReadyRef.current?.(chart);
 
+    // Công cụ vẽ (W-511): tạo primitive MỘT lần với màu theme hiện tại; Effect 1a gắn vào series chính
+    // (và gắn lại mỗi khi đổi kiểu chart tạo series mới). `null` khi tắt tính năng.
+    if (drawingsEnabledRef.current) {
+      drawingsPrimitiveRef.current = new DrawingsPrimitive({
+        foreground: colors.foreground,
+        background: colors.background,
+      });
+    }
+
     // Legend OHLC kiểu TradingView: rê crosshair → hiện nến dưới con trỏ; rời chart → nến mới nhất.
     const onCrosshairMove = (param: MouseEventParams<Time>) => {
       const index =
@@ -292,6 +373,64 @@ export function GoldChart({
       setHoveredIndex(index ?? null);
     };
     chart.subscribeCrosshairMove(onCrosshairMove);
+
+    // Click chuột phục vụ công cụ vẽ. CHỈ xử lý click trong pane giá (paneIndex 0) — nơi series chính
+    // + primitive sống; bỏ qua click ở pane RSI/MACD. Ở chế độ CHỌN → hit-test nét gần nhất; ở chế độ
+    // vẽ → dựng toạ độ time/price rồi commit (1 điểm cho đường ngang, 2 điểm cho trendline/fib).
+    const onChartClick = (param: MouseEventParams<Time>) => {
+      if (!drawingsEnabledRef.current) return;
+      const point = param.point;
+      const series = mainSeriesRef.current;
+      if (!point || !series) return;
+      if (param.paneIndex !== undefined && param.paneIndex !== 0) return;
+
+      const tool = activeToolRef.current;
+      if (tool === null) {
+        const id = drawingsPrimitiveRef.current?.hitTestDrawing(point.x, point.y) ?? null;
+        onSelectDrawingRef.current?.(id);
+        return;
+      }
+
+      const price = series.coordinateToPrice(point.y);
+      if (price === null) return;
+
+      if (tool === 'horizontal-line') {
+        onCommitDrawingRef.current?.({
+          id: newDrawingId(),
+          type: 'horizontal-line',
+          price,
+          color: DEFAULT_HORIZONTAL_LINE_COLOR,
+        });
+        return;
+      }
+
+      // trendline / fib-retracement: cần time+price. Ưu tiên `param.time` (đã bám nến); ngoài vùng dữ
+      // liệu thì thử `coordinateToTime`. Chỉ chấp nhận time dạng số (UTCTimestamp) khớp schema W-510.
+      const rawTime =
+        typeof param.time === 'number' ? param.time : chart.timeScale().coordinateToTime(point.x);
+      if (typeof rawTime !== 'number') return;
+
+      const pending = pendingPointRef.current;
+      if (!pending) {
+        pendingPointRef.current = { time: rawTime, price };
+        return;
+      }
+      pendingPointRef.current = null;
+      const p1 = { time: pending.time, price: pending.price };
+      const p2 = { time: rawTime, price };
+      if (tool === 'trendline') {
+        onCommitDrawingRef.current?.({
+          id: newDrawingId(),
+          type: 'trendline',
+          p1,
+          p2,
+          color: DEFAULT_TRENDLINE_COLOR,
+        });
+      } else {
+        onCommitDrawingRef.current?.({ id: newDrawingId(), type: 'fib-retracement', p1, p2 });
+      }
+    };
+    chart.subscribeClick(onChartClick);
 
     const observer = new MutationObserver(() => {
       const next = readThemeColors();
@@ -303,6 +442,11 @@ export function GoldChart({
       if (mainSeriesRef.current) {
         applyMainSeriesColors(mainSeriesRef.current, mainSeriesTypeRef.current, next);
       }
+      // Nhãn % Fibonacci vẽ bằng màu theme (nền/chữ) → cập nhật để luôn tương phản đúng khi đổi theme.
+      drawingsPrimitiveRef.current?.setTheme({
+        foreground: next.foreground,
+        background: next.background,
+      });
       const thresholds = rsiThresholdRef.current;
       thresholds.upper?.applyOptions({ color: next.border });
       thresholds.lower?.applyOptions({ color: next.border });
@@ -315,9 +459,14 @@ export function GoldChart({
     return () => {
       observer.disconnect();
       chart.unsubscribeCrosshairMove(onCrosshairMove);
+      chart.unsubscribeClick(onChartClick);
+      // chart.remove() tự huỷ mọi series + primitive gắn trong nó — chỉ cần bỏ tham chiếu để không
+      // giữ instance chết (tránh gắn lại nhầm ở lần mount sau).
       chart.remove();
       onChartReadyRef.current?.(null);
       chartRef.current = null;
+      drawingsPrimitiveRef.current = null;
+      pendingPointRef.current = null;
       mainSeriesRef.current = null;
       volumeSeriesRef.current = null;
       compareSeriesRef.current = null;
@@ -344,7 +493,11 @@ export function GoldChart({
     const chart = chartRef.current;
     if (!chart) return;
 
+    const primitive = drawingsPrimitiveRef.current;
     if (mainSeriesRef.current) {
+      // Gỡ primitive khỏi series cũ TRƯỚC khi xoá series (removeSeries cũng tự detach, nhưng gỡ tường
+      // minh để `attached`/`detached` của primitive chạy đúng cặp, không rò tham chiếu series cũ).
+      if (primitive) mainSeriesRef.current.detachPrimitive(primitive);
       chart.removeSeries(mainSeriesRef.current);
       mainSeriesRef.current = null;
       // markers plugin bị hủy cùng series cũ — buộc Effect 7 tạo lại trên series mới.
@@ -352,8 +505,11 @@ export function GoldChart({
     }
 
     const colors = readThemeColors();
-    mainSeriesRef.current = createMainSeries(chart, config.chartType, colors);
+    const series = createMainSeries(chart, config.chartType, colors);
+    mainSeriesRef.current = series;
     mainSeriesTypeRef.current = CHART_TYPE_TO_SERIES[config.chartType];
+    // Gắn LẠI primitive vào series mới → nét vẽ vẫn hiển thị sau khi đổi kiểu chart (W-502).
+    if (primitive) series.attachPrimitive(primitive);
   }, [config.chartType]);
 
   // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount/đổi symbol.
