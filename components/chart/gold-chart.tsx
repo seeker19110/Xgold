@@ -42,6 +42,16 @@ interface GoldChartProps {
   label: string;
   /** Khung thời gian đang hiển thị — dùng tính countdown nến hiện tại trong legend. */
   timeframe: Timeframe;
+  /**
+   * true khi container cha (chart-page-client.tsx) đang ở chế độ fullscreen (W-505) — container
+   * chart giãn hết chiều cao khả dụng (flex-1/h-full) thay vì chiều cao cố định 560px.
+   */
+  fullscreenActive?: boolean;
+  /**
+   * Gọi với chart instance ngay khi tạo xong (Effect 1) và với `null` lúc dọn dẹp/unmount — dùng để
+   * chụp ảnh chart (`chart.takeScreenshot()`, W-505) từ component cha.
+   */
+  onChartReady?: (chart: IChartApi | null) => void;
 }
 
 interface ThemeColors {
@@ -96,9 +106,22 @@ function toLineData(points: readonly IndicatorPoint[]): { time: UTCTimestamp; va
  * Chart nến (lightweight-charts v5) + Multi-MA chồng lên pane giá + Multi-RSI ở pane phụ.
  * Tự đồng bộ màu theo theme Dark blue/Light đang chọn.
  */
-export function GoldChart({ candles, config, label, timeframe }: GoldChartProps) {
+export function GoldChart({
+  candles,
+  config,
+  label,
+  timeframe,
+  fullscreenActive,
+  onChartReady,
+}: GoldChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  // Ref giữ callback mới nhất — tránh Effect 1 (chỉ chạy 1 lần lúc mount) phải liệt kê
+  // `onChartReady` vào deps (component cha có thể truyền hàm mới mỗi lần render).
+  const onChartReadyRef = useRef(onChartReady);
+  useEffect(() => {
+    onChartReadyRef.current = onChartReady;
+  }, [onChartReady]);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const maSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const rsiSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
@@ -155,6 +178,7 @@ export function GoldChart({ candles, config, label, timeframe }: GoldChartProps)
 
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
+    onChartReadyRef.current?.(chart);
 
     // Legend OHLC kiểu TradingView: rê crosshair → hiện nến dưới con trỏ; rời chart → nến mới nhất.
     const onCrosshairMove = (param: MouseEventParams<Time>) => {
@@ -189,6 +213,7 @@ export function GoldChart({ candles, config, label, timeframe }: GoldChartProps)
       observer.disconnect();
       chart.unsubscribeCrosshairMove(onCrosshairMove);
       chart.remove();
+      onChartReadyRef.current?.(null);
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
@@ -591,10 +616,10 @@ export function GoldChart({ candles, config, label, timeframe }: GoldChartProps)
   const countdown = latestCandle ? candleCountdown(timeframe, latestCandle.ts, now) : null;
 
   return (
-    <div className="relative min-w-0">
+    <div className={fullscreenActive ? 'relative min-w-0 flex-1' : 'relative min-w-0'}>
       <div
         ref={containerRef}
-        className="h-[560px] w-full min-w-0"
+        className={fullscreenActive ? 'h-full w-full min-w-0' : 'h-[560px] w-full min-w-0'}
         role="group"
         aria-label={`Chart nến ${label} với Multi-MA và Multi-RSI`}
       />
