@@ -3,24 +3,17 @@
 import { useEffect, useState } from 'react';
 import type { Candle, Timeframe } from '@/lib/candles/types';
 import { INSTRUMENTS, type Instrument } from '@/lib/instruments';
-import { DEFAULT_ANALYSIS_CONFIG, suggestLatest, type SignalDirection } from '@/lib/analysis';
-import { rsi, sma } from '@/lib/indicators';
+import {
+  emptyRow,
+  fetchInstrumentCandles,
+  rowFromCandles,
+  type ScreenerRow,
+} from '@/lib/screener/row';
 
-export interface ScreenerRow {
-  symbol: string;
-  slug: string;
-  label: string;
-  currency: Instrument['currency'];
-  /** `null` nếu mã đó lỗi/rỗng — hiển thị "—", không làm hỏng cả bảng. */
-  latestClose: number | null;
-  direction: SignalDirection | null;
-  /** `score/maxScore`, dải −1..+1; 0 nếu không có gợi ý. */
-  norm: number;
-  rsi14: number | null;
-  /** 'up'/'down' so với SMA200; `null` nếu thiếu dữ liệu. */
-  trend: 'up' | 'down' | null;
-  source: 'supabase' | 'sample' | null;
-}
+// Logic dựng dòng (`ScreenerRow`/`emptyRow`/`rowFromCandles`/`fetchInstrumentCandles`) đã tách ra
+// `lib/screener/row.ts` để Watchlist (W-509) dùng lại; re-export `ScreenerRow` để nơi khác đang
+// import từ hook (vd `screener-table.tsx`) không phải đổi đường dẫn.
+export type { ScreenerRow } from '@/lib/screener/row';
 
 export interface MarketContextCandles {
   xau1D: Candle[];
@@ -34,73 +27,6 @@ export interface ScreenerState {
   /** Nến 1D của XAU/XAG/DXY cho thẻ "Bối cảnh thị trường" (mục 4.2) — `null` khi đang tải. */
   marketContext: MarketContextCandles | null;
   error: string | null;
-}
-
-interface CandlesFetchResult {
-  instrument: Instrument;
-  candles: Candle[];
-  source: 'supabase' | 'sample';
-}
-
-async function fetchInstrumentCandles(
-  instrument: Instrument,
-  timeframe: Timeframe,
-): Promise<CandlesFetchResult> {
-  const params = new URLSearchParams({ symbol: instrument.symbol, timeframe });
-  const res = await fetch(`/api/candles?${params.toString()}`);
-  if (!res.ok) {
-    const body: unknown = await res.json().catch(() => ({}));
-    const message =
-      typeof body === 'object' && body !== null && 'error' in body
-        ? String((body as { error: unknown }).error)
-        : `HTTP ${res.status}`;
-    throw new Error(message);
-  }
-  const body = (await res.json()) as { candles: Candle[]; source: 'supabase' | 'sample' };
-  return { instrument, candles: body.candles, source: body.source };
-}
-
-function emptyRow(instrument: Instrument): ScreenerRow {
-  return {
-    symbol: instrument.symbol,
-    slug: instrument.slug,
-    label: instrument.label,
-    currency: instrument.currency,
-    latestClose: null,
-    direction: null,
-    norm: 0,
-    rsi14: null,
-    trend: null,
-    source: null,
-  };
-}
-
-function rowFromCandles(
-  instrument: Instrument,
-  candles: Candle[],
-  source: 'supabase' | 'sample',
-): ScreenerRow {
-  const latest = candles.at(-1) ?? null;
-  const suggestion = suggestLatest(candles, DEFAULT_ANALYSIS_CONFIG);
-  const norm = suggestion && suggestion.maxScore > 0 ? suggestion.score / suggestion.maxScore : 0;
-
-  const rsiPoint = rsi(candles, 14).at(-1) ?? null;
-  const smaPoint = sma(candles, 200).at(-1) ?? null;
-  const trend: ScreenerRow['trend'] =
-    latest && smaPoint?.value != null ? (latest.close >= smaPoint.value ? 'up' : 'down') : null;
-
-  return {
-    symbol: instrument.symbol,
-    slug: instrument.slug,
-    label: instrument.label,
-    currency: instrument.currency,
-    latestClose: latest?.close ?? null,
-    direction: suggestion?.direction ?? null,
-    norm,
-    rsi14: rsiPoint?.value ?? null,
-    trend,
-    source,
-  };
 }
 
 /**
