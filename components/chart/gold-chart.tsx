@@ -16,8 +16,13 @@ import {
   type Time,
   type UTCTimestamp,
 } from 'lightweight-charts';
-import type { Candle } from '@/lib/candles/types';
-import { formatLegendChange, formatLegendPrice, legendAt } from '@/lib/candles/legend';
+import type { Candle, Timeframe } from '@/lib/candles/types';
+import {
+  candleCountdown,
+  formatLegendChange,
+  formatLegendPrice,
+  legendAt,
+} from '@/lib/candles/legend';
 import type { ChartConfig } from '@/lib/indicators/config';
 import {
   sma,
@@ -35,6 +40,8 @@ interface GoldChartProps {
   config: ChartConfig;
   /** Cụm mô tả cho aria-label, vd 'giá vàng XAU/USD' (ghép vào "Chart nến {label} …"). */
   label: string;
+  /** Khung thời gian đang hiển thị — dùng tính countdown nến hiện tại trong legend. */
+  timeframe: Timeframe;
 }
 
 interface ThemeColors {
@@ -89,7 +96,7 @@ function toLineData(points: readonly IndicatorPoint[]): { time: UTCTimestamp; va
  * Chart nến (lightweight-charts v5) + Multi-MA chồng lên pane giá + Multi-RSI ở pane phụ.
  * Tự đồng bộ màu theo theme Dark blue/Light đang chọn.
  */
-export function GoldChart({ candles, config, label }: GoldChartProps) {
+export function GoldChart({ candles, config, label, timeframe }: GoldChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -118,6 +125,9 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
   // Tra chỉ số nến theo mốc thời gian cho crosshair → legend OHLC (cập nhật ở Effect 2).
   const timeToIndexRef = useRef<Map<number, number>>(new Map());
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  // Mốc giờ hiện tại cho countdown nến (legend) — tick mỗi giây, KHÔNG đọc Date.now() trực tiếp
+  // trong render (tránh lệch giữa các lần render và không tất định khi test).
+  const [now, setNow] = useState<Date>(() => new Date());
   const ichimokuSeriesRef = useRef<{
     spanA: ISeriesApi<'Line'> | null;
     spanB: ISeriesApi<'Line'> | null;
@@ -195,6 +205,13 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       markersRef.current = null;
       ichimokuSeriesRef.current = { spanA: null, spanB: null };
     };
+  }, []);
+
+  // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount/đổi symbol
+  // (component gold-chart được remount theo `key` ở nơi gọi khi đổi symbol/timeframe).
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
   }, []);
 
   // Effect 2: dữ liệu nến + map thời gian→chỉ số cho legend (đổi dữ liệu thì bỏ trạng thái hover cũ).
@@ -568,6 +585,10 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       : legend?.direction === 'down'
         ? 'text-danger'
         : 'text-muted-foreground';
+  // Countdown luôn tính trên nến MỚI NHẤT (đang mở) — không phụ thuộc nến đang hover, vì countdown
+  // trả lời "khi nào nến hiện tại đóng lại", không phải nến dưới con trỏ.
+  const latestCandle = candles[candles.length - 1];
+  const countdown = latestCandle ? candleCountdown(timeframe, latestCandle.ts, now) : null;
 
   return (
     <div className="relative min-w-0">
@@ -603,6 +624,11 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
             C <span className={legendColorClass}>{formatLegendPrice(legend.close)}</span>
           </span>
           <span className={legendColorClass}>{formatLegendChange(legend)}</span>
+          {countdown && (
+            <span aria-label="Thời gian còn lại tới khi nến hiện tại đóng">
+              ⏱ {countdown.label}
+            </span>
+          )}
         </div>
       )}
     </div>
