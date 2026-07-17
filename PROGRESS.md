@@ -464,9 +464,17 @@
 
 ## Đang làm
 
-- **Chờ merge PR #31/#32/#33 (vòng `/completion` thứ 2, 2026-07-16)** — xem "Báo cáo hoàn thiện vòng
-  2" bên dưới. Sau khi cả 3 merge: chạy lại Lighthouse thật trên trạng thái cuối của `main` (khuyến
-  nghị ở nhật ký hội tụ Pha 4, `docs/ops/COMPLETION-PLAN.md`) để đóng hẳn vòng 2.
+- ✅ **Vòng `/completion` thứ 2 ĐÃ ĐÓNG HẲN (2026-07-17):** PR #31/#32/#33/#34 đều đã merge vào
+  `main` (`6989fb2`). Đã chạy lại toàn bộ 5 cổng local trên trạng thái `main` này: `type-check` ✅ ·
+  `lint` ✅ (0 cảnh báo) · `format:check` ✅ · `test` ✅ (282/282, 44 file) · `build` ✅ (13 route,
+  gồm 4 SSG `/chart/[symbol]`). Chạy lại **Lighthouse CI thật** (`npx lhci autorun`, Chrome
+  `/opt/pw-browsers/chromium-1194`, `--no-sandbox`) trên bản build production của `main` — cả 5 URL
+  (`/`, `/chart/xauusd`, `/gia-vang-trong-nuoc`, `/quet-tin-hieu`, `/so-sanh-gia-vang`) × 3 lần chạy:
+  "All results processed!", 0 assertion lỗi (đạt ngưỡng performance/a11y/best-practices/seo ≥0.9,
+  LCP ≤2500ms, CLS ≤0.1 — không cần nới ngưỡng, khớp kết quả W-406 đã đo trên nhánh riêng trước khi
+  merge). Bước upload lên `temporary-public-storage` thất bại do mạng sandbox chặn (không ảnh hưởng
+  kết quả assertion — cùng vấn đề môi trường đã ghi nhận nhiều đợt trước). **Khuyến nghị đóng ở nhật
+  ký hội tụ Pha 4 nay đã thực hiện xong — vòng 2 hoàn tất.**
 - Vòng `/completion` đầu tiên (2026-07-03) đã hoàn tất trọn vòng đời: Pha 0 (FEATURE-MAP.md +
   CONVENTIONS.md) → Pha 1 (audit 12 nhóm, `COMPREHENSIVE-AUDIT-STATUS.md`) → Pha 2 (kế hoạch
   `docs/ops/COMPLETION-PLAN.md`, người dùng duyệt) → Pha 3 (Đợt 1–3, PR #8/#10/#11, tất cả đã merge)
