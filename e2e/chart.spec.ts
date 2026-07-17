@@ -297,7 +297,7 @@ test('vẽ trendline bằng chuột thật → lưu localStorage, còn sau reloa
 
   // Bật công cụ "Đường xu hướng" (trendline) — aria-pressed phản hồi trạng thái bật.
   const toolbar = page.getByRole('group', { name: 'Công cụ vẽ trên chart' });
-  const trendlineBtn = toolbar.getByRole('button', { name: 'Đường xu hướng' });
+  const trendlineBtn = toolbar.getByRole('button', { name: 'Xu hướng' });
   await trendlineBtn.click();
   await expect(trendlineBtn).toHaveAttribute('aria-pressed', 'true');
 

@@ -21,6 +21,8 @@ export interface UseDrawingsResult {
   selectDrawing: (id: string | null) => void;
   /** Xoá nét đang chọn (không làm gì nếu chưa chọn). */
   deleteSelected: () => void;
+  /** Xoá TOÀN BỘ nét vẽ của symbol hiện tại (W-512 — nút "Xoá hết"). */
+  clearAll: () => void;
 }
 
 /**
@@ -79,6 +81,13 @@ export function useDrawings(symbol: string): UseDrawingsResult {
     });
   }, [symbol]);
 
+  const clearAll = useCallback(() => {
+    setDrawings([]);
+    saveDrawings(symbol, []);
+    setSelectedId(null);
+    setActiveTool(null);
+  }, [symbol]);
+
   // Phím Delete/Backspace xoá nét đang chọn — bỏ qua khi con trỏ đang ở ô nhập liệu.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -107,5 +116,6 @@ export function useDrawings(symbol: string): UseDrawingsResult {
     commitDrawing,
     selectDrawing,
     deleteSelected,
+    clearAll,
   };
 }
