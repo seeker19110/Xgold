@@ -35,6 +35,14 @@ const VolumeSettingsSchema = z.object({
   visible: z.boolean(),
 });
 
+/**
+ * Kiểu hiển thị chuỗi giá chính. 'candles'/'bar' vẽ OHLC; 'heikinAshi' vẽ OHLC đã làm mượt
+ * (dùng lại series nến, dữ liệu qua `toHeikinAshi`); 'line'/'area' chỉ vẽ giá đóng cửa gốc.
+ * Nguồn sự thật cho cả schema lẫn UI (`ChartTypeSwitcher`) để không lệch danh sách.
+ */
+export const CHART_TYPES = ['candles', 'heikinAshi', 'bar', 'line', 'area'] as const;
+export type ChartType = (typeof CHART_TYPES)[number];
+
 const IchimokuSettingsSchema = z.object({
   visible: z.boolean(),
   conversionPeriod: z.number().int().positive(),
@@ -95,6 +103,9 @@ export const ChartConfigSchema = z
     analysis: AnalysisConfigSchema.default(DEFAULT_ANALYSIS_CONFIG),
     // Thang giá: 'normal' (tuyến tính) hoặc 'logarithmic' — W-503.
     priceScaleMode: z.enum(['normal', 'logarithmic']).default('normal'),
+    // Kiểu chart: Nến/Heikin Ashi/Bar/Line/Area — W-502. `.default` giữ tương thích ngược URL/
+    // localStorage cũ (trước Đợt 14 không có khóa này) → mặc định 'candles'.
+    chartType: z.enum(CHART_TYPES).default('candles'),
   })
   .refine((c) => hasUniqueIds(c.maLines), { message: 'maLines có id trùng nhau' })
   .refine((c) => hasUniqueIds(c.rsiLines), { message: 'rsiLines có id trùng nhau' });
@@ -114,6 +125,7 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
   ichimoku: DEFAULT_ICHIMOKU_SETTINGS,
   analysis: DEFAULT_ANALYSIS_CONFIG,
   priceScaleMode: 'normal',
+  chartType: 'candles',
 };
 
 /** Mã hóa cấu hình chỉ báo thành 1 chuỗi query param — nền tảng cho "URL chia sẻ được". */

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import {
   createChart,
   createSeriesMarkers,
+  AreaSeries,
+  BarSeries,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
@@ -13,17 +15,19 @@ import {
   type ISeriesMarkersPluginApi,
   type MouseEventParams,
   type SeriesMarker,
+  type SeriesType,
   type Time,
   type UTCTimestamp,
 } from 'lightweight-charts';
 import type { Candle, Timeframe } from '@/lib/candles/types';
+import { toHeikinAshi } from '@/lib/candles/heikin-ashi';
 import {
   candleCountdown,
   formatLegendChange,
   formatLegendPrice,
   legendAt,
 } from '@/lib/candles/legend';
-import type { ChartConfig } from '@/lib/indicators/config';
+import type { ChartConfig, ChartType } from '@/lib/indicators/config';
 import {
   sma,
   ema,
@@ -58,11 +62,31 @@ interface ThemeColors {
   background: string;
   foreground: string;
   border: string;
+  primary: string;
   success: string;
   danger: string;
 }
 
 const RSI_PANE_INDEX = 1;
+
+/** Kiểu chart (config) → loại series lightweight-charts. Heikin Ashi dùng lại series nến. */
+const CHART_TYPE_TO_SERIES: Record<ChartType, SeriesType> = {
+  candles: 'Candlestick',
+  heikinAshi: 'Candlestick',
+  bar: 'Bar',
+  line: 'Line',
+  area: 'Area',
+};
+
+// Line/Area chỉ có 1 giá trị/nến (close) — không phải OHLC.
+function isValueSeries(seriesType: SeriesType): boolean {
+  return seriesType === 'Line' || seriesType === 'Area';
+}
+
+// Màu vùng tô Area (dưới đường) — cố định, dịu, đọc được trên cả Dark blue lẫn Light
+// (đường Area lấy màu theo `--primary` của theme, xem createMainSeries/applyMainSeriesColors).
+const AREA_TOP_COLOR = 'rgba(91, 157, 255, 0.4)';
+const AREA_BOTTOM_COLOR = 'rgba(91, 157, 255, 0)';
 
 // Màu cố định cho BB/MACD (không cấu hình màu ở v1 — khác Multi-MA/RSI vốn mỗi đường một màu).
 const BB_COLOR = '#94a3b8';
@@ -85,9 +109,75 @@ function readThemeColors(): ThemeColors {
     background: get('--background', '#0b1220'),
     foreground: get('--foreground', '#e8eef8'),
     border: get('--border', '#243049'),
+    primary: get('--primary', '#5b9dff'),
     success: get('--success', '#4ade80'),
     danger: get('--danger', '#f87171'),
   };
+}
+
+/** Tạo series chính đúng loại theo kiểu chart, áp màu theme lúc khởi tạo. */
+function createMainSeries(
+  chart: IChartApi,
+  chartType: ChartType,
+  colors: ThemeColors,
+): ISeriesApi<SeriesType> {
+  switch (chartType) {
+    case 'bar':
+      return chart.addSeries(BarSeries, {
+        upColor: colors.success,
+        downColor: colors.danger,
+      });
+    case 'line':
+      return chart.addSeries(LineSeries, {
+        color: colors.primary,
+        lineWidth: 2,
+        priceLineVisible: false,
+      });
+    case 'area':
+      return chart.addSeries(AreaSeries, {
+        lineColor: colors.primary,
+        topColor: AREA_TOP_COLOR,
+        bottomColor: AREA_BOTTOM_COLOR,
+        lineWidth: 2,
+        priceLineVisible: false,
+      });
+    case 'candles':
+    case 'heikinAshi':
+      return chart.addSeries(CandlestickSeries, {
+        upColor: colors.success,
+        downColor: colors.danger,
+        borderVisible: false,
+        wickUpColor: colors.success,
+        wickDownColor: colors.danger,
+      });
+  }
+}
+
+/** Áp lại màu theme cho series chính đang hiển thị (gọi khi đổi theme Dark blue ↔ Light). */
+function applyMainSeriesColors(
+  series: ISeriesApi<SeriesType>,
+  seriesType: SeriesType,
+  colors: ThemeColors,
+): void {
+  switch (seriesType) {
+    case 'Bar':
+      series.applyOptions({ upColor: colors.success, downColor: colors.danger });
+      break;
+    case 'Line':
+      series.applyOptions({ color: colors.primary });
+      break;
+    case 'Area':
+      series.applyOptions({ lineColor: colors.primary });
+      break;
+    default:
+      // Candlestick (candles + heikinAshi)
+      series.applyOptions({
+        upColor: colors.success,
+        downColor: colors.danger,
+        wickUpColor: colors.success,
+        wickDownColor: colors.danger,
+      });
+  }
 }
 
 function toUtcTimestamp(ts: string): UTCTimestamp {
@@ -122,7 +212,11 @@ export function GoldChart({
   useEffect(() => {
     onChartReadyRef.current = onChartReady;
   }, [onChartReady]);
-  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  // Series chính đa kiểu (Nến/HA/Bar/Line/Area, W-502) — dùng union `SeriesType` vì lightweight
+  // -charts không cho đổi loại series tại chỗ: đổi kiểu = remove series cũ + add series mới.
+  const mainSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
+  // Loại series đang gắn — để theme observer biết cách áp màu (nến/bar khác line/area).
+  const mainSeriesTypeRef = useRef<SeriesType>('Candlestick');
   const maSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const rsiSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const rsiThresholdRef = useRef<{
@@ -156,7 +250,7 @@ export function GoldChart({
     spanB: ISeriesApi<'Line'> | null;
   }>({ spanA: null, spanB: null });
 
-  // Effect 1: dựng chart + series nến một lần; dọn dẹp khi unmount.
+  // Effect 1: dựng chart một lần (series chính do Effect 1a quản lý vòng đời); dọn khi unmount.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -168,16 +262,8 @@ export function GoldChart({
       grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
       timeScale: { timeVisible: true, secondsVisible: false },
     });
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: colors.success,
-      downColor: colors.danger,
-      borderVisible: false,
-      wickUpColor: colors.success,
-      wickDownColor: colors.danger,
-    });
 
     chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
     onChartReadyRef.current?.(chart);
 
     // Legend OHLC kiểu TradingView: rê crosshair → hiện nến dưới con trỏ; rời chart → nến mới nhất.
@@ -194,12 +280,10 @@ export function GoldChart({
         layout: { background: { color: next.background }, textColor: next.foreground },
         grid: { vertLines: { color: next.border }, horzLines: { color: next.border } },
       });
-      candleSeries.applyOptions({
-        upColor: next.success,
-        downColor: next.danger,
-        wickUpColor: next.success,
-        wickDownColor: next.danger,
-      });
+      // Series chính có thể đã đổi loại (W-502) — áp màu theo loại hiện tại qua ref.
+      if (mainSeriesRef.current) {
+        applyMainSeriesColors(mainSeriesRef.current, mainSeriesTypeRef.current, next);
+      }
       const thresholds = rsiThresholdRef.current;
       thresholds.upper?.applyOptions({ color: next.border });
       thresholds.lower?.applyOptions({ color: next.border });
@@ -215,7 +299,7 @@ export function GoldChart({
       chart.remove();
       onChartReadyRef.current?.(null);
       chartRef.current = null;
-      candleSeriesRef.current = null;
+      mainSeriesRef.current = null;
       volumeSeriesRef.current = null;
       // maSeriesRef/rsiSeriesRef là Map bền vững suốt vòng đời component (không phải node DOM) —
       // muốn đọc nội dung MỚI NHẤT lúc dọn dẹp (chart.remove() đã tự hủy mọi series bên trong nó),
@@ -232,6 +316,26 @@ export function GoldChart({
     };
   }, []);
 
+  // Effect 1a: vòng đời SERIES CHÍNH theo kiểu chart (W-502). lightweight-charts không cho đổi loại
+  // series tại chỗ nên đổi kiểu = remove series cũ (kéo theo hủy markers plugin gắn trên nó) + add
+  // series loại mới. Chạy TRƯỚC Effect 2/2a/7 (thứ tự khai báo) — cả 3 effect đó cũng phụ thuộc
+  // config.chartType nên sẽ set lại data/thang giá/markers lên series MỚI ngay trong cùng lượt render.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    if (mainSeriesRef.current) {
+      chart.removeSeries(mainSeriesRef.current);
+      mainSeriesRef.current = null;
+      // markers plugin bị hủy cùng series cũ — buộc Effect 7 tạo lại trên series mới.
+      markersRef.current = null;
+    }
+
+    const colors = readThemeColors();
+    mainSeriesRef.current = createMainSeries(chart, config.chartType, colors);
+    mainSeriesTypeRef.current = CHART_TYPE_TO_SERIES[config.chartType];
+  }, [config.chartType]);
+
   // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount/đổi symbol
   // (component gold-chart được remount theo `key` ở nơi gọi khi đổi symbol/timeframe).
   useEffect(() => {
@@ -239,28 +343,45 @@ export function GoldChart({
     return () => clearInterval(id);
   }, []);
 
-  // Effect 2: dữ liệu nến + map thời gian→chỉ số cho legend (đổi dữ liệu thì bỏ trạng thái hover cũ).
+  // Effect 2: dữ liệu series chính + map thời gian→chỉ số cho legend (đổi dữ liệu thì bỏ hover cũ).
+  // Phụ thuộc cả config.chartType: đổi kiểu chart thì Effect 1a đã tạo series mới, ở đây set lại data
+  // đúng dạng (OHLC cho nến/HA/bar; close cho line/area). Heikin Ashi lấy OHLC đã làm mượt; line/area
+  // luôn theo GIÁ GỐC (close). Chỉ số legend luôn theo mảng `candles` gốc (HA giữ nguyên ts/độ dài).
   useEffect(() => {
-    const series = candleSeriesRef.current;
+    const series = mainSeriesRef.current;
     if (!series) return;
+
+    const seriesType = CHART_TYPE_TO_SERIES[config.chartType];
+    const ohlcCandles = config.chartType === 'heikinAshi' ? toHeikinAshi(candles) : candles;
+
     const timeToIndex = new Map<number, number>();
-    series.setData(
-      candles.map((c, i) => {
-        const time = toUtcTimestamp(c.ts);
-        timeToIndex.set(time, i);
-        return { time, open: c.open, high: c.high, low: c.low, close: c.close };
-      }),
-    );
+    candles.forEach((c, i) => timeToIndex.set(toUtcTimestamp(c.ts), i));
+
+    if (isValueSeries(seriesType)) {
+      // Line/Area: giá gốc (không dùng HA close ở v1).
+      series.setData(candles.map((c) => ({ time: toUtcTimestamp(c.ts), value: c.close })));
+    } else {
+      series.setData(
+        ohlcCandles.map((c) => ({
+          time: toUtcTimestamp(c.ts),
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        })),
+      );
+    }
     timeToIndexRef.current = timeToIndex;
     // Nến cũ không còn — index hover cũ trỏ nhầm nến mới; đặt lại về "nến mới nhất".
     setHoveredIndex(null);
     chartRef.current?.timeScale().fitContent();
-  }, [candles]);
+  }, [candles, config.chartType]);
 
   // Effect 2a: thang giá Log/Linear (W-503) — áp lên price scale phải (thang giá nến), tách khỏi
   // thang giá 'volume' riêng (Effect 2b) để không kéo méo cột khối lượng khi bật log.
+  // Phụ thuộc cả config.chartType để áp lại mode lên series MỚI sau khi đổi kiểu chart (W-502).
   useEffect(() => {
-    const series = candleSeriesRef.current;
+    const series = mainSeriesRef.current;
     if (!series) return;
     series.priceScale().applyOptions({
       mode:
@@ -268,7 +389,7 @@ export function GoldChart({
           ? PriceScaleMode.Logarithmic
           : PriceScaleMode.Normal,
     });
-  }, [config.priceScaleMode]);
+  }, [config.priceScaleMode, config.chartType]);
 
   // Effect 2b: thanh khối lượng — overlay 20% đáy pane giá (bố cục TradingView), thang giá riêng
   // 'volume' để không kéo méo thang giá nến. Nến thiếu volume (null) thì bỏ qua điểm đó.
@@ -575,9 +696,11 @@ export function GoldChart({
   }, [candles, config.macd, config.rsiLines.length]);
 
   // Effect 7: markers tín hiệu Mua/Bán trên nến — các thời điểm phân loại tổng hợp của engine
-  // phân tích (lib/analysis) chuyển sang Mua/Bán. Tắt phân tích → xóa markers.
+  // phân tích (lib/analysis) chuyển sang Mua/Bán. Tắt phân tích → xóa markers. Phụ thuộc cả
+  // config.chartType: đổi kiểu chart hủy markers plugin cũ (Effect 1a set markersRef=null) nên phải
+  // tạo lại plugin trên series mới rồi set lại markers (vị trí theo thời gian, đúng với mọi kiểu).
   useEffect(() => {
-    const series = candleSeriesRef.current;
+    const series = mainSeriesRef.current;
     if (!series) return;
 
     if (!markersRef.current) markersRef.current = createSeriesMarkers(series, []);
@@ -595,7 +718,7 @@ export function GoldChart({
       text: event.direction === 'buy' ? 'Mua' : 'Bán',
     }));
     markersRef.current.setMarkers(markers);
-  }, [candles, config.analysis]);
+  }, [candles, config.analysis, config.chartType]);
 
   // Auto-fit CHỈ chạy khi người dùng chủ động bấm — khác Effect 2 (tự fit khi đổi bộ dữ liệu nến),
   // dùng sau khi zoom/pan để đưa toàn bộ dữ liệu đang có trở lại vào khung nhìn.
