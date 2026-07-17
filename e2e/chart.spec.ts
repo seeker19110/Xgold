@@ -175,6 +175,45 @@ test('bật thang giá Log không làm vỡ chart; axe 0 vi phạm (W-503)', asy
   await expect(chartContainer.locator('canvas').first()).toBeVisible();
 });
 
+test('đổi kiểu chart (Nến → Heikin Ashi → Line) không vỡ chart; axe 0 vi phạm (W-502)', async ({
+  page,
+}) => {
+  await page.goto('/chart/xauusd');
+
+  const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
+  const canvas = chartContainer.locator('canvas').first();
+  await expect(canvas).toBeVisible();
+
+  const switcher = page.getByRole('group', { name: 'Chọn kiểu chart' });
+  const btnCandles = switcher.getByRole('button', { name: 'Nến', exact: true });
+  const btnHeikin = switcher.getByRole('button', { name: 'Heikin Ashi', exact: true });
+  const btnLine = switcher.getByRole('button', { name: 'Line', exact: true });
+
+  // Mặc định là Nến.
+  await expect(btnCandles).toHaveAttribute('aria-pressed', 'true');
+
+  // → Heikin Ashi: series đổi loại (remove + add), canvas vẫn còn (markers/overlay vẽ lại trên
+  //   series mới — kiểm chứng thị giác thủ công vì markers nằm trên canvas, không phải DOM).
+  await btnHeikin.click();
+  await expect(btnHeikin).toHaveAttribute('aria-pressed', 'true');
+  await expect(btnCandles).toHaveAttribute('aria-pressed', 'false');
+  await expect(canvas).toBeVisible();
+
+  // → Line: series 1 giá trị (close), canvas vẫn còn.
+  await btnLine.click();
+  await expect(btnLine).toHaveAttribute('aria-pressed', 'true');
+  await expect(btnHeikin).toHaveAttribute('aria-pressed', 'false');
+  await expect(canvas).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations).toEqual([]);
+
+  // Quay lại Nến — không vỡ.
+  await btnCandles.click();
+  await expect(btnCandles).toHaveAttribute('aria-pressed', 'true');
+  await expect(canvas).toBeVisible();
+});
+
 test('nút Auto fit đưa dữ liệu về đủ khung nhìn sau khi zoom (W-503)', async ({ page }) => {
   await page.goto('/chart/xauusd');
 

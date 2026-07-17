@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { IChartApi } from 'lightweight-charts';
 import { AnalysisPanel } from '@/components/chart/analysis-panel';
+import { ChartTypeSwitcher } from '@/components/chart/chart-type-switcher';
 import { ConfluencePanel } from '@/components/chart/confluence-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
@@ -203,6 +204,10 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+        <ChartTypeSwitcher
+          value={config.chartType}
+          onChange={(chartType) => setConfig({ ...config, chartType })}
+        />
         <TimeframeSwitcher value={timeframe} onChange={setTimeframe} />
         <button
           type="button"
