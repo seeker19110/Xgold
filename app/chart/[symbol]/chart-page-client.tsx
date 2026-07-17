@@ -9,6 +9,7 @@ import { CompareSwitcher } from '@/components/chart/compare-switcher';
 import { ConfluencePanel } from '@/components/chart/confluence-panel';
 import { GoldChart } from '@/components/chart/gold-chart';
 import { IndicatorPanel } from '@/components/chart/indicator-panel';
+import { SymbolSearch } from '@/components/chart/symbol-search';
 import { SymbolSwitcher } from '@/components/chart/symbol-switcher';
 import { TimeframeSwitcher } from '@/components/chart/timeframe-switcher';
 import { useCandles } from '@/components/chart/use-candles';
@@ -117,7 +118,10 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
         <h1 className="text-2xl font-semibold">{label}</h1>
       </div>
 
-      <SymbolSwitcher currentSlug={slug} />
+      <div className="flex flex-wrap items-center gap-2">
+        <SymbolSwitcher currentSlug={slug} />
+        <SymbolSearch />
+      </div>
 
       {source === 'sample' && (
         <p

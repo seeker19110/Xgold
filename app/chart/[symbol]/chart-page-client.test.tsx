@@ -15,6 +15,10 @@ const { useCandlesMock, useIndicatorConfigMock, setConfigMock, takeScreenshotMoc
   }),
 );
 
+// SymbolSearch (W-508) dùng useRouter — cô lập khỏi App Router context thật (không mount trong test
+// này, xem invariant "expected app router to be mounted").
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
 vi.mock('@/components/chart/use-candles', () => ({ useCandles: useCandlesMock }));
 vi.mock('@/components/chart/use-indicator-config', () => ({
   useIndicatorConfig: useIndicatorConfigMock,
