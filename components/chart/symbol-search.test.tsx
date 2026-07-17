@@ -128,6 +128,36 @@ describe('SymbolSearch', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('Tab ở phần tử cuối trong dialog → vòng về phần tử đầu (bẫy focus WCAG 2.4.3)', () => {
+    render(<SymbolSearch />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tìm mã (Ctrl+K)' }));
+    const dialog = screen.getByRole('dialog');
+    const input = screen.getByRole('textbox', { name: 'Tìm mã' });
+    fireEvent.change(input, { target: { value: 'xag' } });
+    const lastButton = within(dialog).getByText('XAG/USD').closest('button') as HTMLElement;
+
+    lastButton.focus();
+    expect(lastButton).toHaveFocus();
+    fireEvent.keyDown(dialog, { key: 'Tab' });
+
+    expect(input).toHaveFocus();
+  });
+
+  it('Shift+Tab ở phần tử đầu trong dialog → vòng về phần tử cuối (bẫy focus WCAG 2.4.3)', () => {
+    render(<SymbolSearch />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tìm mã (Ctrl+K)' }));
+    const dialog = screen.getByRole('dialog');
+    const input = screen.getByRole('textbox', { name: 'Tìm mã' });
+    fireEvent.change(input, { target: { value: 'xag' } });
+    const lastButton = within(dialog).getByText('XAG/USD').closest('button') as HTMLElement;
+
+    input.focus();
+    expect(input).toHaveFocus();
+    fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+
+    expect(lastButton).toHaveFocus();
+  });
+
   it('click bên trong dialog không đóng dialog', () => {
     render(<SymbolSearch />);
     fireEvent.click(screen.getByRole('button', { name: 'Tìm mã (Ctrl+K)' }));

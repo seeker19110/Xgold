@@ -67,10 +67,34 @@ export function SymbolSearch() {
     }
   }
 
+  // Selector chuẩn cho phần tử focus-được trong dialog (dùng để bẫy Tab — WCAG 2.4.3).
+  const FOCUSABLE_SELECTOR =
+    'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
   function handleDialogKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === 'Escape') {
       event.stopPropagation();
       close();
+      return;
+    }
+    if (event.key === 'Tab') {
+      const dialog = event.currentTarget;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === first || !dialog.contains(active)) {
+          event.preventDefault();
+          last?.focus();
+        }
+      } else {
+        if (active === last || !dialog.contains(active)) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
     }
   }
 
