@@ -18,6 +18,7 @@ import { useCandles } from '@/components/chart/use-candles';
 import { useCompareCandles } from '@/components/chart/use-compare-candles';
 import { useIndicatorConfig } from '@/components/chart/use-indicator-config';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { AlertsPanel } from '@/components/alerts/alerts-panel';
 import { Watchlist } from '@/components/watchlist/watchlist';
 import { useWatchlist } from '@/components/watchlist/use-watchlist';
 import { candlesCsvFileName, candlesToCsv } from '@/lib/candles/csv';
@@ -40,6 +41,10 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
   const [timeframe, setTimeframe] = useState<Timeframe>('1h');
   const { status, candles, source, error } = useCandles(symbol, timeframe);
   const [config, setConfig] = useIndicatorConfig();
+
+  // Cảnh báo giá (W-514): giá đóng cửa nến mới nhất của mã đang xem — nguồn để kiểm tra ngưỡng. Chỉ
+  // có ở trạng thái success; các trạng thái khác → null (không kiểm tra).
+  const latestClose = candles.at(-1)?.close ?? null;
 
   // Watchlist (W-509): state ghim nằm ở đây để nút ghim trên header và cột/sheet watchlist dùng
   // CHUNG một nguồn. Bắt đầu rỗng khớp SSR, đọc localStorage sau mount (xem `use-watchlist.ts`).
@@ -304,6 +309,7 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
             />
             <ConfluencePanel symbol={symbol} label={label} config={config.analysis} />
             <IndicatorPanel config={config} onChange={setConfig} />
+            <AlertsPanel symbol={symbol} label={label} latestClose={latestClose} />
           </>
         )}
 
