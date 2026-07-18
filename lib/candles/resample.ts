@@ -18,6 +18,34 @@ export const SOURCE_TIMEFRAME: Record<Timeframe, BaseTimeframe> = {
 const MINUTE_MS = 60 * 1000;
 
 /**
+ * Độ dài cố định (giây) của một khung — dùng để tính mốc đóng nến (countdown legend, xem
+ * `lib/candles/legend.ts`). `1M` KHÔNG có độ dài cố định (tháng dương lịch 28–31 ngày) → trả
+ * `null`; nơi gọi phải tự xử lý (vd countdown không hiển thị cho khung tháng).
+ */
+export function timeframeDurationSeconds(timeframe: Timeframe): number | null {
+  switch (timeframe) {
+    case '5m':
+      return 5 * 60;
+    case '15m':
+      return 15 * 60;
+    case '30m':
+      return 30 * 60;
+    case '1h':
+      return 60 * 60;
+    case '4h':
+      return 4 * 60 * 60;
+    case '1D':
+      return 24 * 60 * 60;
+    case '1W':
+      return 7 * 24 * 60 * 60;
+    case '1M':
+      return null;
+    default:
+      return null;
+  }
+}
+
+/**
  * Xuất riêng để test trực tiếp nhánh `default` (khung cơ sở 5m/1h/1D) — `resample()` không bao giờ
  * gọi hàm này với khung cơ sở (early-return ở dòng trên), nên nhánh đó không tới được qua API công
  * khai; export để phủ test thay vì xóa (F-020 — đúng ngữ nghĩa phòng thủ, không phải dead code).

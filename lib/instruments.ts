@@ -92,3 +92,23 @@ export function getInstrumentBySlug(slug: string): Instrument | undefined {
 export function isSupportedSymbol(symbol: string): boolean {
   return BY_SYMBOL.has(symbol);
 }
+
+/**
+ * Lọc registry theo chuỗi gõ vào (không phân biệt hoa/thường), khớp `symbol`/`label`/`name`. Tách
+ * riêng khỏi UI (`components/chart/symbol-search.tsx`, W-508) để: (1) unit test độc lập không cần
+ * render component, (2) sau này đổi thuật toán lọc (fuzzy match…) không phải sửa component.
+ * Registry hiện chỉ 4 mã nên `includes()` giản đơn là đủ cho v1.
+ *
+ * Quy ước: query rỗng/chỉ khoảng trắng → trả TOÀN BỘ registry (mở hộp tìm kiếm thấy đủ mã ngay,
+ * không phải gõ trước mới thấy gì).
+ */
+export function filterInstruments(query: string): Instrument[] {
+  const normalized = query.trim().toLowerCase();
+  if (normalized === '') return [...INSTRUMENTS];
+  return INSTRUMENTS.filter(
+    (instrument) =>
+      instrument.symbol.toLowerCase().includes(normalized) ||
+      instrument.label.toLowerCase().includes(normalized) ||
+      instrument.name.toLowerCase().includes(normalized),
+  );
+}

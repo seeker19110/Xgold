@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bucketStartMs, resample } from '@/lib/candles/resample';
+import { bucketStartMs, resample, timeframeDurationSeconds } from '@/lib/candles/resample';
 import type { Candle } from '@/lib/candles/types';
 
 function c(
@@ -153,5 +153,21 @@ describe('resample', () => {
     expect(bucketStartMs(tsMs, '5m')).toBe(tsMs);
     expect(bucketStartMs(tsMs, '1h')).toBe(tsMs);
     expect(bucketStartMs(tsMs, '1D')).toBe(tsMs);
+  });
+});
+
+describe('timeframeDurationSeconds', () => {
+  it('trả đúng độ dài (giây) cho mọi khung có độ dài cố định', () => {
+    expect(timeframeDurationSeconds('5m')).toBe(5 * 60);
+    expect(timeframeDurationSeconds('15m')).toBe(15 * 60);
+    expect(timeframeDurationSeconds('30m')).toBe(30 * 60);
+    expect(timeframeDurationSeconds('1h')).toBe(60 * 60);
+    expect(timeframeDurationSeconds('4h')).toBe(4 * 60 * 60);
+    expect(timeframeDurationSeconds('1D')).toBe(24 * 60 * 60);
+    expect(timeframeDurationSeconds('1W')).toBe(7 * 24 * 60 * 60);
+  });
+
+  it("'1M' không có độ dài cố định (tháng dương lịch biến thiên) → null", () => {
+    expect(timeframeDurationSeconds('1M')).toBeNull();
   });
 });

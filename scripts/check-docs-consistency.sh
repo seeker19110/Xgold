@@ -25,6 +25,10 @@ ALLOW_MISSING_PATH=(
   "app/layout.tsx" "lib/example.test.ts"
   ".claude/project-commands.sh" ".claude/settings-sonnet.json" ".claude/usage-budget.sh"
   "lib/candles/heikin-ashi.ts"
+  # node_modules không commit (gitignore) — job docs-consistency không chạy `npm install`, nên
+  # đường dẫn thật bên trong đó (dùng làm bằng chứng xác minh API, vd ADR-0012) luôn "thiếu" ở CI
+  # dù đúng thật khi có cài dependency.
+  "node_modules/lightweight-charts/dist/typings.d.ts"
 )
 
 is_in() { local needle="$1"; shift; for x in "$@"; do [ "$x" = "$needle" ] && return 0; done; return 1; }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   INSTRUMENTS,
+  filterInstruments,
   getInstrumentBySlug,
   getInstrumentBySymbol,
   isSupportedSymbol,
@@ -54,5 +55,36 @@ describe('registry mã (lib/instruments)', () => {
       expect(i.sample.daily.length).toBeGreaterThan(0);
       expect(i.sample.hourly.length).toBeGreaterThan(0);
     }
+  });
+
+  describe('filterInstruments (W-508 — symbol search)', () => {
+    it('query rỗng hoặc chỉ khoảng trắng trả toàn bộ registry', () => {
+      expect(filterInstruments('')).toEqual(INSTRUMENTS);
+      expect(filterInstruments('   ')).toEqual(INSTRUMENTS);
+    });
+
+    it('lọc theo symbol không phân biệt hoa/thường', () => {
+      expect(filterInstruments('xauusd').map((i) => i.symbol)).toEqual(['XAUUSD']);
+      expect(filterInstruments('XAGUSD').map((i) => i.symbol)).toEqual(['XAGUSD']);
+    });
+
+    it('lọc theo label (vd "XAU/USD") không phân biệt hoa/thường', () => {
+      expect(filterInstruments('xau/usd').map((i) => i.symbol)).toEqual(['XAUUSD']);
+    });
+
+    it('lọc theo name (vd "vàng") không phân biệt hoa/thường', () => {
+      expect(filterInstruments('VÀNG').map((i) => i.symbol)).toEqual(['XAUUSD']);
+    });
+
+    it('chuỗi con khớp một phần (vd "usd") trả nhiều mã', () => {
+      const results = filterInstruments('usd').map((i) => i.symbol);
+      expect(results).toContain('XAUUSD');
+      expect(results).toContain('XAGUSD');
+      expect(results).toContain('USDVND');
+    });
+
+    it('không khớp mã nào trả mảng rỗng', () => {
+      expect(filterInstruments('khong-ton-tai')).toEqual([]);
+    });
   });
 });

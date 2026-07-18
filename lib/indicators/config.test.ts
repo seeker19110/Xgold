@@ -73,6 +73,76 @@ describe('encodeChartConfig / decodeChartConfig', () => {
     expect(decoded?.analysis).toEqual(DEFAULT_CHART_CONFIG.analysis);
   });
 
+  it('cấu hình CŨ (trước Đợt 14, không có priceScaleMode) vẫn giải mã được với default normal (W-503)', () => {
+    const legacy = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [{ id: 'ma-20', type: 'SMA', period: 20, color: '#facc15', visible: true }],
+          rsiLines: [{ id: 'rsi-14', period: 14, color: '#a78bfa', visible: true }],
+        }),
+      ),
+    );
+    const decoded = decodeChartConfig(legacy);
+    expect(decoded).not.toBeNull();
+    expect(decoded?.priceScaleMode).toBe('normal');
+  });
+
+  it('priceScaleMode "logarithmic" round-trip đúng (W-503)', () => {
+    const config = { ...DEFAULT_CHART_CONFIG, priceScaleMode: 'logarithmic' as const };
+    const encoded = encodeChartConfig(config);
+    const decoded = decodeChartConfig(encoded);
+    expect(decoded).toEqual(config);
+  });
+
+  it('priceScaleMode giá trị lạ trong URL bị sửa tay → trả null', () => {
+    const bad = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [],
+          rsiLines: [],
+          priceScaleMode: 'invalid-mode',
+        }),
+      ),
+    );
+    expect(decodeChartConfig(bad)).toBeNull();
+  });
+
+  it('cấu hình CŨ (không có chartType) vẫn giải mã được với default candles (W-502)', () => {
+    const legacy = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [{ id: 'ma-20', type: 'SMA', period: 20, color: '#facc15', visible: true }],
+          rsiLines: [{ id: 'rsi-14', period: 14, color: '#a78bfa', visible: true }],
+        }),
+      ),
+    );
+    const decoded = decodeChartConfig(legacy);
+    expect(decoded).not.toBeNull();
+    expect(decoded?.chartType).toBe('candles');
+  });
+
+  it.each(['candles', 'heikinAshi', 'bar', 'line', 'area'] as const)(
+    'chartType "%s" round-trip đúng (W-502)',
+    (chartType) => {
+      const config = { ...DEFAULT_CHART_CONFIG, chartType };
+      const decoded = decodeChartConfig(encodeChartConfig(config));
+      expect(decoded).toEqual(config);
+    },
+  );
+
+  it('chartType giá trị lạ trong URL bị sửa tay → trả null (W-502)', () => {
+    const bad = encodeURIComponent(
+      btoa(
+        JSON.stringify({
+          maLines: [],
+          rsiLines: [],
+          chartType: 'renko',
+        }),
+      ),
+    );
+    expect(decodeChartConfig(bad)).toBeNull();
+  });
+
   it('MACD fast >= slow trong URL bị sửa tay → trả null', () => {
     const bad = encodeURIComponent(
       btoa(

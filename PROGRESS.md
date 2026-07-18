@@ -464,6 +464,99 @@
 
 ## Đang làm
 
+- ✅ **Đợt 14 — TradingView parity: kiểu chart + tiện ích thang giá (2026-07-17, PLAN.md/ADR-0012,
+  điều phối qua Kiến trúc 3 tầng — coordinator + 5 worker):**
+  - **W-501** `lib/candles/heikin-ashi.ts` (`toHeikinAshi`, pure fn, 4 test tính tay, coverage 100%).
+  - **W-503** thang giá Log/Linear (`ChartConfig.priceScaleMode`, `.default('normal')`) + nút Auto
+    fit (`timeScale().fitContent()`).
+  - **W-504** countdown nến hiện tại trong legend (`candleCountdown` + `timeframeDurationSeconds`,
+    test tính tay khung 1h → 44:30).
+  - **W-505** fullscreen (Fullscreen API + fallback không throw) + chụp ảnh chart PNG
+    (`chart.takeScreenshot()`, đúng pattern appendChild/click/removeChild — tránh lặp lại F-011).
+  - **W-502** (route:complex, việc khó nhất) — chọn 5 kiểu chart (Nến/Heikin Ashi/Bar/Line/Area):
+    refactor `gold-chart.tsx` sang union `ISeriesApi<SeriesType>` + Effect quản lý vòng đời series
+    chính khi đổi kiểu, giữ nguyên markers/legend/priceScale/countdown/overlay hoạt động đúng qua
+    mọi kiểu; không `as any`/cast bừa.
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (308/308, 45 file). Review (code-review) 0 phát hiện chặn (1 mục comment sai đã sửa).
+    **Lighthouse thật cả 5 URL** không tụt ngưỡng sau khi thêm JS (performance 0.98–1.0, a11y 1.0,
+    CLS 0.000, LCP 446–1069ms).
+  - **Cần kiểm chứng thủ công ngoài sandbox** (E2E chưa chạy được — Playwright browser bị chặn tải,
+    giới hạn môi trường đã biết): screenshot 5 kiểu chart × 2 theme, markers/legend đúng sau đổi
+    kiểu, nội dung file PNG chụp được, thang log giãn không đều bằng mắt.
+  - **Điểm cần chốt sản phẩm (không chặn, chỉ ghi nhận):** legend OHLC ở chế độ Heikin Ashi hiển thị
+    giá GỐC (không phải giá HA đã làm mượt) — quyết định có chủ đích, cần xác nhận đúng ý đồ khi có
+    dịp kiểm chứng thật.
+  - Còn lại theo `docs/plans/xgold-tradingview-parity-plan.md`: Đợt 15 (symbol search/watchlist/so
+    sánh mã), Đợt 16 (công cụ vẽ, ADR-0012 đã chốt), Đợt 17 (alerts v1 client-side).
+
+- ✅ **Đợt 17 — TradingView parity: cảnh báo giá v1 client-side (2026-07-18, PLAN.md, việc CUỐI
+  CÙNG của kế hoạch 4 đợt, dispatch trực tiếp không qua coordinator vì chỉ 1 việc):**
+  - **W-514** `lib/alerts/types.ts` (Zod `priceAlertSchema` + `shouldTrigger` pure fn) +
+    `use-alerts.ts` (hook localStorage SSR-safe, cùng pattern `use-watchlist.ts`) +
+    `alerts-panel.tsx` (form đặt/xóa/xem danh sách, disclaimer "chỉ hoạt động khi tab đang mở —
+    không nền, không email"). Notification API: xin quyền không chặn UI khi bị từ chối.
+  - **Fix sau review (đã sửa, không phải chỉ ghi nhận):** effect kích hoạt Notification thiếu
+    cleanup nên React Strict Mode double-invoke có thể bắn thông báo 2 lần cho cùng 1 alert (cả 2
+    lần đọc `alerts` cũ trước khi `setState` từ `markTriggered` kịp áp dụng) — thêm `useRef<Set>`
+    theo dõi id đã bắn trong phiên component, độc lập với double-invoke. Test regression thêm bằng
+    `<StrictMode>` (không tái hiện được lỗi rõ ràng trong Vitest/jsdom — khác môi trường React DOM
+    dev thật — nhưng fix vẫn giữ vì đúng nguyên tắc phòng thủ, chi phí thấp, không đổi hành vi đúng).
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (424/424, 61 file). Review 0 phát hiện chặn khác. **Lighthouse thật cả 5 URL** trên
+    toàn bộ code base sau 4 đợt parity — vẫn đạt ngưỡng (`LHCI_EXIT=0`).
+  - **Cần kiểm chứng thủ công ngoài sandbox:** xin quyền Notification thật + thông báo hệ thống thật
+    hiện ra khi giá chạm ngưỡng; đối chiếu thị giác 2 theme.
+  - **🎉 Kế hoạch TradingView parity 4 đợt (`docs/plans/xgold-tradingview-parity-plan.md`) ĐÃ ĐÓNG
+    HẲN** — Đợt 14 (kiểu chart/log scale/fullscreen) → 15 (search/watchlist/compare) → 16 (công cụ
+    vẽ, ADR-0012) → 17 (alerts) đều đã merge vào `claude/tieeps-tuc-code-qzxq7g`, mỗi đợt đủ gate +
+    review + Lighthouse thật. Việc còn lại ngoài phạm vi code (Supabase thật, icon PWA, Sentry, nâng
+    major dependencies) đã ghi ở "Nợ kỹ thuật" — cần tài nguyên/quyết định từ người dùng.
+
+- ✅ **Đợt 16 — TradingView parity: công cụ vẽ (2026-07-17/18, PLAN.md + ADR-0012, điều phối qua
+  coordinator + 3 worker — đợt rủi ro cao nhất kế hoạch):**
+  - **ADR-0012** chốt trước khi code: tự viết Series Primitives, không dùng gói cộng đồng (`lightweight-charts-drawing` pre-1.0/1 người bảo trì, `lightweight-charts-line-tools` kiến trúc không tương thích — xác minh qua npm registry API thật).
+  - **W-510** (route:spec) hạ tầng `lib/drawings/` — Zod discriminated union (đường ngang/trendline/Fibonacci retracement), toạ độ theo `time`+`price` (không theo pixel, sống sót zoom/pan/đổi khung), storage localStorage theo symbol phòng thủ, `fibLevelPrice` tính tay đúng.
+  - **W-511** (route:complex, Opus HIGH — **việc khó nhất TOÀN BỘ kế hoạch parity**) primitive renderer + hit-test — `DrawingsPrimitive implements ISeriesPrimitive<Time>`, gắn vào series chính qua `attachPrimitive`/`detachPrimitive` cân bằng đúng (kể cả khi đổi kiểu chart W-502), hit-test bằng khoảng cách điểm-tới-đoạn-thẳng (unit test đủ ca biên). Đã **bỏ hẳn tính năng di chuyển (kéo-thả)** — đúng phạm vi thu hẹp cho phép trước, chỉ còn vẽ mới + chọn + xóa cho cả 3 loại. API primitive hoạt động đúng mô tả ADR-0012, không phát sinh mâu thuẫn cần dừng sớm.
+  - **W-512** (route:standard) thanh công cụ vẽ — desktop cột dọc thu gọn được, mobile thanh ngang cuộn; nút "Chọn" tái dùng `activeTool=null` sẵn có (không thêm giá trị mới vào union, tránh đổi API lõi); nút "Xoá hết" (`clearAll`).
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (395/395, 58 file). Review 0 phát hiện chặn (1 mục comment mâu thuẫn về vòng đời remount
+    đã sửa cho khớp sự thật, không đổi hành vi). **Lighthouse thật cả 5 URL** không tụt ngưỡng dù
+    thêm canvas primitive (`LHCI_EXIT=0`).
+  - **2 lần bị chặn bởi giới hạn phiên API** (worker W-511 và coordinator) — không phải lỗi code,
+    retry thành công sau khi giới hạn giải phóng; khi coordinator bị chặn lâu hơn dự kiến, phiên
+    chính tự đảm nhận nốt Lighthouse + review + merge để không chặn tiến độ.
+  - **Cần kiểm chứng thủ công ngoài sandbox** (E2E chưa chạy được — giới hạn môi trường đã biết): vẽ
+    cả 3 loại × 2 theme, sống sót zoom/pan/đổi khung/đổi kiểu chart, tương phản màu vẽ AA, mobile
+    toolbar không đè canvas.
+  - Còn lại theo kế hoạch: Đợt 17 (alerts v1 client-side) — đợt cuối cùng của TradingView parity.
+
+- ✅ **Đợt 15 — TradingView parity: symbol search + watchlist + so sánh mã (2026-07-17, PLAN.md,
+  điều phối qua coordinator + 4 worker + 1 fix a11y):**
+  - **W-506** `lib/candles/percent-normalize.ts` (`normalizeToPercent`, pure fn, guard chia 0).
+  - **W-507** (route:complex) so sánh mã trên chart — overlay % mã phụ (`priceScaleId: 'compare'`
+    riêng, không méo thang nến chính giữ giá thật), tối đa 2 mã, không lưu URL/config ở v1.
+  - **W-508** symbol search (Ctrl+K/Cmd+K), lọc registry (`filterInstruments`), dialog
+    `role="dialog"`/`aria-modal`, `SymbolSwitcher` giữ nguyên.
+  - **W-509** (route:complex, retry qua 1 lần session limit API) watchlist ghim mã — cột phải
+    desktop (sticky) + sheet mobile, tái dùng logic `use-screener` (tách `lib/screener/row.ts`
+    không đổi hành vi, `use-screener.test.ts` xanh nguyên), localStorage SSR-safe.
+  - **Fix a11y sau review** (2 mục NÊN SỬA, không phải phát hiện chặn nhưng a11y là nguyên tắc bất
+    biến CLAUDE.md §8 nên bắt sửa trước khi chốt): badge "So sánh …%" từng đè legend OHLC khi wrap 2
+    dòng → gộp vào 1 container `flex-col`; focus trap trong dialog symbol-search chưa đủ (Tab thoát
+    ra ngoài, vi phạm WCAG 2.4.3) → thêm bẫy Tab/Shift+Tab đầy đủ + 2 unit test.
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (369/369, 53 file). Review 0 phát hiện chặn. **Lighthouse thật cả 5 URL sau merge cuối**
+    (kể cả sau fix a11y) không tụt ngưỡng — watchlist cột phải không gây CLS (0.000 mọi trang).
+  - **Cần kiểm chứng thủ công ngoài sandbox** (E2E chưa chạy được — giới hạn môi trường đã biết):
+    ghim/reload giữ trạng thái, bố cục desktop/mobile × 2 theme, đường % compare + thang giá không
+    méo, Ctrl+K từ mọi vị trí + focus trap không thoát dialog, badge compare không đè legend khi
+    wrap 2 dòng.
+  - **Nợ kỹ thuật nhỏ chấp nhận được (không chặn):** màu đường compare cố định (không theo token —
+    màu vẽ canvas, có giải thích trong code); breakpoint 768px chart co lại khi mở cột watchlist.
+  - Còn lại theo kế hoạch: Đợt 16 (công cụ vẽ, ADR-0012 đã chốt, rủi ro cao nhất), Đợt 17 (alerts v1
+    client-side).
+
 - ✅ **Vòng `/completion` thứ 2 ĐÃ ĐÓNG HẲN (2026-07-17):** PR #31/#32/#33/#34 đều đã merge vào
   `main` (`6989fb2`). Đã chạy lại toàn bộ 5 cổng local trên trạng thái `main` này: `type-check` ✅ ·
   `lint` ✅ (0 cảnh báo) · `format:check` ✅ · `test` ✅ (282/282, 44 file) · `build` ✅ (13 route,

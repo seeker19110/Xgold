@@ -4,20 +4,30 @@ import { useEffect, useRef, useState } from 'react';
 import {
   createChart,
   createSeriesMarkers,
+  AreaSeries,
+  BarSeries,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
+  PriceScaleMode,
   type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type MouseEventParams,
   type SeriesMarker,
+  type SeriesType,
   type Time,
   type UTCTimestamp,
 } from 'lightweight-charts';
-import type { Candle } from '@/lib/candles/types';
-import { formatLegendChange, formatLegendPrice, legendAt } from '@/lib/candles/legend';
-import type { ChartConfig } from '@/lib/indicators/config';
+import type { Candle, Timeframe } from '@/lib/candles/types';
+import { toHeikinAshi } from '@/lib/candles/heikin-ashi';
+import {
+  candleCountdown,
+  formatLegendChange,
+  formatLegendPrice,
+  legendAt,
+} from '@/lib/candles/legend';
+import type { ChartConfig, ChartType } from '@/lib/indicators/config';
 import {
   sma,
   ema,
@@ -28,23 +38,91 @@ import {
   type IndicatorPoint,
 } from '@/lib/indicators';
 import { signalEvents } from '@/lib/analysis';
+import type { Drawing } from '@/lib/drawings/types';
+import {
+  DEFAULT_HORIZONTAL_LINE_COLOR,
+  DEFAULT_TRENDLINE_COLOR,
+  newDrawingId,
+} from '@/lib/drawings/style';
+import { DrawingsPrimitive } from './drawings-primitive';
+import type { DrawingTool } from './use-drawings';
 
 interface GoldChartProps {
   candles: readonly Candle[];
   config: ChartConfig;
   /** Cụm mô tả cho aria-label, vd 'giá vàng XAU/USD' (ghép vào "Chart nến {label} …"). */
   label: string;
+  /** Khung thời gian đang hiển thị — dùng tính countdown nến hiện tại trong legend. */
+  timeframe: Timeframe;
+  /**
+   * true khi container cha (chart-page-client.tsx) đang ở chế độ fullscreen (W-505) — container
+   * chart giãn hết chiều cao khả dụng (flex-1/h-full) thay vì chiều cao cố định 560px.
+   */
+  fullscreenActive?: boolean;
+  /**
+   * Gọi với chart instance ngay khi tạo xong (Effect 1) và với `null` lúc dọn dẹp/unmount — dùng để
+   * chụp ảnh chart (`chart.takeScreenshot()`, W-505) từ component cha.
+   */
+  onChartReady?: (chart: IChartApi | null) => void;
+  /**
+   * Chuỗi % của MÃ SO SÁNH đã chuẩn hoá bằng `normalizeToPercent` (W-506/W-507) trên toàn bộ khung
+   * nhìn hiện có. Rỗng/undefined = không so sánh (đường bị gỡ). Vẽ trên thang giá riêng `'compare'`
+   * để KHÔNG làm méo thang giá nến chính (nến vẫn hiển thị giá thật).
+   */
+  compareData?: readonly { ts: string; value: number }[];
+  /** Nhãn mã so sánh (vd 'XAG/USD') cho chú giải % — chỉ hiển thị khi có `compareData`. */
+  compareLabel?: string;
+  /**
+   * Công cụ vẽ (W-511). Truyền `drawings` (dù rỗng) để BẬT tính năng vẽ: chart tự gắn primitive vào
+   * series chính, xử lý click chuột (vẽ mới / chọn) và chuyển toạ độ pixel↔time/price. Không truyền
+   * (`undefined`) = tắt hẳn, không gắn primitive (không phát sinh chi phí).
+   */
+  drawings?: readonly Drawing[];
+  /** Id nét đang được chọn (highlight) — `null` = không chọn. */
+  selectedDrawingId?: string | null;
+  /** Công cụ đang bật; `null` = chế độ CHỌN (click nét để chọn). */
+  activeTool?: DrawingTool;
+  /** Gọi khi người dùng vẽ xong một nét mới (đủ điểm) — cha lưu localStorage + chọn nét vừa vẽ. */
+  onCommitDrawing?: (drawing: Drawing) => void;
+  /** Gọi khi click ở chế độ CHỌN — `id` nét trúng hoặc `null` nếu click vùng trống. */
+  onSelectDrawing?: (id: string | null) => void;
+}
+
+/** Một điểm neo (time+price) đang chờ điểm thứ hai của trendline/fib. */
+interface PendingPoint {
+  time: number;
+  price: number;
 }
 
 interface ThemeColors {
   background: string;
   foreground: string;
   border: string;
+  primary: string;
   success: string;
   danger: string;
 }
 
 const RSI_PANE_INDEX = 1;
+
+/** Kiểu chart (config) → loại series lightweight-charts. Heikin Ashi dùng lại series nến. */
+const CHART_TYPE_TO_SERIES: Record<ChartType, SeriesType> = {
+  candles: 'Candlestick',
+  heikinAshi: 'Candlestick',
+  bar: 'Bar',
+  line: 'Line',
+  area: 'Area',
+};
+
+// Line/Area chỉ có 1 giá trị/nến (close) — không phải OHLC.
+function isValueSeries(seriesType: SeriesType): boolean {
+  return seriesType === 'Line' || seriesType === 'Area';
+}
+
+// Màu vùng tô Area (dưới đường) — cố định, dịu, đọc được trên cả Dark blue lẫn Light
+// (đường Area lấy màu theo `--primary` của theme, xem createMainSeries/applyMainSeriesColors).
+const AREA_TOP_COLOR = 'rgba(91, 157, 255, 0.4)';
+const AREA_BOTTOM_COLOR = 'rgba(91, 157, 255, 0)';
 
 // Màu cố định cho BB/MACD (không cấu hình màu ở v1 — khác Multi-MA/RSI vốn mỗi đường một màu).
 const BB_COLOR = '#94a3b8';
@@ -56,6 +134,9 @@ const MARKER_BUY_COLOR = '#4ade80';
 const MARKER_SELL_COLOR = '#f87171';
 const ICHIMOKU_SPAN_A_COLOR = '#f5cf0e';
 const ICHIMOKU_SPAN_B_COLOR = '#f10f0f';
+// Màu cố định đường so sánh mã (W-507) — tím, tách biệt rõ với nến (success/danger) và các overlay
+// khác (BB xám, MACD xanh/cam, Ichimoku vàng/đỏ); tương phản đủ trên cả Dark blue lẫn Light.
+const COMPARE_COLOR = '#c084fc';
 // Thanh khối lượng mờ để không lấn át nến (overlay 20% đáy pane giá — bố cục mặc định TradingView).
 const VOLUME_UP_COLOR = 'rgba(74, 222, 128, 0.35)';
 const VOLUME_DOWN_COLOR = 'rgba(248, 113, 113, 0.35)';
@@ -67,9 +148,75 @@ function readThemeColors(): ThemeColors {
     background: get('--background', '#0b1220'),
     foreground: get('--foreground', '#e8eef8'),
     border: get('--border', '#243049'),
+    primary: get('--primary', '#5b9dff'),
     success: get('--success', '#4ade80'),
     danger: get('--danger', '#f87171'),
   };
+}
+
+/** Tạo series chính đúng loại theo kiểu chart, áp màu theme lúc khởi tạo. */
+function createMainSeries(
+  chart: IChartApi,
+  chartType: ChartType,
+  colors: ThemeColors,
+): ISeriesApi<SeriesType> {
+  switch (chartType) {
+    case 'bar':
+      return chart.addSeries(BarSeries, {
+        upColor: colors.success,
+        downColor: colors.danger,
+      });
+    case 'line':
+      return chart.addSeries(LineSeries, {
+        color: colors.primary,
+        lineWidth: 2,
+        priceLineVisible: false,
+      });
+    case 'area':
+      return chart.addSeries(AreaSeries, {
+        lineColor: colors.primary,
+        topColor: AREA_TOP_COLOR,
+        bottomColor: AREA_BOTTOM_COLOR,
+        lineWidth: 2,
+        priceLineVisible: false,
+      });
+    case 'candles':
+    case 'heikinAshi':
+      return chart.addSeries(CandlestickSeries, {
+        upColor: colors.success,
+        downColor: colors.danger,
+        borderVisible: false,
+        wickUpColor: colors.success,
+        wickDownColor: colors.danger,
+      });
+  }
+}
+
+/** Áp lại màu theme cho series chính đang hiển thị (gọi khi đổi theme Dark blue ↔ Light). */
+function applyMainSeriesColors(
+  series: ISeriesApi<SeriesType>,
+  seriesType: SeriesType,
+  colors: ThemeColors,
+): void {
+  switch (seriesType) {
+    case 'Bar':
+      series.applyOptions({ upColor: colors.success, downColor: colors.danger });
+      break;
+    case 'Line':
+      series.applyOptions({ color: colors.primary });
+      break;
+    case 'Area':
+      series.applyOptions({ lineColor: colors.primary });
+      break;
+    default:
+      // Candlestick (candles + heikinAshi)
+      series.applyOptions({
+        upColor: colors.success,
+        downColor: colors.danger,
+        wickUpColor: colors.success,
+        wickDownColor: colors.danger,
+      });
+  }
 }
 
 function toUtcTimestamp(ts: string): UTCTimestamp {
@@ -88,10 +235,39 @@ function toLineData(points: readonly IndicatorPoint[]): { time: UTCTimestamp; va
  * Chart nến (lightweight-charts v5) + Multi-MA chồng lên pane giá + Multi-RSI ở pane phụ.
  * Tự đồng bộ màu theo theme Dark blue/Light đang chọn.
  */
-export function GoldChart({ candles, config, label }: GoldChartProps) {
+/** Định dạng % có dấu cho chú giải mã so sánh (vd +1.23% / -0.80%). */
+function formatComparePercent(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+
+export function GoldChart({
+  candles,
+  config,
+  label,
+  timeframe,
+  fullscreenActive,
+  onChartReady,
+  compareData,
+  compareLabel,
+  drawings,
+  selectedDrawingId,
+  activeTool,
+  onCommitDrawing,
+  onSelectDrawing,
+}: GoldChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  // Ref giữ callback mới nhất — tránh Effect 1 (chỉ chạy 1 lần lúc mount) phải liệt kê
+  // `onChartReady` vào deps (component cha có thể truyền hàm mới mỗi lần render).
+  const onChartReadyRef = useRef(onChartReady);
+  useEffect(() => {
+    onChartReadyRef.current = onChartReady;
+  }, [onChartReady]);
+  // Series chính đa kiểu (Nến/HA/Bar/Line/Area, W-502) — dùng union `SeriesType` vì lightweight
+  // -charts không cho đổi loại series tại chỗ: đổi kiểu = remove series cũ + add series mới.
+  const mainSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
+  // Loại series đang gắn — để theme observer biết cách áp màu (nến/bar khác line/area).
+  const mainSeriesTypeRef = useRef<SeriesType>('Candlestick');
   const maSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const rsiSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
   const rsiThresholdRef = useRef<{
@@ -114,15 +290,61 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
   }>({ line: null, signal: null, histogram: null, paneIndex: -1 });
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const compareSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   // Tra chỉ số nến theo mốc thời gian cho crosshair → legend OHLC (cập nhật ở Effect 2).
   const timeToIndexRef = useRef<Map<number, number>>(new Map());
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  // Mốc giờ hiện tại cho countdown nến (legend) — tick mỗi giây, KHÔNG đọc Date.now() trực tiếp
+  // trong render (tránh lệch giữa các lần render và không tất định khi test).
+  const [now, setNow] = useState<Date>(() => new Date());
   const ichimokuSeriesRef = useRef<{
     spanA: ISeriesApi<'Line'> | null;
     spanB: ISeriesApi<'Line'> | null;
   }>({ spanA: null, spanB: null });
 
-  // Effect 1: dựng chart + series nến một lần; dọn dẹp khi unmount.
+  // Công cụ vẽ (W-511). Primitive gắn vào SERIES CHÍNH — vẽ lại theo time/price mỗi khung hình nên
+  // sống sót zoom/pan/đổi timeframe. Các ref "giá trị mới nhất" để handler click (đăng ký MỘT lần ở
+  // Effect 1) luôn đọc state hiện tại mà không phải đăng ký lại mỗi lần đổi công cụ/danh sách nét.
+  const drawingsEnabled = drawings !== undefined;
+  const drawingsPrimitiveRef = useRef<DrawingsPrimitive | null>(null);
+  const pendingPointRef = useRef<PendingPoint | null>(null);
+  const drawingsEnabledRef = useRef(drawingsEnabled);
+  const activeToolRef = useRef<DrawingTool>(activeTool ?? null);
+  const onCommitDrawingRef = useRef(onCommitDrawing);
+  const onSelectDrawingRef = useRef(onSelectDrawing);
+
+  // Đồng bộ các ref "giá trị mới nhất" cho handler click (đăng ký một lần ở Effect 1).
+  useEffect(() => {
+    drawingsEnabledRef.current = drawingsEnabled;
+    activeToolRef.current = activeTool ?? null;
+    onCommitDrawingRef.current = onCommitDrawing;
+    onSelectDrawingRef.current = onSelectDrawing;
+  }, [drawingsEnabled, activeTool, onCommitDrawing, onSelectDrawing]);
+
+  // Đổi công cụ (hoặc về chế độ chọn) → huỷ điểm neo đang chờ, tránh nối nhầm p1 cũ với p2 công cụ
+  // mới. Effect này CŨNG là cơ chế dọn dẹp khi đổi symbol: `useDrawings(symbol)` (chart-page-client)
+  // reset `activeTool` về `null` khi symbol đổi, effect này chạy theo và xoá điểm neo dở dang của mã
+  // cũ — không dựa vào việc GoldChart có remount hay không.
+  useEffect(() => {
+    pendingPointRef.current = null;
+  }, [activeTool]);
+
+  // Đẩy danh sách nét + nét đang chọn xuống primitive (đã tự requestUpdate để chart vẽ lại).
+  useEffect(() => {
+    drawingsPrimitiveRef.current?.setDrawings(drawings ?? []);
+  }, [drawings]);
+  useEffect(() => {
+    drawingsPrimitiveRef.current?.setSelected(selectedDrawingId ?? null);
+  }, [selectedDrawingId]);
+
+  // Con trỏ chữ thập khi đang ở chế độ vẽ (gợi ý thị giác); về mặc định ở chế độ chọn.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.style.cursor = drawingsEnabled && activeTool != null ? 'crosshair' : '';
+  }, [drawingsEnabled, activeTool]);
+
+  // Effect 1: dựng chart một lần (series chính do Effect 1a quản lý vòng đời); dọn khi unmount.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -134,16 +356,24 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
       timeScale: { timeVisible: true, secondsVisible: false },
     });
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: colors.success,
-      downColor: colors.danger,
-      borderVisible: false,
-      wickUpColor: colors.success,
-      wickDownColor: colors.danger,
-    });
 
     chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
+    onChartReadyRef.current?.(chart);
+
+    // Công cụ vẽ (W-511): tạo primitive MỘT lần với màu theme hiện tại; Effect 1a gắn vào series chính
+    // (và gắn lại mỗi khi đổi kiểu chart tạo series mới). `null` khi tắt tính năng.
+    if (drawingsEnabledRef.current) {
+      drawingsPrimitiveRef.current = new DrawingsPrimitive({
+        foreground: colors.foreground,
+        background: colors.background,
+      });
+      // Đồng bộ NGAY dữ liệu hiện có (vd nét đã lưu localStorage nạp lại sau reload) — effect đồng
+      // bộ `drawings`/`selectedDrawingId` khai báo TRƯỚC effect này trong file nên đã chạy 1 lần lúc
+      // primitive CHƯA tồn tại (ref null) khi mount; nếu không đồng bộ lại ở đây, primitive mới tạo
+      // sẽ mãi rỗng cho tới khi người dùng tự đổi `drawings` lần nữa (thêm/xoá nét mới).
+      drawingsPrimitiveRef.current.setDrawings(drawings ?? []);
+      drawingsPrimitiveRef.current.setSelected(selectedDrawingId ?? null);
+    }
 
     // Legend OHLC kiểu TradingView: rê crosshair → hiện nến dưới con trỏ; rời chart → nến mới nhất.
     const onCrosshairMove = (param: MouseEventParams<Time>) => {
@@ -153,17 +383,78 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     };
     chart.subscribeCrosshairMove(onCrosshairMove);
 
+    // Click chuột phục vụ công cụ vẽ. CHỈ xử lý click trong pane giá (paneIndex 0) — nơi series chính
+    // + primitive sống; bỏ qua click ở pane RSI/MACD. Ở chế độ CHỌN → hit-test nét gần nhất; ở chế độ
+    // vẽ → dựng toạ độ time/price rồi commit (1 điểm cho đường ngang, 2 điểm cho trendline/fib).
+    const onChartClick = (param: MouseEventParams<Time>) => {
+      if (!drawingsEnabledRef.current) return;
+      const point = param.point;
+      const series = mainSeriesRef.current;
+      if (!point || !series) return;
+      if (param.paneIndex !== undefined && param.paneIndex !== 0) return;
+
+      const tool = activeToolRef.current;
+      if (tool === null) {
+        const id = drawingsPrimitiveRef.current?.hitTestDrawing(point.x, point.y) ?? null;
+        onSelectDrawingRef.current?.(id);
+        return;
+      }
+
+      const price = series.coordinateToPrice(point.y);
+      if (price === null) return;
+
+      if (tool === 'horizontal-line') {
+        onCommitDrawingRef.current?.({
+          id: newDrawingId(),
+          type: 'horizontal-line',
+          price,
+          color: DEFAULT_HORIZONTAL_LINE_COLOR,
+        });
+        return;
+      }
+
+      // trendline / fib-retracement: cần time+price. Ưu tiên `param.time` (đã bám nến); ngoài vùng dữ
+      // liệu thì thử `coordinateToTime`. Chỉ chấp nhận time dạng số (UTCTimestamp) khớp schema W-510.
+      const rawTime =
+        typeof param.time === 'number' ? param.time : chart.timeScale().coordinateToTime(point.x);
+      if (typeof rawTime !== 'number') return;
+
+      const pending = pendingPointRef.current;
+      if (!pending) {
+        pendingPointRef.current = { time: rawTime, price };
+        return;
+      }
+      pendingPointRef.current = null;
+      const p1 = { time: pending.time, price: pending.price };
+      const p2 = { time: rawTime, price };
+      if (tool === 'trendline') {
+        onCommitDrawingRef.current?.({
+          id: newDrawingId(),
+          type: 'trendline',
+          p1,
+          p2,
+          color: DEFAULT_TRENDLINE_COLOR,
+        });
+      } else {
+        onCommitDrawingRef.current?.({ id: newDrawingId(), type: 'fib-retracement', p1, p2 });
+      }
+    };
+    chart.subscribeClick(onChartClick);
+
     const observer = new MutationObserver(() => {
       const next = readThemeColors();
       chart.applyOptions({
         layout: { background: { color: next.background }, textColor: next.foreground },
         grid: { vertLines: { color: next.border }, horzLines: { color: next.border } },
       });
-      candleSeries.applyOptions({
-        upColor: next.success,
-        downColor: next.danger,
-        wickUpColor: next.success,
-        wickDownColor: next.danger,
+      // Series chính có thể đã đổi loại (W-502) — áp màu theo loại hiện tại qua ref.
+      if (mainSeriesRef.current) {
+        applyMainSeriesColors(mainSeriesRef.current, mainSeriesTypeRef.current, next);
+      }
+      // Nhãn % Fibonacci vẽ bằng màu theme (nền/chữ) → cập nhật để luôn tương phản đúng khi đổi theme.
+      drawingsPrimitiveRef.current?.setTheme({
+        foreground: next.foreground,
+        background: next.background,
       });
       const thresholds = rsiThresholdRef.current;
       thresholds.upper?.applyOptions({ color: next.border });
@@ -177,10 +468,17 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     return () => {
       observer.disconnect();
       chart.unsubscribeCrosshairMove(onCrosshairMove);
+      chart.unsubscribeClick(onChartClick);
+      // chart.remove() tự huỷ mọi series + primitive gắn trong nó — chỉ cần bỏ tham chiếu để không
+      // giữ instance chết (tránh gắn lại nhầm ở lần mount sau).
       chart.remove();
+      onChartReadyRef.current?.(null);
       chartRef.current = null;
-      candleSeriesRef.current = null;
+      drawingsPrimitiveRef.current = null;
+      pendingPointRef.current = null;
+      mainSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      compareSeriesRef.current = null;
       // maSeriesRef/rsiSeriesRef là Map bền vững suốt vòng đời component (không phải node DOM) —
       // muốn đọc nội dung MỚI NHẤT lúc dọn dẹp (chart.remove() đã tự hủy mọi series bên trong nó),
       // không phải chụp nhanh lúc effect chạy — cảnh báo exhaustive-deps không áp dụng ở đây.
@@ -194,25 +492,97 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       markersRef.current = null;
       ichimokuSeriesRef.current = { spanA: null, spanB: null };
     };
+    // Effect mount-một-lần: `drawings`/`selectedDrawingId` chỉ đọc giá trị TẠI THỜI ĐIỂM tạo
+    // primitive (đồng bộ ban đầu); thay đổi SAU mount đã có 2 effect riêng theo dõi đúng.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Effect 2: dữ liệu nến + map thời gian→chỉ số cho legend (đổi dữ liệu thì bỏ trạng thái hover cũ).
+  // Effect 1a: vòng đời SERIES CHÍNH theo kiểu chart (W-502). lightweight-charts không cho đổi loại
+  // series tại chỗ nên đổi kiểu = remove series cũ (kéo theo hủy markers plugin gắn trên nó) + add
+  // series loại mới. Chạy TRƯỚC Effect 2/2a/7 (thứ tự khai báo) — cả 3 effect đó cũng phụ thuộc
+  // config.chartType nên sẽ set lại data/thang giá/markers lên series MỚI ngay trong cùng lượt render.
   useEffect(() => {
-    const series = candleSeriesRef.current;
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const primitive = drawingsPrimitiveRef.current;
+    if (mainSeriesRef.current) {
+      // Gỡ primitive khỏi series cũ TRƯỚC khi xoá series (removeSeries cũng tự detach, nhưng gỡ tường
+      // minh để `attached`/`detached` của primitive chạy đúng cặp, không rò tham chiếu series cũ).
+      if (primitive) mainSeriesRef.current.detachPrimitive(primitive);
+      chart.removeSeries(mainSeriesRef.current);
+      mainSeriesRef.current = null;
+      // markers plugin bị hủy cùng series cũ — buộc Effect 7 tạo lại trên series mới.
+      markersRef.current = null;
+    }
+
+    const colors = readThemeColors();
+    const series = createMainSeries(chart, config.chartType, colors);
+    mainSeriesRef.current = series;
+    mainSeriesTypeRef.current = CHART_TYPE_TO_SERIES[config.chartType];
+    // Gắn LẠI primitive vào series mới → nét vẽ vẫn hiển thị sau khi đổi kiểu chart (W-502).
+    if (primitive) series.attachPrimitive(primitive);
+  }, [config.chartType]);
+
+  // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount.
+  // (interval được clearInterval trong cleanup của chính effect này; component GoldChart này KHÔNG
+  // tự remount theo `key` khi các prop khác đổi trong CÙNG một lần mount. Lưu ý: khi người dùng đổi
+  // mã ở `/chart/[symbol]`, Next.js App Router tự unmount/remount toàn bộ cây Page — bao gồm cả
+  // GoldChart — đó là cơ chế framework riêng, không phải `key` thủ công; xem ghi chú ở
+  // `pendingPointRef` bên dưới về việc effect đó cũng dọn dẹp đúng khi đổi symbol nhờ `activeTool`
+  // reset theo prop, không phải nhờ giả định remount.)
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Effect 2: dữ liệu series chính + map thời gian→chỉ số cho legend (đổi dữ liệu thì bỏ hover cũ).
+  // Phụ thuộc cả config.chartType: đổi kiểu chart thì Effect 1a đã tạo series mới, ở đây set lại data
+  // đúng dạng (OHLC cho nến/HA/bar; close cho line/area). Heikin Ashi lấy OHLC đã làm mượt; line/area
+  // luôn theo GIÁ GỐC (close). Chỉ số legend luôn theo mảng `candles` gốc (HA giữ nguyên ts/độ dài).
+  useEffect(() => {
+    const series = mainSeriesRef.current;
     if (!series) return;
+
+    const seriesType = CHART_TYPE_TO_SERIES[config.chartType];
+    const ohlcCandles = config.chartType === 'heikinAshi' ? toHeikinAshi(candles) : candles;
+
     const timeToIndex = new Map<number, number>();
-    series.setData(
-      candles.map((c, i) => {
-        const time = toUtcTimestamp(c.ts);
-        timeToIndex.set(time, i);
-        return { time, open: c.open, high: c.high, low: c.low, close: c.close };
-      }),
-    );
+    candles.forEach((c, i) => timeToIndex.set(toUtcTimestamp(c.ts), i));
+
+    if (isValueSeries(seriesType)) {
+      // Line/Area: giá gốc (không dùng HA close ở v1).
+      series.setData(candles.map((c) => ({ time: toUtcTimestamp(c.ts), value: c.close })));
+    } else {
+      series.setData(
+        ohlcCandles.map((c) => ({
+          time: toUtcTimestamp(c.ts),
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        })),
+      );
+    }
     timeToIndexRef.current = timeToIndex;
     // Nến cũ không còn — index hover cũ trỏ nhầm nến mới; đặt lại về "nến mới nhất".
     setHoveredIndex(null);
     chartRef.current?.timeScale().fitContent();
-  }, [candles]);
+  }, [candles, config.chartType]);
+
+  // Effect 2a: thang giá Log/Linear (W-503) — áp lên price scale phải (thang giá nến), tách khỏi
+  // thang giá 'volume' riêng (Effect 2b) để không kéo méo cột khối lượng khi bật log.
+  // Phụ thuộc cả config.chartType để áp lại mode lên series MỚI sau khi đổi kiểu chart (W-502).
+  useEffect(() => {
+    const series = mainSeriesRef.current;
+    if (!series) return;
+    series.priceScale().applyOptions({
+      mode:
+        config.priceScaleMode === 'logarithmic'
+          ? PriceScaleMode.Logarithmic
+          : PriceScaleMode.Normal,
+    });
+  }, [config.priceScaleMode, config.chartType]);
 
   // Effect 2b: thanh khối lượng — overlay 20% đáy pane giá (bố cục TradingView), thang giá riêng
   // 'volume' để không kéo méo thang giá nến. Nến thiếu volume (null) thì bỏ qua điểm đó.
@@ -449,6 +819,42 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
     state.spanB.setData(spanBData);
   }, [candles, config.ichimoku]);
 
+  // Effect so sánh mã (W-507): 1 đường % của mã phụ chồng lên pane giá (0), THANG GIÁ RIÊNG
+  // 'compare' (overlay như 'volume' — không hiển thị trục, không kéo méo thang giá nến chính giữ
+  // giá thật). Không có `compareData` → gỡ series (removeSeries) để không rò rỉ khi bỏ chọn/đổi mã.
+  // Dữ liệu % đã được component cha chuẩn hoá sẵn bằng `normalizeToPercent`; ở đây chỉ đổi ts→time.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    if (!compareData || compareData.length === 0) {
+      if (compareSeriesRef.current) {
+        chart.removeSeries(compareSeriesRef.current);
+        compareSeriesRef.current = null;
+      }
+      return;
+    }
+
+    if (!compareSeriesRef.current) {
+      const series = chart.addSeries(LineSeries, {
+        color: COMPARE_COLOR,
+        lineWidth: 2,
+        priceScaleId: 'compare',
+        priceFormat: { type: 'percent' },
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      // Chừa lề trên/dưới để đường % không dính sát mép pane (giống scaleMargins của volume).
+      series.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.1 } });
+      compareSeriesRef.current = series;
+    }
+
+    compareSeriesRef.current.setData(
+      compareData.map((p) => ({ time: toUtcTimestamp(p.ts), value: p.value })),
+    );
+  }, [compareData]);
+
   // Effect 6: MACD — pane phụ riêng (sau pane RSI nếu có). Không có API dời series giữa các pane
   // trong lightweight-charts v5 nên khi bố cục pane đổi (thêm/bỏ RSI) thì gỡ và tạo lại series —
   // sự kiện hiếm, dữ liệu nhỏ, đổi lấy code đơn giản đúng.
@@ -519,9 +925,11 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
   }, [candles, config.macd, config.rsiLines.length]);
 
   // Effect 7: markers tín hiệu Mua/Bán trên nến — các thời điểm phân loại tổng hợp của engine
-  // phân tích (lib/analysis) chuyển sang Mua/Bán. Tắt phân tích → xóa markers.
+  // phân tích (lib/analysis) chuyển sang Mua/Bán. Tắt phân tích → xóa markers. Phụ thuộc cả
+  // config.chartType: đổi kiểu chart hủy markers plugin cũ (Effect 1a set markersRef=null) nên phải
+  // tạo lại plugin trên series mới rồi set lại markers (vị trí theo thời gian, đúng với mọi kiểu).
   useEffect(() => {
-    const series = candleSeriesRef.current;
+    const series = mainSeriesRef.current;
     if (!series) return;
 
     if (!markersRef.current) markersRef.current = createSeriesMarkers(series, []);
@@ -539,7 +947,13 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       text: event.direction === 'buy' ? 'Mua' : 'Bán',
     }));
     markersRef.current.setMarkers(markers);
-  }, [candles, config.analysis]);
+  }, [candles, config.analysis, config.chartType]);
+
+  // Auto-fit CHỈ chạy khi người dùng chủ động bấm — khác Effect 2 (tự fit khi đổi bộ dữ liệu nến),
+  // dùng sau khi zoom/pan để đưa toàn bộ dữ liệu đang có trở lại vào khung nhìn.
+  function handleAutoFit() {
+    chartRef.current?.timeScale().fitContent();
+  }
 
   const legend = legendAt(candles, hoveredIndex ?? candles.length - 1);
   const legendColorClass =
@@ -548,33 +962,78 @@ export function GoldChart({ candles, config, label }: GoldChartProps) {
       : legend?.direction === 'down'
         ? 'text-danger'
         : 'text-muted-foreground';
+  // Countdown luôn tính trên nến MỚI NHẤT (đang mở) — không phụ thuộc nến đang hover, vì countdown
+  // trả lời "khi nào nến hiện tại đóng lại", không phải nến dưới con trỏ.
+  const latestCandle = candles[candles.length - 1];
+  const countdown = latestCandle ? candleCountdown(timeframe, latestCandle.ts, now) : null;
+  // Chú giải mã so sánh: % mới nhất của mã phụ (chỉ khi đang so sánh). Cũng là điểm móc DOM cho E2E
+  // xác nhận đường so sánh đã hiện (series vẽ trên canvas nên không truy vấn trực tiếp được).
+  const hasCompare = !!compareLabel && !!compareData && compareData.length > 0;
+  const compareLatest = hasCompare ? compareData[compareData.length - 1] : undefined;
 
   return (
-    <div className="relative min-w-0">
+    <div className={fullscreenActive ? 'relative min-w-0 flex-1' : 'relative min-w-0'}>
       <div
         ref={containerRef}
-        className="h-[560px] w-full min-w-0"
+        className={fullscreenActive ? 'h-full w-full min-w-0' : 'h-[560px] w-full min-w-0'}
         role="group"
         aria-label={`Chart nến ${label} với Multi-MA và Multi-RSI`}
       />
-      {legend && (
-        <div
-          aria-label={`Chú giải OHLC ${label}`}
-          className="text-foreground bg-surface/70 pointer-events-none absolute top-2 left-2 z-10 flex flex-wrap gap-x-3 rounded px-2 py-1 font-mono text-xs"
-        >
-          <span>
-            O <span className={legendColorClass}>{formatLegendPrice(legend.open)}</span>
-          </span>
-          <span>
-            H <span className={legendColorClass}>{formatLegendPrice(legend.high)}</span>
-          </span>
-          <span>
-            L <span className={legendColorClass}>{formatLegendPrice(legend.low)}</span>
-          </span>
-          <span>
-            C <span className={legendColorClass}>{formatLegendPrice(legend.close)}</span>
-          </span>
-          <span className={legendColorClass}>{formatLegendChange(legend)}</span>
+      <button
+        type="button"
+        onClick={handleAutoFit}
+        aria-label="Đưa toàn bộ dữ liệu vào khung nhìn (auto fit)"
+        className="text-foreground bg-surface/70 hover:bg-surface border-border absolute top-2 right-2 z-10 min-h-11 min-w-11 rounded-md border px-2 py-1 text-xs font-medium"
+      >
+        Auto fit
+      </button>
+      {(legend || (hasCompare && compareLatest)) && (
+        // Legend OHLC + badge so sánh cùng nằm trong MỘT container flow (flex-col) thay vì mỗi cái
+        // một vị trí `absolute` riêng cố định — legend có thể wrap 2 dòng khi bật nhiều chỉ báo/màn
+        // hẹp, badge dưới sẽ tự đẩy xuống theo chiều cao thật của legend thay vì bị chồng lên.
+        <div className="pointer-events-none absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+          {legend && (
+            <div
+              aria-label={`Chú giải OHLC ${label}`}
+              className="text-foreground bg-surface/70 flex flex-wrap gap-x-3 rounded px-2 py-1 font-mono text-xs"
+            >
+              <span>
+                O <span className={legendColorClass}>{formatLegendPrice(legend.open)}</span>
+              </span>
+              <span>
+                H <span className={legendColorClass}>{formatLegendPrice(legend.high)}</span>
+              </span>
+              <span>
+                L <span className={legendColorClass}>{formatLegendPrice(legend.low)}</span>
+              </span>
+              <span>
+                C <span className={legendColorClass}>{formatLegendPrice(legend.close)}</span>
+              </span>
+              <span className={legendColorClass}>{formatLegendChange(legend)}</span>
+              {countdown && (
+                <span aria-label="Thời gian còn lại tới khi nến hiện tại đóng">
+                  ⏱ {countdown.label}
+                </span>
+              )}
+            </div>
+          )}
+          {hasCompare && compareLatest && (
+            <div
+              aria-label={`So sánh ${compareLabel}`}
+              className="text-foreground bg-surface/70 flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs"
+            >
+              {/* Ô màu khớp ĐÚNG màu đường vẽ trên canvas (COMPARE_COLOR) — dùng biến làm nguồn sự
+                  thật duy nhất thay vì hard-code lại; đây là swatch chú giải, không phải màu giao
+                  diện. */}
+              <span
+                aria-hidden="true"
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: COMPARE_COLOR }}
+              />
+              <span>{compareLabel}</span>
+              <span>{formatComparePercent(compareLatest.value)}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

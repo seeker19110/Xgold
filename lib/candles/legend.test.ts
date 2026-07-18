@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatLegendChange, formatLegendPrice, legendAt } from '@/lib/candles/legend';
+import {
+  candleCountdown,
+  formatLegendChange,
+  formatLegendPrice,
+  legendAt,
+} from '@/lib/candles/legend';
 import type { Candle } from '@/lib/candles/types';
 
 function c(ts: string, open: number, high: number, low: number, close: number): Candle {
@@ -74,5 +79,68 @@ describe('formatLegendPrice / formatLegendChange', () => {
     expect(formatLegendChange(up!)).toBe('+5.50 (+5.24%)');
     expect(formatLegendChange(down!)).toBe('−10.00 (−9.05%)');
     expect(formatLegendChange(flat!)).toBe('0.00 (0.00%)');
+  });
+});
+
+describe('candleCountdown', () => {
+  it('khung 1h, nến mở 10:00:00Z, now 10:15:30Z → còn 44:30 (đóng lúc 11:00:00Z, tính tay)', () => {
+    const result = candleCountdown(
+      '1h',
+      '2026-07-03T10:00:00.000Z',
+      new Date('2026-07-03T10:15:30.000Z'),
+    );
+    expect(result).not.toBeNull();
+    expect(result?.secondsRemaining).toBe(44 * 60 + 30);
+    expect(result?.label).toBe('44:30');
+  });
+
+  it('ca biên: now đúng bằng mốc đóng nến → secondsRemaining = 0, không âm', () => {
+    const result = candleCountdown(
+      '1h',
+      '2026-07-03T10:00:00.000Z',
+      new Date('2026-07-03T11:00:00.000Z'),
+    );
+    expect(result?.secondsRemaining).toBe(0);
+    expect(result?.label).toBe('00:00');
+  });
+
+  it('now đã qua mốc đóng (trễ) → vẫn không âm (kẹp về 0)', () => {
+    const result = candleCountdown(
+      '1h',
+      '2026-07-03T10:00:00.000Z',
+      new Date('2026-07-03T11:05:00.000Z'),
+    );
+    expect(result?.secondsRemaining).toBe(0);
+  });
+
+  it('khung <1h (5m): định dạng mm:ss', () => {
+    const result = candleCountdown(
+      '5m',
+      '2026-07-03T10:00:00.000Z',
+      new Date('2026-07-03T10:02:00.000Z'),
+    );
+    expect(result?.secondsRemaining).toBe(3 * 60);
+    expect(result?.label).toBe('03:00');
+  });
+
+  it('khung ≥1h với countdown còn lại ≥1h (4h): định dạng hh:mm:ss', () => {
+    const result = candleCountdown(
+      '4h',
+      '2026-07-03T08:00:00.000Z',
+      new Date('2026-07-03T09:00:00.000Z'),
+    );
+    // Đóng lúc 12:00:00Z, còn lại 3h đúng.
+    expect(result?.secondsRemaining).toBe(3 * 60 * 60);
+    expect(result?.label).toBe('03:00:00');
+  });
+
+  it("timeframe không có độ dài cố định ('1M') → null", () => {
+    expect(
+      candleCountdown('1M', '2026-07-03T00:00:00.000Z', new Date('2026-07-03T00:00:00.000Z')),
+    ).toBeNull();
+  });
+
+  it('latestCandleTs không parse được → null (không throw)', () => {
+    expect(candleCountdown('1h', 'not-a-date', new Date('2026-07-03T00:00:00.000Z'))).toBeNull();
   });
 });

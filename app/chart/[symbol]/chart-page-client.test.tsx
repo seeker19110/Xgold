@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChartPageClient } from '@/app/chart/[symbol]/chart-page-client';
@@ -5,11 +6,18 @@ import type { CandlesState } from '@/components/chart/use-candles';
 import { DEFAULT_CHART_CONFIG } from '@/lib/indicators/config';
 import type { Candle } from '@/lib/candles/types';
 
-const { useCandlesMock, useIndicatorConfigMock, setConfigMock } = vi.hoisted(() => ({
-  useCandlesMock: vi.fn(),
-  useIndicatorConfigMock: vi.fn(),
-  setConfigMock: vi.fn(),
-}));
+const { useCandlesMock, useIndicatorConfigMock, setConfigMock, takeScreenshotMock } = vi.hoisted(
+  () => ({
+    useCandlesMock: vi.fn(),
+    useIndicatorConfigMock: vi.fn(),
+    setConfigMock: vi.fn(),
+    takeScreenshotMock: vi.fn(),
+  }),
+);
+
+// SymbolSearch (W-508) dùng useRouter — cô lập khỏi App Router context thật (không mount trong test
+// này, xem invariant "expected app router to be mounted").
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 vi.mock('@/components/chart/use-candles', () => ({ useCandles: useCandlesMock }));
 vi.mock('@/components/chart/use-indicator-config', () => ({
@@ -19,9 +27,22 @@ vi.mock('@/components/chart/use-indicator-config', () => ({
 // Component con nặng (canvas/lightweight-charts, fetch riêng) — không phải phạm vi test này
 // (đã có test riêng: gold-chart không test được jsdom/canvas, confluence-panel/indicator-panel có
 // test riêng). Thay bằng stand-in nhẹ để cô lập logic thật của chart-page-client.tsx (4 trạng thái
-// + nút Xuất CSV).
+// + nút Xuất CSV/Toàn màn hình/Chụp ảnh chart). `onChartReady` được gọi giống hệt gold-chart.tsx
+// thật (chart instance giả có `takeScreenshot`) để test được handleScreenshot (W-505).
 vi.mock('@/components/chart/gold-chart', () => ({
-  GoldChart: ({ label }: { label: string }) => <div data-testid="gold-chart">{label}</div>,
+  GoldChart: ({
+    label,
+    onChartReady,
+  }: {
+    label: string;
+    onChartReady?: (chart: { takeScreenshot: typeof takeScreenshotMock } | null) => void;
+  }) => {
+    useEffect(() => {
+      onChartReady?.({ takeScreenshot: takeScreenshotMock });
+      return () => onChartReady?.(null);
+    }, [onChartReady]);
+    return <div data-testid="gold-chart">{label}</div>;
+  },
 }));
 vi.mock('@/components/chart/analysis-panel', () => ({
   AnalysisPanel: () => <div data-testid="analysis-panel" />,
@@ -113,6 +134,94 @@ describe('ChartPageClient', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(removeSpy).toHaveBeenCalledWith(anchor);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+
+    clickSpy.mockRestore();
+    appendSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+
+  // jsdom không định nghĩa sẵn `document.fullscreenElement` — khai báo property có thể cấu hình
+  // lại (configurable: true) để mock được, rồi xóa sau mỗi test tránh rò rỉ sang test khác.
+  function mockFullscreenElement(initial: Element | null) {
+    let current: Element | null = initial;
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      get: () => current,
+    });
+    return {
+      set: (el: Element | null) => {
+        current = el;
+      },
+      restore: () => {
+        delete (document as { fullscreenElement?: Element | null }).fullscreenElement;
+      },
+    };
+  }
+
+  it('nút Toàn màn hình: gọi requestFullscreen, aria-pressed đổi theo sự kiện fullscreenchange (W-505)', () => {
+    mockCandles({ status: 'success', candles: CANDLES, source: 'supabase', error: null });
+    renderPage();
+
+    const toggle = screen.getByRole('button', { name: 'Toàn màn hình' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    const requestFullscreenMock = vi.fn().mockResolvedValue(undefined);
+    HTMLDivElement.prototype.requestFullscreen = requestFullscreenMock;
+    const fullscreenElement = mockFullscreenElement(null);
+
+    fireEvent.click(toggle);
+    expect(requestFullscreenMock).toHaveBeenCalledTimes(1);
+
+    // Trình duyệt xác nhận đã vào fullscreen → 'fullscreenchange' bắn ra, aria-pressed cập nhật.
+    const fullscreenContainer = requestFullscreenMock.mock.instances[0] as Element;
+    fullscreenElement.set(fullscreenContainer);
+    fireEvent(document, new Event('fullscreenchange'));
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(toggle).toHaveTextContent('Thoát toàn màn hình');
+
+    fullscreenElement.restore();
+  });
+
+  it('trình duyệt không hỗ trợ Fullscreen API: bấm nút không throw, không có tác dụng', () => {
+    mockCandles({ status: 'success', candles: CANDLES, source: 'supabase', error: null });
+    renderPage();
+
+    const fullscreenElement = mockFullscreenElement(null);
+    // @ts-expect-error -- xóa method để mô phỏng trình duyệt không hỗ trợ (fallback W-505).
+    delete HTMLDivElement.prototype.requestFullscreen;
+
+    const toggle = screen.getByRole('button', { name: 'Toàn màn hình' });
+    expect(() => fireEvent.click(toggle)).not.toThrow();
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    fullscreenElement.restore();
+  });
+
+  it('nút Chụp ảnh chart: gọi chart.takeScreenshot() → toBlob → tải PNG đúng tên file (W-505)', () => {
+    mockCandles({ status: 'success', candles: CANDLES, source: 'supabase', error: null });
+    renderPage();
+
+    const createObjectURL = vi.fn(() => 'blob:mock-png-url');
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    const fakeCanvas = { toBlob: vi.fn((cb: (blob: Blob | null) => void) => cb(new Blob(['x']))) };
+    takeScreenshotMock.mockReturnValue(fakeCanvas);
+
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const appendSpy = vi.spyOn(document.body, 'appendChild');
+    const removeSpy = vi.spyOn(document.body, 'removeChild');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chụp ảnh chart' }));
+
+    expect(takeScreenshotMock).toHaveBeenCalledTimes(1);
+    expect(appendSpy).toHaveBeenCalled();
+    const anchor = appendSpy.mock.calls[0]?.[0] as HTMLAnchorElement;
+    expect(anchor.download).toBe('xauusd-1h-chart.png');
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(removeSpy).toHaveBeenCalledWith(anchor);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-png-url');
 
     clickSpy.mockRestore();
     appendSpy.mockRestore();
