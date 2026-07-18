@@ -490,6 +490,24 @@
   - Còn lại theo `docs/plans/xgold-tradingview-parity-plan.md`: Đợt 15 (symbol search/watchlist/so
     sánh mã), Đợt 16 (công cụ vẽ, ADR-0012 đã chốt), Đợt 17 (alerts v1 client-side).
 
+- ✅ **Đợt 16 — TradingView parity: công cụ vẽ (2026-07-17/18, PLAN.md + ADR-0012, điều phối qua
+  coordinator + 3 worker — đợt rủi ro cao nhất kế hoạch):**
+  - **ADR-0012** chốt trước khi code: tự viết Series Primitives, không dùng gói cộng đồng (`lightweight-charts-drawing` pre-1.0/1 người bảo trì, `lightweight-charts-line-tools` kiến trúc không tương thích — xác minh qua npm registry API thật).
+  - **W-510** (route:spec) hạ tầng `lib/drawings/` — Zod discriminated union (đường ngang/trendline/Fibonacci retracement), toạ độ theo `time`+`price` (không theo pixel, sống sót zoom/pan/đổi khung), storage localStorage theo symbol phòng thủ, `fibLevelPrice` tính tay đúng.
+  - **W-511** (route:complex, Opus HIGH — **việc khó nhất TOÀN BỘ kế hoạch parity**) primitive renderer + hit-test — `DrawingsPrimitive implements ISeriesPrimitive<Time>`, gắn vào series chính qua `attachPrimitive`/`detachPrimitive` cân bằng đúng (kể cả khi đổi kiểu chart W-502), hit-test bằng khoảng cách điểm-tới-đoạn-thẳng (unit test đủ ca biên). Đã **bỏ hẳn tính năng di chuyển (kéo-thả)** — đúng phạm vi thu hẹp cho phép trước, chỉ còn vẽ mới + chọn + xóa cho cả 3 loại. API primitive hoạt động đúng mô tả ADR-0012, không phát sinh mâu thuẫn cần dừng sớm.
+  - **W-512** (route:standard) thanh công cụ vẽ — desktop cột dọc thu gọn được, mobile thanh ngang cuộn; nút "Chọn" tái dùng `activeTool=null` sẵn có (không thêm giá trị mới vào union, tránh đổi API lõi); nút "Xoá hết" (`clearAll`).
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (395/395, 58 file). Review 0 phát hiện chặn (1 mục comment mâu thuẫn về vòng đời remount
+    đã sửa cho khớp sự thật, không đổi hành vi). **Lighthouse thật cả 5 URL** không tụt ngưỡng dù
+    thêm canvas primitive (`LHCI_EXIT=0`).
+  - **2 lần bị chặn bởi giới hạn phiên API** (worker W-511 và coordinator) — không phải lỗi code,
+    retry thành công sau khi giới hạn giải phóng; khi coordinator bị chặn lâu hơn dự kiến, phiên
+    chính tự đảm nhận nốt Lighthouse + review + merge để không chặn tiến độ.
+  - **Cần kiểm chứng thủ công ngoài sandbox** (E2E chưa chạy được — giới hạn môi trường đã biết): vẽ
+    cả 3 loại × 2 theme, sống sót zoom/pan/đổi khung/đổi kiểu chart, tương phản màu vẽ AA, mobile
+    toolbar không đè canvas.
+  - Còn lại theo kế hoạch: Đợt 17 (alerts v1 client-side) — đợt cuối cùng của TradingView parity.
+
 - ✅ **Đợt 15 — TradingView parity: symbol search + watchlist + so sánh mã (2026-07-17, PLAN.md,
   điều phối qua coordinator + 4 worker + 1 fix a11y):**
   - **W-506** `lib/candles/percent-normalize.ts` (`normalizeToPercent`, pure fn, guard chia 0).
