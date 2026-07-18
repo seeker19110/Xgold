@@ -8,6 +8,13 @@ và dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 > Vì commit theo _conventional commits_, phần "Unreleased" có thể được sinh tự động sau
 > (ví dụ `standard-version` / `changesets`). Trước mắt cập nhật tay khi có thay đổi đáng kể.
 
+## [1.6.0](https://github.com/seeker19110/Xgold/compare/v1.5.1...v1.6.0) (2026-07-18)
+
+
+### Features
+
+* **chart:** TradingView parity Đợt 14-17 — kiểu chart, search/watchlist, công cụ vẽ, alerts ([#38](https://github.com/seeker19110/Xgold/issues/38)) ([5157fd3](https://github.com/seeker19110/Xgold/commit/5157fd3e92825de6d9e7175b84669a2306576a98))
+
 ## [1.5.1](https://github.com/seeker19110/Xgold/compare/v1.5.0...v1.5.1) (2026-07-17)
 
 
