@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { StrictMode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AlertsPanel } from '@/components/alerts/alerts-panel';
 import { ALERTS_STORAGE_KEY, type PriceAlert } from '@/lib/alerts/types';
@@ -125,6 +126,26 @@ describe('AlertsPanel', () => {
 
     await waitFor(() => expect(screen.getByText('Đang chờ')).toBeInTheDocument());
     expect(notif.calls()).toBe(0);
+  });
+
+  it('React Strict Mode double-invoke effect → Notification vẫn chỉ bắn đúng 1 lần', async () => {
+    // Strict Mode chạy mount + effect 2 lần liên tiếp trong cùng 1 commit để lộ side-effect không
+    // idempotent — tái hiện đúng lỗi double-fire đã phát hiện khi review (F-021 style), xác nhận
+    // guard `firedIdsRef` chặn được dù cả 2 lần chạy đều đọc `alerts` cũ (chưa kịp `triggeredAt`).
+    const notif = stubGrantedNotification();
+    localStorage.setItem(
+      ALERTS_STORAGE_KEY,
+      JSON.stringify([storedAlert({ direction: 'above', targetPrice: 2500 })]),
+    );
+
+    render(
+      <StrictMode>
+        <AlertsPanel symbol="XAUUSD" label="XAU/USD" latestClose={2600} />
+      </StrictMode>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Đã kích hoạt')).toBeInTheDocument());
+    expect(notif.calls()).toBe(1);
   });
 
   it('không hỗ trợ Notification → hiện ghi chú, không throw', () => {

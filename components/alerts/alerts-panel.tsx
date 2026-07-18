@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { getInstrumentBySymbol, type Instrument } from '@/lib/instruments';
 import { shouldTrigger, type AlertDirection, type PriceAlert } from '@/lib/alerts/types';
@@ -84,6 +84,12 @@ export function AlertsPanel({ symbol, label, latestClose }: AlertsPanelProps) {
   const priceId = useId();
   const errorId = useId();
 
+  // Chặn bắn trùng khi React Strict Mode double-invoke effect trong cùng 1 commit (cả 2 lần chạy
+  // đọc `alerts` cũ, chưa kịp thấy `triggeredAt` mà lần chạy trước vừa đánh dấu) — theo dõi id đã
+  // bắn TRONG PHIÊN COMPONENT NÀY bằng ref, cập nhật đồng bộ ngay trong thân effect (không phụ
+  // thuộc batching của setState như `markTriggered`).
+  const firedIdsRef = useRef<Set<string>>(new Set());
+
   // Kích hoạt: chạy khi nến mới nhất đổi. Chỉ xét alert đúng mã đang xem + còn hoạt động — mã khác
   // không có giá "sống" ở trang này nên không kiểm được (ghi rõ ở disclaimer). markTriggered đổi
   // `alerts` khiến effect chạy lại nhưng alert đã có triggeredAt nên bị bỏ qua → bắn đúng 1 lần.
@@ -91,7 +97,9 @@ export function AlertsPanel({ symbol, label, latestClose }: AlertsPanelProps) {
     if (!isHydrated || latestClose === null) return;
     for (const alert of alerts) {
       if (alert.symbol !== symbol || alert.triggeredAt !== null) continue;
+      if (firedIdsRef.current.has(alert.id)) continue;
       if (shouldTrigger(alert, latestClose)) {
+        firedIdsRef.current.add(alert.id);
         fireNotification(alert, alertRowLabel(alert.symbol), latestClose);
         markTriggered(alert.id);
       }
