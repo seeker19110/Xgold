@@ -490,6 +490,29 @@
   - Còn lại theo `docs/plans/xgold-tradingview-parity-plan.md`: Đợt 15 (symbol search/watchlist/so
     sánh mã), Đợt 16 (công cụ vẽ, ADR-0012 đã chốt), Đợt 17 (alerts v1 client-side).
 
+- ✅ **Đợt 17 — TradingView parity: cảnh báo giá v1 client-side (2026-07-18, PLAN.md, việc CUỐI
+  CÙNG của kế hoạch 4 đợt, dispatch trực tiếp không qua coordinator vì chỉ 1 việc):**
+  - **W-514** `lib/alerts/types.ts` (Zod `priceAlertSchema` + `shouldTrigger` pure fn) +
+    `use-alerts.ts` (hook localStorage SSR-safe, cùng pattern `use-watchlist.ts`) +
+    `alerts-panel.tsx` (form đặt/xóa/xem danh sách, disclaimer "chỉ hoạt động khi tab đang mở —
+    không nền, không email"). Notification API: xin quyền không chặn UI khi bị từ chối.
+  - **Fix sau review (đã sửa, không phải chỉ ghi nhận):** effect kích hoạt Notification thiếu
+    cleanup nên React Strict Mode double-invoke có thể bắn thông báo 2 lần cho cùng 1 alert (cả 2
+    lần đọc `alerts` cũ trước khi `setState` từ `markTriggered` kịp áp dụng) — thêm `useRef<Set>`
+    theo dõi id đã bắn trong phiên component, độc lập với double-invoke. Test regression thêm bằng
+    `<StrictMode>` (không tái hiện được lỗi rõ ràng trong Vitest/jsdom — khác môi trường React DOM
+    dev thật — nhưng fix vẫn giữ vì đúng nguyên tắc phòng thủ, chi phí thấp, không đổi hành vi đúng).
+  - Cổng: `build` ✅ (13 route) · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format:check` ✅ ·
+    `test` ✅ (424/424, 61 file). Review 0 phát hiện chặn khác. **Lighthouse thật cả 5 URL** trên
+    toàn bộ code base sau 4 đợt parity — vẫn đạt ngưỡng (`LHCI_EXIT=0`).
+  - **Cần kiểm chứng thủ công ngoài sandbox:** xin quyền Notification thật + thông báo hệ thống thật
+    hiện ra khi giá chạm ngưỡng; đối chiếu thị giác 2 theme.
+  - **🎉 Kế hoạch TradingView parity 4 đợt (`docs/plans/xgold-tradingview-parity-plan.md`) ĐÃ ĐÓNG
+    HẲN** — Đợt 14 (kiểu chart/log scale/fullscreen) → 15 (search/watchlist/compare) → 16 (công cụ
+    vẽ, ADR-0012) → 17 (alerts) đều đã merge vào `claude/tieeps-tuc-code-qzxq7g`, mỗi đợt đủ gate +
+    review + Lighthouse thật. Việc còn lại ngoài phạm vi code (Supabase thật, icon PWA, Sentry, nâng
+    major dependencies) đã ghi ở "Nợ kỹ thuật" — cần tài nguyên/quyết định từ người dùng.
+
 - ✅ **Đợt 16 — TradingView parity: công cụ vẽ (2026-07-17/18, PLAN.md + ADR-0012, điều phối qua
   coordinator + 3 worker — đợt rủi ro cao nhất kế hoạch):**
   - **ADR-0012** chốt trước khi code: tự viết Series Primitives, không dùng gói cộng đồng (`lightweight-charts-drawing` pre-1.0/1 người bảo trì, `lightweight-charts-line-tools` kiến trúc không tương thích — xác minh qua npm registry API thật).
