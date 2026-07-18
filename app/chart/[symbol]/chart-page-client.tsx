@@ -138,7 +138,10 @@ export function ChartPageClient({ symbol, slug, label, chartLabel }: ChartPageCl
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-7xl gap-4 p-6">
-      <main className="flex max-w-5xl min-w-0 flex-1 flex-col gap-4">
+      {/* pb-20 chỉ ở mobile: nút nổi "Mở danh sách theo dõi" (fixed bottom-4, md:hidden) có thể
+          đè lên nội dung cuối trang (nút chuyển theme) nếu trang ngắn — chừa chỗ để nội dung
+          không bị che, bỏ đệm này ở desktop (md:pb-0) vì nút nổi không hiển thị ở đó. */}
+      <main className="flex max-w-5xl min-w-0 flex-1 flex-col gap-4 pb-20 md:pb-0">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
             ← Xgold

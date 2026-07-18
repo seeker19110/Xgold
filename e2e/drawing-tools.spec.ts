@@ -27,6 +27,12 @@ async function drawnCount(page: Page, type?: string): Promise<number> {
 }
 
 test.describe('desktop — cột dọc bên trái chart', () => {
+  // Ép viewport desktop tường minh — bố cục toolbar (cột dọc vs thanh ngang) phụ thuộc bề rộng màn
+  // hình, không phải project Playwright đang chạy (`--project=mobile` vẫn chạy hết test trong file
+  // này, chỉ khác device mặc định) — thiếu dòng này, describe "desktop" bị chạy ở viewport hẹp khi
+  // project=mobile.
+  test.use({ viewport: { width: 1280, height: 800 } });
+
   test('chọn "Ngang" → click 1 điểm ra đường ngang, không phải trendline', async ({ page }) => {
     await gotoChart(page);
     const chartContainer = page.getByRole('group', { name: 'Chart nến giá vàng XAU/USD' });
@@ -63,6 +69,9 @@ test.describe('desktop — cột dọc bên trái chart', () => {
     const box = await canvas.boundingBox();
     if (!box) throw new Error('canvas không có bounding box');
     await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.6);
+    // Chờ >500ms giữa 2 click: lightweight-charts phát hiện double-click trong ngưỡng 500ms
+    // (`Delay.ResetClick`) — click quá gần nhau bị hiểu nhầm thành 1 cử chỉ, click thứ 2 không tính.
+    await page.waitForTimeout(800);
     await page.mouse.click(box.x + box.width * 0.7, box.y + box.height * 0.3);
 
     expect(await drawnCount(page, 'fib-retracement')).toBe(1);
@@ -74,7 +83,7 @@ test.describe('desktop — cột dọc bên trái chart', () => {
     await gotoChart(page);
     const toolbar = page.getByRole('group', { name: 'Công cụ vẽ trên chart' });
     const trendlineBtn = toolbar.getByRole('button', { name: 'Xu hướng' });
-    const selectBtn = toolbar.getByRole('button', { name: 'Chọn' });
+    const selectBtn = toolbar.getByRole('button', { name: 'Chọn', exact: true });
 
     await expect(selectBtn).toHaveAttribute('aria-pressed', 'true'); // mặc định ở chế độ chọn
     await trendlineBtn.click();
@@ -98,8 +107,15 @@ test.describe('desktop — cột dọc bên trái chart', () => {
     const toolbar = page.getByRole('group', { name: 'Công cụ vẽ trên chart' });
     await toolbar.getByRole('button', { name: 'Ngang' }).click();
     await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.4);
+    // Chờ >500ms trước khi bắt đầu nét TIẾP THEO — ngưỡng double-click 500ms của lightweight-charts
+    // (`Delay.ResetClick`) áp dụng cho MỌI cặp click canvas liên tiếp, không chỉ 2 điểm cùng 1 nét;
+    // thiếu chờ ở đây khiến click đầu của trendline bị tính gộp với click vừa vẽ xong đường ngang.
+    await page.waitForTimeout(800);
     await toolbar.getByRole('button', { name: 'Xu hướng' }).click();
     await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.6);
+    // Chờ >500ms giữa 2 click của trendline — tránh bị lightweight-charts hiểu nhầm double-click
+    // (xem ghi chú `Delay.ResetClick` ở trên).
+    await page.waitForTimeout(800);
     await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.5);
 
     expect(await drawnCount(page)).toBe(2);
@@ -112,13 +128,13 @@ test.describe('desktop — cột dọc bên trái chart', () => {
   test('thu gọn/mở rộng thanh công cụ', async ({ page }) => {
     await gotoChart(page);
     const toolbar = page.getByRole('group', { name: 'Công cụ vẽ trên chart' });
-    await expect(toolbar.getByRole('button', { name: 'Chọn' })).toBeVisible();
+    await expect(toolbar.getByRole('button', { name: 'Chọn', exact: true })).toBeVisible();
 
     await toolbar.getByRole('button', { name: 'Thu gọn thanh công cụ vẽ' }).click();
-    await expect(toolbar.getByRole('button', { name: 'Chọn' })).toBeHidden();
+    await expect(toolbar.getByRole('button', { name: 'Chọn', exact: true })).toBeHidden();
 
     await toolbar.getByRole('button', { name: 'Mở rộng thanh công cụ vẽ' }).click();
-    await expect(toolbar.getByRole('button', { name: 'Chọn' })).toBeVisible();
+    await expect(toolbar.getByRole('button', { name: 'Chọn', exact: true })).toBeVisible();
   });
 
   test('thanh công cụ vẽ không có vi phạm accessibility nghiêm trọng', async ({ page }) => {

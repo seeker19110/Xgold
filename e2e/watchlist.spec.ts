@@ -14,6 +14,9 @@ import AxeBuilder from '@axe-core/playwright';
 
 const PIN_BUTTON = 'Ghim XAU/USD vào danh sách theo dõi';
 const UNPIN_HEADER = 'Bỏ ghim XAU/USD khỏi danh sách theo dõi';
+// Nút xóa TỪNG DÒNG trong watchlist panel/sheet — khác nút toggle ghim ở header (hành động khác:
+// xóa khỏi danh sách, không phải bỏ ghim mã đang xem), đặt tên khác để tránh strict-mode collision.
+const REMOVE_ROW = 'Xóa XAU/USD khỏi danh sách theo dõi';
 
 async function gotoChart(page: Page) {
   await page.goto('/chart/xauusd');
@@ -21,6 +24,13 @@ async function gotoChart(page: Page) {
 }
 
 test.describe('desktop (cột phải)', () => {
+  // Ép viewport desktop tường minh — bố cục aside/sheet phụ thuộc bề rộng màn hình (breakpoint
+  // `md`), không phải project Playwright đang chạy (`--project=mobile` vẫn chạy hết mọi test trong
+  // file, kể cả describe "desktop" này, chỉ khác device mặc định) — thiếu dòng này, describe
+  // "desktop" bị chạy ở viewport hẹp khi project=mobile, ra layout sheet thay vì aside, test sai mục
+  // tiêu kiểm tra.
+  test.use({ viewport: { width: 1280, height: 800 } });
+
   test('ghim mã → xuất hiện trong watchlist; reload giữ trạng thái; bỏ ghim → biến mất', async ({
     page,
   }) => {
@@ -81,8 +91,8 @@ test.describe('mobile (sheet)', () => {
     const sheetAfter = page.getByRole('dialog', { name: /Theo dõi/ });
     await expect(sheetAfter.getByRole('link', { name: /XAU\/USD/ })).toBeVisible();
 
-    // Bỏ ghim trong sheet.
-    await sheetAfter.getByRole('button', { name: UNPIN_HEADER }).click();
+    // Xóa khỏi danh sách theo dõi ngay trong sheet (nút của từng dòng, khác nút toggle ở header).
+    await sheetAfter.getByRole('button', { name: REMOVE_ROW }).click();
     await expect(sheetAfter.getByText(/Chưa ghim mã nào/)).toBeVisible();
   });
 

@@ -78,8 +78,8 @@ function WatchlistRowItem({
       <button
         type="button"
         onClick={() => onUnpin(row.symbol)}
-        aria-label={`Bỏ ghim ${row.label} khỏi danh sách theo dõi`}
-        title="Bỏ ghim"
+        aria-label={`Xóa ${row.label} khỏi danh sách theo dõi`}
+        title="Xóa khỏi danh sách theo dõi"
         className="border-border text-muted-foreground hover:bg-surface hover:text-foreground my-1 flex min-h-11 min-w-11 items-center justify-center rounded-md border text-lg"
       >
         <span aria-hidden="true">×</span>

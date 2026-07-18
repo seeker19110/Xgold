@@ -72,7 +72,7 @@ describe('WatchlistPanel', () => {
     };
     render(<WatchlistPanel state={state} onUnpin={onUnpin} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Bỏ ghim XAU\/USD/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Xóa XAU\/USD/ }));
     expect(onUnpin).toHaveBeenCalledWith('XAUUSD');
   });
 });

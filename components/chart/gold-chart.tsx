@@ -367,6 +367,12 @@ export function GoldChart({
         foreground: colors.foreground,
         background: colors.background,
       });
+      // Đồng bộ NGAY dữ liệu hiện có (vd nét đã lưu localStorage nạp lại sau reload) — effect đồng
+      // bộ `drawings`/`selectedDrawingId` khai báo TRƯỚC effect này trong file nên đã chạy 1 lần lúc
+      // primitive CHƯA tồn tại (ref null) khi mount; nếu không đồng bộ lại ở đây, primitive mới tạo
+      // sẽ mãi rỗng cho tới khi người dùng tự đổi `drawings` lần nữa (thêm/xoá nét mới).
+      drawingsPrimitiveRef.current.setDrawings(drawings ?? []);
+      drawingsPrimitiveRef.current.setSelected(selectedDrawingId ?? null);
     }
 
     // Legend OHLC kiểu TradingView: rê crosshair → hiện nến dưới con trỏ; rời chart → nến mới nhất.
@@ -486,6 +492,9 @@ export function GoldChart({
       markersRef.current = null;
       ichimokuSeriesRef.current = { spanA: null, spanB: null };
     };
+    // Effect mount-một-lần: `drawings`/`selectedDrawingId` chỉ đọc giá trị TẠI THỜI ĐIỂM tạo
+    // primitive (đồng bộ ban đầu); thay đổi SAU mount đã có 2 effect riêng theo dõi đúng.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Effect 1a: vòng đời SERIES CHÍNH theo kiểu chart (W-502). lightweight-charts không cho đổi loại
