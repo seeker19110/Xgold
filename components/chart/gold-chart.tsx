@@ -321,7 +321,10 @@ export function GoldChart({
     onSelectDrawingRef.current = onSelectDrawing;
   }, [drawingsEnabled, activeTool, onCommitDrawing, onSelectDrawing]);
 
-  // Đổi công cụ (hoặc về chế độ chọn) → huỷ điểm neo đang chờ, tránh nối nhầm p1 cũ với p2 công cụ mới.
+  // Đổi công cụ (hoặc về chế độ chọn) → huỷ điểm neo đang chờ, tránh nối nhầm p1 cũ với p2 công cụ
+  // mới. Effect này CŨNG là cơ chế dọn dẹp khi đổi symbol: `useDrawings(symbol)` (chart-page-client)
+  // reset `activeTool` về `null` khi symbol đổi, effect này chạy theo và xoá điểm neo dở dang của mã
+  // cũ — không dựa vào việc GoldChart có remount hay không.
   useEffect(() => {
     pendingPointRef.current = null;
   }, [activeTool]);
@@ -512,9 +515,13 @@ export function GoldChart({
     if (primitive) series.attachPrimitive(primitive);
   }, [config.chartType]);
 
-  // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount/đổi symbol.
-  // (interval được clearInterval trong cleanup của chính effect này khi deps đổi; gold-chart KHÔNG
-  // được remount theo `key` — chart-page-client render <GoldChart> không truyền prop `key`.)
+  // Effect 1b: tick countdown nến (legend) mỗi giây — dọn dẹp interval khi unmount.
+  // (interval được clearInterval trong cleanup của chính effect này; component GoldChart này KHÔNG
+  // tự remount theo `key` khi các prop khác đổi trong CÙNG một lần mount. Lưu ý: khi người dùng đổi
+  // mã ở `/chart/[symbol]`, Next.js App Router tự unmount/remount toàn bộ cây Page — bao gồm cả
+  // GoldChart — đó là cơ chế framework riêng, không phải `key` thủ công; xem ghi chú ở
+  // `pendingPointRef` bên dưới về việc effect đó cũng dọn dẹp đúng khi đổi symbol nhờ `activeTool`
+  // reset theo prop, không phải nhờ giả định remount.)
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
