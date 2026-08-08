@@ -10,7 +10,8 @@
 
 - [ ] Có tài khoản Supabase, tạo project mới (Free/Pro tùy nhu cầu) — ghi lại `<project-ref>`.
 - [ ] Đăng ký [Twelve Data](https://twelvedata.com/) (free tier: 800 credits/ngày, đủ cho 4 mã ×
-      3 khung theo lịch giờ — xem tính toán ở cuối `ingest-gold/README.md`), lấy `TWELVEDATA_API_KEY`.
+      3 khung theo lịch giờ — xem tính toán ở cuối `supabase/functions/ingest-gold/README.md`), lấy
+      `TWELVEDATA_API_KEY`.
 - [ ] Cài Supabase CLI nếu chưa có: `npm install -g supabase` (hoặc dùng `npx supabase`).
 
 ## 1. Migration schema (theo thứ tự file trong `supabase/migrations/`)
@@ -63,7 +64,7 @@
 ## 6. Bật `pg_cron` (chỉ sau khi bước 4–5 đã xanh)
 
 - [ ] Chạy SQL `cron.schedule('ingest-gold-hourly', '5 * * * *', ...)` trong Supabase Studio SQL
-      Editor (nguyên văn ở `ingest-gold/README.md` mục 4).
+      Editor (nguyên văn ở `supabase/functions/ingest-gold/README.md` mục 4).
 - [ ] Chờ 1 chu kỳ (>1 giờ), xác nhận `ingest_runs` có bản ghi mới tự động, không cần gọi tay.
 - [ ] Ghi lại lịch đã bật vào `PROGRESS.md` (mục "Đã xong") kèm ngày giờ xác nhận.
 
