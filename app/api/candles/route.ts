@@ -7,6 +7,9 @@ import { getInstrumentBySymbol, type Instrument } from '@/lib/instruments';
 
 export const dynamic = 'force-dynamic';
 
+/** Trần số nến CƠ SỞ đọc từ CSDL mỗi request (giới hạn payload). Luôn là các nến MỚI NHẤT. */
+const MAX_CANDLES = 2000;
+
 const QuerySchema = z.object({
   symbol: z.string().min(1).default('XAUUSD'),
   timeframe: z.enum(TIMEFRAMES).default('1h'),
@@ -77,8 +80,13 @@ export async function GET(request: Request): Promise<NextResponse> {
       .select('ts, open, high, low, close, volume')
       .eq('instrument_id', dbInstrument.id)
       .eq('timeframe', base)
-      .order('ts', { ascending: true })
-      .limit(2000);
+      // Sắp GIẢM DẦN rồi `.reverse()` — KHÔNG phải tăng dần. `order(asc) + limit(N)` lấy N nến
+      // CŨ NHẤT: khi bảng vượt `MAX_CANDLES` (khung `1h` ≈ 83 ngày, `5m` ≈ 7 ngày dữ liệu liên
+      // tục), chart sẽ đóng băng ở dữ liệu cũ và không bao giờ hiện giá hiện tại, mà không ném
+      // lỗi nào. Fixture nhỏ hơn `MAX_CANDLES` nên không lộ ra ở local — xem test hồi quy
+      // "lấy nến MỚI NHẤT" trong route.test.ts.
+      .order('ts', { ascending: false })
+      .limit(MAX_CANDLES);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -90,7 +98,8 @@ export async function GET(request: Request): Promise<NextResponse> {
         { status: 500 },
       );
     }
-    baseCandles = rowsParsed.data;
+    // Truy vấn trả mới→cũ; `resample()` và lightweight-charts đều yêu cầu cũ→mới.
+    baseCandles = rowsParsed.data.reverse();
     source = 'supabase';
   } else {
     baseCandles = sampleBaseCandles(instrument, base);
