@@ -482,6 +482,26 @@
     `npm audit --omit=dev --audit-level=high` ✅.
   - **Chưa làm (ngoài phạm vi đợt này):** E2E/Lighthouse chưa chạy trong sandbox (thiếu trình
     duyệt Playwright — CI chạy đủ); phần major còn lại của F-019 vẫn hoãn có chủ đích.
+  - **Merge:** PR #40 → `main` (squash, CI 10/10 xanh gồm cả `quality`/`e2e`/`lighthouse`). Tiếp
+    theo merge PR #39 (`release-please`, đã tự cập nhật gộp #40) → phát hành **v1.6.0** — PR bot
+    này không tự chạy CI được trong môi trường repo hiện tại (cần chủ repo bấm "Approve and run"
+    thủ công, như PR #9 trước đây), diff chỉ đổi metadata phát hành nên merge dựa trên CI đã xanh
+    của `main`.
+
+- ✅ **F-019 — thử nâng nốt 2 gói major còn lại, kết luận: vẫn chặn thật (2026-08-08):**
+  - **`@types/node` 22.20.0→26.1.1: nâng được**, mọi cổng xanh (build/type-check/lint/format/test
+    426-426/audit). Đã áp dụng.
+  - **`typescript` 6.0.3→7.0.2: KHÔNG nâng được** — `typescript-eslint` (dùng trong
+    `eslint-config-next`) báo thẳng lỗi chặn cứng: _"typescript-eslint does not support TS 7.0"_,
+    trỏ tới tracking issue upstream còn mở (`typescript-eslint/typescript-eslint#10940`). Không
+    phải lỗi cấu hình repo — không có bản `typescript-eslint` nào tương thích TS 7 tại thời điểm
+    này. Đã hoàn nguyên về 6.0.3, xác nhận lint sạch lại.
+  - **`eslint` 9.39.4→10.7.0: KHÔNG nâng được** — tái hiện đúng lỗi đã ghi từ lúc bootstrap
+    (`context.getFilename is not a function`ở `eslint-plugin-react` 7.37.5 bundled trong
+    `eslint-config-next` 16.3.0, API đã bị ESLint 10 gỡ bỏ). `eslint-config-next` 16.3.0 (bản mới
+    nhất) vẫn chưa nâng `eslint-plugin-react`. Đã hoàn nguyên về 9.39.4.
+  - Cổng sau cùng (chỉ giữ `@types/node`): `build` ✅ · `type-check` ✅ · `lint` ✅ (0 cảnh báo) ·
+    `format` ✅ · `test` ✅ (426/426) · `npm audit --omit=dev --audit-level=high` ✅.
 
 ## Đang làm
 
@@ -734,10 +754,16 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
     16.2.10→16.3.0** (bản _minor_, không phải major) và nới `overrides.postcss` `^8.5.10`→`^8.5.26`
     (postcss 8.5.16 dính path traversal GHSA-r28c-9q8g-f849/GHSA-fxqj-rqcc-2cmp và kéo theo
     `nanoid` 3.3.15). Sau nâng: `npm audit --omit=dev` **found 0 vulnerabilities**.
-  - **Phần còn LẠI của F-019 vẫn hoãn:** `typescript` 6.0.3→7.x, `eslint` 9.39.4→10.x,
-    `@types/node` 22.20.0→26.x — vẫn là major, vẫn không phải lỗ hổng bảo mật, lý do hoãn ở trên
-    còn nguyên giá trị. Riêng `eslint` 10.x vẫn bị chặn bởi lỗi tương thích thật đã ghi ở mục
-    "Đã xong" (`eslint-plugin-react` bundled trong `eslint-config-next` gọi API đã bị gỡ).
+  - **Cập nhật 2026-08-08 (tiếp) — đã THỬ nâng nốt, không phải chỉ quyết định hoãn:**
+    `@types/node` 22.20.0→**26.1.1 đã nâng thành công**, cổng đầy đủ xanh. `typescript` 7.0.2 và
+    `eslint` 10.7.0 đã thử trực tiếp và **cùng gặp lỗi chặn cứng thật** (không phải rủi ro suy
+    đoán nữa): `typescript-eslint` báo "does not support TS 7.0" (tracking issue upstream còn mở,
+    `typescript-eslint/typescript-eslint#10940`); `eslint` 10 tái hiện đúng lỗi
+    `context.getFilename is not a function` ở `eslint-plugin-react` 7.37.5 bundled trong
+    `eslint-config-next` 16.3.0 (bản mới nhất tại thời điểm này vẫn chưa nâng). Cả hai đã hoàn
+    nguyên về bản cũ, xác nhận lint/type-check sạch lại. **Còn lại F-019: chỉ 2 gói, đều bị chặn
+    bởi upstream — không phải quyết định hoãn của dự án nữa, chờ `typescript-eslint`/
+    `eslint-config-next` ra bản tương thích.** Xem chi tiết ở "Đã xong".
 - `app/manifest.ts` tham chiếu icon `/icon-192.png`, `/icon-512.png` chưa có file thật — không chặn cổng
   (không phải lỗi build/lint), nhưng cần bổ sung ảnh icon thật trước khi PWA/manifest được dùng nghiêm túc.
 - **Chưa test thật được với Supabase/Twelve Data/Stooq thật** (mạng sandbox chặn + không có Docker/Deno):
