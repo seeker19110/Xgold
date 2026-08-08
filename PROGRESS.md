@@ -462,6 +462,27 @@
     và dữ liệu khớp chart.
   - Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format` ✅ · `test` ✅ (248/248).
 
+- ✅ **Vá bảo mật dependency + lỗi phân trang `/api/candles` (2026-08-08):**
+  - **(a) Bảo mật:** `npm audit --omit=dev --audit-level=high` đang **đỏ trên `main`** (cùng lệnh
+    CI dùng ở `.github/workflows/ci.yml:99`) → nâng `next`/`eslint-config-next` 16.2.10→**16.3.0**
+    - `overrides.postcss` →`^8.5.26`. Sau nâng: **0 vulnerabilities**. Chi tiết ở "Nợ kỹ thuật"
+      (F-019, cập nhật 2026-08-08).
+  - **(b) Lỗi tiềm ẩn `app/api/candles/route.ts`:** truy vấn cũ dùng
+    `.order('ts', { ascending: true }).limit(2000)` → lấy 2000 nến **CŨ NHẤT**, không phải mới
+    nhất. Khi bảng `candles` thật vượt trần (khung cơ sở `1h` ≈ 83 ngày, `5m` ≈ 7 ngày dữ liệu
+    liên tục), chart **đóng băng ở dữ liệu cũ và không bao giờ hiện giá hiện tại**, không ném lỗi
+    nào nên không có gì bắt được. Fixture local nhỏ hơn trần nên chưa bao giờ lộ — lỗi này sẽ nổ
+    **ngay khi nối Supabase thật**, tức trước khi bất kỳ ai nhìn thấy nó là bug. Sửa: sắp giảm
+    dần + `.reverse()`, tách hằng `MAX_CANDLES` (bỏ số ma thuật).
+  - Test: 2 test hồi quy mới trong `app/api/candles/route.test.ts` (xác nhận đối số `order`/`limit`
+    và bất biến ts tăng nghiêm ngặt ở response) — **đã kiểm chứng test FAIL khi hoàn nguyên bản
+    vá** (3/3 đỏ), không phải test rỗng. Mock của test F-009 cũ đổi sang thứ tự mới→cũ cho khớp
+    hình dạng response thật của truy vấn mới.
+  - Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ (0 cảnh báo) · `format` ✅ · `test` ✅ (426/426) ·
+    `npm audit --omit=dev --audit-level=high` ✅.
+  - **Chưa làm (ngoài phạm vi đợt này):** E2E/Lighthouse chưa chạy trong sandbox (thiếu trình
+    duyệt Playwright — CI chạy đủ); phần major còn lại của F-019 vẫn hoãn có chủ đích.
+
 ## Đang làm
 
 - ✅ **Đợt 14 — TradingView parity: kiểu chart + tiện ích thang giá (2026-07-17, PLAN.md/ADR-0012,
@@ -705,6 +726,18 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
   thời điểm này (không phải lỗ hổng bảo mật, `npm audit --omit=dev` sạch), ngoài phạm vi đã audit/
   duyệt. Nâng cấp khi có nhu cầu cụ thể (tính năng mới cần, hoặc lỗ hổng bảo mật phát sinh) — làm
   riêng từng gói một, không gộp, chạy đủ cổng sau mỗi gói.
+  - **Cập nhật 2026-08-08 — điều kiện mở lại đã kích hoạt (một phần):** `npm audit --omit=dev
+--audit-level=high` **đỏ (exit 1, 3 lỗ hổng High)** — `next` 16.2.10 dính 9 advisory (SSRF
+    trong rewrites & Server Actions, cache confusion, DoS Image Optimization, lộ endpoint Server
+    Function), `sharp` <0.35.0 (libvips CVE-2026-33327/33328/35590/35591), `nanoid` ≤3.3.16. Đúng
+    mệnh đề "nâng cấp khi có lỗ hổng bảo mật phát sinh" ở trên → đã nâng **`next` + `eslint-config-next`
+    16.2.10→16.3.0** (bản _minor_, không phải major) và nới `overrides.postcss` `^8.5.10`→`^8.5.26`
+    (postcss 8.5.16 dính path traversal GHSA-r28c-9q8g-f849/GHSA-fxqj-rqcc-2cmp và kéo theo
+    `nanoid` 3.3.15). Sau nâng: `npm audit --omit=dev` **found 0 vulnerabilities**.
+  - **Phần còn LẠI của F-019 vẫn hoãn:** `typescript` 6.0.3→7.x, `eslint` 9.39.4→10.x,
+    `@types/node` 22.20.0→26.x — vẫn là major, vẫn không phải lỗ hổng bảo mật, lý do hoãn ở trên
+    còn nguyên giá trị. Riêng `eslint` 10.x vẫn bị chặn bởi lỗi tương thích thật đã ghi ở mục
+    "Đã xong" (`eslint-plugin-react` bundled trong `eslint-config-next` gọi API đã bị gỡ).
 - `app/manifest.ts` tham chiếu icon `/icon-192.png`, `/icon-512.png` chưa có file thật — không chặn cổng
   (không phải lỗi build/lint), nhưng cần bổ sung ảnh icon thật trước khi PWA/manifest được dùng nghiêm túc.
 - **Chưa test thật được với Supabase/Twelve Data/Stooq thật** (mạng sandbox chặn + không có Docker/Deno):
