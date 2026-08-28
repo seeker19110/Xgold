@@ -20,6 +20,13 @@ import { evaluateMacdCross } from '@/lib/analysis/rules/macd-cross';
 import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
 import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
 import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
+import {
+  detectRegime,
+  REDUNDANCY_FACTOR,
+  REGIME_FAMILY_MULTIPLIER,
+  RULE_FAMILY,
+  type RuleFamily,
+} from '@/lib/analysis/regime';
 
 type RuleEvaluator = (inputs: AnalysisInputs, index: number, params: AnalysisParams) => RuleVerdict;
 
@@ -35,9 +42,35 @@ const EVALUATORS: Record<RuleId, RuleEvaluator> = {
 
 const DIRECTION_VALUE: Record<SignalDirection, number> = { buy: 1, sell: -1, neutral: 0 };
 
+interface FamilyBucket {
+  /** Tổng có dấu trong nhóm: Mua = +weight, Bán = −weight. */
+  signed: number;
+  /** Tổng trọng số các quy tắc đang bật trong nhóm. */
+  total: number;
+  /** Trọng số lớn nhất trong nhóm — phần "bằng chứng gốc" không bị chiết khấu. */
+  max: number;
+}
+
+/**
+ * Trọng số hiệu dụng của một nhóm sau khi chiết khấu bằng chứng trùng lặp: quy tắc nặng nhất giữ
+ * nguyên, phần còn lại chỉ tính `REDUNDANCY_FACTOR`. Ba quy tắc xu hướng cùng nói "Mua" vì cùng
+ * một lý do không phải ba bằng chứng độc lập (khiếm khuyết B3 — đánh giá 2026-08-28).
+ */
+function effectiveFamilyWeight(bucket: FamilyBucket): number {
+  return bucket.max + REDUNDANCY_FACTOR * (bucket.total - bucket.max);
+}
+
 /**
  * Tổng hợp có trọng số các quy tắc ĐANG BẬT tại nến `index`. Quy tắc thiếu dữ liệu tự trả
  * trung tính (đóng góp 0) — |score| chỉ có thể giảm khi thiếu dữ liệu, không bao giờ "đoán".
+ *
+ * Hai chế độ (`config.combineMode`):
+ * - `linear` — cộng thẳng weight × hướng như v1.
+ * - `grouped` (mặc định) — gộp theo nhóm quy tắc, chiết khấu bằng chứng trùng lặp trong nhóm, và
+ *   (khi `regimeAware`) nhân trọng số nhóm theo chế độ thị trường đo bằng Efficiency Ratio.
+ *
+ * Cả hai chế độ đều giữ `score/maxScore ∈ [−1, 1]`, nên ngưỡng `buyThreshold` và bảng hiệu chuẩn
+ * xác suất (`calibration.ts`) dùng chung được cho cả hai.
  */
 export function evaluateAt(
   inputs: AnalysisInputs,
@@ -49,8 +82,9 @@ export function evaluateAt(
   if (ts === undefined) throw new Error(`index ${index} ngoài phạm vi dữ liệu`);
 
   const signals: RuleSignal[] = [];
-  let score = 0;
-  let maxScore = 0;
+  const buckets = new Map<RuleFamily, FamilyBucket>();
+  let linearScore = 0;
+  let linearMax = 0;
 
   for (const ruleId of RULE_IDS) {
     const setting = config.rules[ruleId];
@@ -58,14 +92,46 @@ export function evaluateAt(
 
     const verdict = EVALUATORS[ruleId](inputs, index, params);
     signals.push({ ruleId, weight: setting.weight, ...verdict });
-    score += DIRECTION_VALUE[verdict.direction] * setting.weight;
-    maxScore += setting.weight;
+    linearScore += DIRECTION_VALUE[verdict.direction] * setting.weight;
+    linearMax += setting.weight;
+
+    const family = RULE_FAMILY[ruleId];
+    const bucket = buckets.get(family) ?? { signed: 0, total: 0, max: 0 };
+    bucket.signed += DIRECTION_VALUE[verdict.direction] * setting.weight;
+    bucket.total += setting.weight;
+    bucket.max = Math.max(bucket.max, setting.weight);
+    buckets.set(family, bucket);
+  }
+
+  let score = linearScore;
+  let maxScore = linearMax;
+  let regime = null;
+
+  if (config.combineMode === 'grouped') {
+    const assessment = detectRegime(inputs, index, params);
+    regime = config.regimeAware ? assessment : null;
+    const multipliers = REGIME_FAMILY_MULTIPLIER[assessment.regime];
+
+    score = 0;
+    maxScore = 0;
+    for (const [family, bucket] of buckets) {
+      if (bucket.total <= 0) continue;
+      // Đồng thuận trong nhóm ∈ [−1, 1]; nhóm cãi nhau thì triệt tiêu lẫn nhau.
+      const consensus = bucket.signed / bucket.total;
+      const weight = effectiveFamilyWeight(bucket) * (config.regimeAware ? multipliers[family] : 1);
+      score += consensus * weight;
+      maxScore += weight;
+    }
   }
 
   const direction: SignalDirection =
-    score >= config.buyThreshold ? 'buy' : score <= -config.buyThreshold ? 'sell' : 'neutral';
+    maxScore > 0 && score >= config.buyThreshold * maxScore
+      ? 'buy'
+      : maxScore > 0 && score <= -config.buyThreshold * maxScore
+        ? 'sell'
+        : 'neutral';
 
-  return { ts, direction, score, maxScore, signals };
+  return { ts, direction, regime, score, maxScore, signals };
 }
 
 /** Gợi ý tại nến gần nhất (nến đã đóng cuối cùng của dữ liệu) — `null` nếu chưa có nến nào. */

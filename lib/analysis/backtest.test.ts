@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { Candle } from '@/lib/candles/types';
-import { summarizeSignalHistory } from '@/lib/analysis/backtest';
+import { evaluatePerformance, summarizeSignalHistory, walkForward } from '@/lib/analysis/backtest';
+import { DEFAULT_ANALYSIS_CONFIG } from '@/lib/analysis/config';
+import { labelSignals } from '@/lib/analysis/labeling';
+import { generateWalk } from '@/lib/fixtures/generate';
 import type { AnalysisConfig } from '@/lib/analysis/config';
 import { DEFAULT_ANALYSIS_PARAMS, RULE_IDS, type AnalysisParams } from '@/lib/analysis/types';
 
 /** Chỉ bật rsi-zone trọng số 1 — chuỗi sự kiện đã tính tay ở combine.test.ts (signalEvents). */
 const RSI_ONLY_CONFIG: AnalysisConfig = {
   enabled: true,
+  combineMode: 'linear',
+  regimeAware: false,
   buyThreshold: 0.5,
   rules: Object.fromEntries(
     RULE_IDS.map((id) => [id, { enabled: id === 'rsi-zone', weight: id === 'rsi-zone' ? 1 : 0 }]),
@@ -42,5 +47,102 @@ describe('summarizeSignalHistory', () => {
   it('không có nến → thống kê rỗng', () => {
     const summary = summarizeSignalHistory([], RSI_ONLY_CONFIG, P);
     expect(summary).toEqual({ totalBuy: 0, totalSell: 0, byYear: {}, events: [] });
+  });
+});
+
+describe('evaluatePerformance (Đợt B)', () => {
+  const candles = generateWalk(Date.UTC(2026, 0, 1), 3_600_000, 600, 2000, 11);
+  const report = evaluatePerformance(candles, DEFAULT_ANALYSIS_CONFIG);
+
+  it('đếm khớp với số nhãn thật và các kết cục cộng lại đúng bằng số tín hiệu', () => {
+    const { labeled } = labelSignals(candles, DEFAULT_ANALYSIS_CONFIG);
+    expect(report.signals).toBe(labeled.length);
+    const sumOutcomes =
+      report.outcomes.tp1 + report.outcomes.tp2 + report.outcomes.sl + report.outcomes.timeout;
+    expect(sumOutcomes).toBe(report.signals);
+    expect(report.wins).toBe(report.outcomes.tp1 + report.outcomes.tp2);
+  });
+
+  it('hitRate và expectancyR khớp định nghĩa (tính lại từ nhãn thô)', () => {
+    const { labeled } = labelSignals(candles, DEFAULT_ANALYSIS_CONFIG);
+    const wins = labeled.filter((s) => s.win).length;
+    expect(report.hitRate).toBeCloseTo(wins / labeled.length, 10);
+    expect(report.expectancyR).toBeCloseTo(
+      labeled.reduce((a, b) => a + b.rMultiple, 0) / labeled.length,
+      10,
+    );
+    expect(report.totalR).toBeCloseTo(
+      labeled.reduce((a, b) => a + b.rMultiple, 0),
+      8,
+    );
+  });
+
+  it('MFE luôn ≥ 0 và MAE luôn ≤ 0 theo định nghĩa', () => {
+    expect(report.avgMfeR!).toBeGreaterThanOrEqual(0);
+    expect(report.avgMaeR!).toBeLessThanOrEqual(0);
+  });
+
+  it('không có tín hiệu nào → mọi tỷ lệ là null, không chia 0', () => {
+    const empty = evaluatePerformance([], DEFAULT_ANALYSIS_CONFIG);
+    expect(empty.signals).toBe(0);
+    expect(empty.hitRate).toBeNull();
+    expect(empty.expectancyR).toBeNull();
+    expect(empty.avgMfeR).toBeNull();
+  });
+});
+
+describe('walkForward (Đợt B)', () => {
+  const candles = generateWalk(Date.UTC(2026, 0, 1), 3_600_000, 900, 2000, 13);
+
+  it('mỗi fold hiệu chuẩn trên quá khứ và chấm trên đoạn SAU đó (không tự chấm mình)', () => {
+    const report = walkForward(
+      candles,
+      DEFAULT_ANALYSIS_CONFIG,
+      undefined,
+      undefined,
+      undefined,
+      3,
+    );
+    expect(report.folds.length).toBeGreaterThan(0);
+    let prevTrain = 0;
+    for (const fold of report.folds) {
+      expect(fold.trainSignals).toBeGreaterThan(prevTrain);
+      expect(fold.testSignals).toBeGreaterThan(0);
+      // Tập huấn luyện chỉ gồm tín hiệu TRƯỚC tập test → tổng không vượt quá tổng nhãn.
+      expect(fold.trainSignals + fold.testSignals).toBeLessThanOrEqual(
+        labelSignals(candles, DEFAULT_ANALYSIS_CONFIG).labeled.length,
+      );
+      prevTrain = fold.trainSignals;
+      if (fold.brier !== null) {
+        expect(fold.brier).toBeGreaterThanOrEqual(0);
+        expect(fold.brier).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it('meanBrier là null khi không fold nào đủ mẫu để chấm, không phải 0 giả', () => {
+    // Ngưỡng mẫu cao ngất → không khoang nào đủ → không chấm được tín hiệu nào.
+    const report = walkForward(
+      candles,
+      DEFAULT_ANALYSIS_CONFIG,
+      undefined,
+      undefined,
+      { bins: 5, minBinSample: 10_000 },
+      3,
+    );
+    expect(report.totalScored).toBe(0);
+    expect(report.meanBrier).toBeNull();
+  });
+
+  it('folds < 2 vẫn chạy được (tự nâng lên 2), không crash', () => {
+    const report = walkForward(
+      candles,
+      DEFAULT_ANALYSIS_CONFIG,
+      undefined,
+      undefined,
+      undefined,
+      1,
+    );
+    expect(report.folds.length).toBeGreaterThanOrEqual(1);
   });
 });

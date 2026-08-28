@@ -18,6 +18,26 @@
 
 ## Đã xong
 
+- ✅ **Đợt 18 — Nâng cấp phân tích xác suất mua/bán (ADR-0013, 2026-08-28):** đánh giá toàn bộ
+  `lib/analysis/` rồi thực thi 3 đợt người dùng duyệt.
+  - **Đợt A — vá lỗi thật (F-020/F-021):** `computeTradeLevels` từng trả **SL nằm sai phía entry**
+    khi hướng tổng hợp mâu thuẫn cấu trúc mây (tái hiện bằng test: lệnh Mua entry 100 → SL 119,
+    TP1 128.5, gắn nhãn "Rủi ro THẤP, xác suất 71.6%"; quét fixture: ≈6% tín hiệu rơi vào ca này).
+    Nay có cổng cấu trúc + chặn SL ở 3×ATR + bất biến thứ tự/giá dương; không đủ điều kiện thì
+    **không đưa mức** và nói rõ lý do trên UI. Hằng số công thức được đặt tên.
+  - **Đợt B — xác suất hiệu chuẩn:** `lib/analysis/labeling.ts` (ba rào chắn TP/SL/hết hạn, vào
+    lệnh ở **mở cửa nến kế**, trừ chi phí, nến chạm cả hai mức tính là thua),
+    `lib/analysis/calibration.ts` (binning + PAV đơn điệu + khoảng tin cậy Wilson + Brier; khoang
+    thiếu mẫu → **không trả số**), `backtest.ts` thêm `evaluatePerformance` + `walkForward`. UI tách
+    **"Xác suất chạm TP1 trước SL"** (hiệu chuẩn, kèm CI + cỡ mẫu) khỏi **"Điểm đồng thuận quy
+    tắc"**; disclaimer viết lại.
+  - **Đợt C — chất lượng tín hiệu:** `lib/analysis/regime.ts` (Kaufman Efficiency Ratio → chế độ
+    trend/range), gộp quy tắc theo nhóm + chiết khấu bằng chứng trùng lặp (0.5), hệ số trọng số
+    theo chế độ, ngưỡng phân loại thành **tỷ lệ** trên maxScore, hợp lưu đa khung có trọng số
+    (1h:1, 4h:2, 1D:3, 1W:4). Giữ `combineMode: 'linear'` để đối chiếu hành vi v1.
+  - Cổng đầy đủ xanh: build ✅, type-check ✅, lint 0 cảnh báo ✅, format ✅, **479 test** ✅
+    (thêm 3 file test mới: `regime.test.ts`, `labeling.test.ts`, `calibration.test.ts`).
+
 - ✅ **Tư vấn research-first** (`/consult`): kế hoạch MVP đầy đủ ở `docs/plans/xgold-mvp-plan.md` — phân loại
   hồ sơ C1+C4, MVP MoSCoW, ma trận chọn chart lib (lightweight-charts 5.2.0) + nguồn dữ liệu (Twelve Data +
   Stooq), kiến trúc ingestion (Supabase Edge Function + pg_cron). PR #1 (draft).

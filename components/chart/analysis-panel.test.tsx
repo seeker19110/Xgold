@@ -10,7 +10,10 @@ const START_TS = Date.parse('2024-01-01T00:00:00.000Z');
 
 // seed=1, 120 nến 1h giá 2000 → tín hiệu Bán đủ dữ liệu (mây/ATR/RSI đầy đủ) → trade levels đầy đủ
 // (xác nhận bằng script dò seed thủ công, xem docs/ops/COMPLETION-PLAN.md W-402).
-const CANDLES_FULL_SIGNAL = generateWalk(START_TS, HOUR_MS, 120, 2000, 1);
+// seed=23: dưới cấu hình mặc định (Đợt C: gộp nhóm + cổng chế độ) cho tín hiệu Mua VÀ giá đã ở
+// đúng phía mây → có mức tham chiếu hợp lệ. (seed=1 ban đầu rơi đúng ca F-020 — hướng tổng hợp
+// mâu thuẫn cấu trúc mây; engine nay từ chối đưa mức thay vì trả SL nằm sai phía entry.)
+const CANDLES_FULL_SIGNAL = generateWalk(START_TS, HOUR_MS, 120, 2000, 23);
 
 // seed=5, 40 nến (chưa đủ 52 nến cho Ichimoku Span B + dịch chuyển) → tín hiệu Bán nhưng
 // computeTradeLevels trả EMPTY_LEVELS (F-018 — nhất quán, không hiển thị "nửa vời").
@@ -62,7 +65,9 @@ describe('AnalysisPanel', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
     const tradeBlock = screen.getByText('Mức tham chiếu giao dịch (ADR-0011)').closest('div');
     expect(tradeBlock).not.toBeNull();
-    expect(tradeBlock!.textContent).toContain('Xác suất');
+    expect(tradeBlock!.textContent).toContain('Xác suất chạm TP1 trước SL');
+    // Đợt B: nhãn "điểm đồng thuận" tách bạch khỏi "xác suất" — hai đại lượng khác nhau.
+    expect(tradeBlock!.textContent).toContain('Điểm đồng thuận quy tắc');
     expect(tradeBlock!.textContent).not.toContain('- / -');
   });
 
@@ -73,6 +78,8 @@ describe('AnalysisPanel', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
     // ...nhưng KHÔNG hiện khối "Mức tham chiếu giao dịch" vì trade levels toàn null (F-018 đã sửa).
     expect(screen.queryByText('Mức tham chiếu giao dịch (ADR-0011)')).not.toBeInTheDocument();
+    // Đợt A: nói rõ VÌ SAO thiếu, thay vì im lặng biến mất.
+    expect(screen.getByText(/Không đưa mức tham chiếu giao dịch:/)).toBeInTheDocument();
   });
 
   it('không có nến: không crash, không hiện khối gợi ý/trade levels, vẫn hiện disclaimer', () => {
