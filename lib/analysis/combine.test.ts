@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { Candle } from '@/lib/candles/types';
 import { evaluateAt, signalEvents, suggestLatest } from '@/lib/analysis/combine';
 import { computeAnalysisInputs } from '@/lib/analysis/inputs';
+import {
+  REDUNDANCY_FACTOR,
+  REGIME_FAMILY_MULTIPLIER,
+  RULE_FAMILY,
+  type RuleFamily,
+} from '@/lib/analysis/regime';
 import type { AnalysisConfig, RuleSetting } from '@/lib/analysis/config';
 import {
   DEFAULT_ANALYSIS_PARAMS,
@@ -32,7 +38,9 @@ function testConfig(enabled: Partial<Record<RuleId, number>>, buyThreshold = 0.2
       ] satisfies [string, RuleSetting];
     }),
   ) as AnalysisConfig['rules'];
-  return { enabled: true, buyThreshold, rules };
+  // Các giá trị dưới đây tính tay theo phép cộng thẳng của v1 → cố định `linear`;
+  // chế độ `grouped` (mặc định Đợt C) có bộ test riêng ở cuối file.
+  return { enabled: true, combineMode: 'linear', regimeAware: false, buyThreshold, rules };
 }
 
 const P: AnalysisParams = {
@@ -61,7 +69,7 @@ describe('evaluateAt', () => {
     expect(buy).toMatchObject({ direction: 'buy', score: 1, maxScore: 1 });
   });
 
-  it('tổng hợp trái chiều có trọng số — tính tay: 0.2 + 0.1 − 0.15 = 0.15 < ngưỡng 0.25 → Trung lập', () => {
+  it('ngưỡng là TỶ LỆ trên maxScore: 0.15/0.45 = 0.33 ≥ 0.25 → Mua (đổi so với v1)', () => {
     // Chuỗi giảm đều [5,4,3,2,1] tại index 4:
     //  - rsi-zone (0.2): toàn giảm → RSI 0 < 30 → Mua (+0.2)
     //  - bb-touch (0.1): cửa sổ [3,2,1] basis 2, σ = √(2/3), lower ≈ 1.184; close 1 ≤ lower → Mua (+0.1)
@@ -72,7 +80,10 @@ describe('evaluateAt', () => {
     const result = evaluateAt(inputs, config, 4, P);
     expect(result.score).toBeCloseTo(0.15, 12);
     expect(result.maxScore).toBeCloseTo(0.45, 12);
-    expect(result.direction).toBe('neutral');
+    // Đợt C: `buyThreshold` được hiểu là tỷ lệ trên tổng trọng số đang bật, không còn là con số
+    // tuyệt đối. Nhờ vậy ngưỡng giữ nguyên ý nghĩa khi người dùng tắt bớt quy tắc (v1: tắt quy tắc
+    // làm ngưỡng ngầm khó lên) và trùng đơn vị với `ratio` mà bảng hiệu chuẩn xác suất dùng.
+    expect(result.direction).toBe('buy');
     expect(result.signals).toHaveLength(3);
   });
 
@@ -141,5 +152,99 @@ describe('signalEvents', () => {
 
   it('không có nến → không có sự kiện', () => {
     expect(signalEvents([], testConfig({ 'rsi-zone': 1 }), P)).toEqual([]);
+  });
+});
+
+describe('evaluateAt — chế độ `grouped` (Đợt C)', () => {
+  const GP: AnalysisParams = { ...P, regimeLookback: 4, regimeTrendThreshold: 0.3 };
+
+  /** Chỉ bật nhóm xu hướng, trọng số 0.25 / 0.1 / 0.15 (tổng 0.5, lớn nhất 0.25). */
+  function trendOnly(): AnalysisConfig {
+    return {
+      ...testConfig({ 'ma-cross': 0.25, 'price-vs-ma': 0.1, 'ichimoku-cloud': 0.15 }),
+      combineMode: 'grouped',
+      regimeAware: true,
+    };
+  }
+
+  it('chiết khấu trùng lặp: maxScore = (0.25 + 0.5×0.25) × hệ số chế độ, không phải tổng 0.5', () => {
+    // Chuỗi tăng đều → ER = 1 ≥ 0.3 → chế độ `trend` → hệ số nhóm xu hướng 1.2.
+    // Trọng số hiệu dụng = 0.25 + 0.5×(0.5 − 0.25) = 0.375 → maxScore = 0.375 × 1.2 = 0.45.
+    const rising = computeAnalysisInputs(candlesFromCloses([10, 11, 12, 13, 14]), GP);
+    const trend = evaluateAt(rising, trendOnly(), 4, GP);
+    expect(trend.regime?.regime).toBe('trend');
+    expect(trend.maxScore).toBeCloseTo(0.45, 12);
+
+    // Dao động quanh một mức → ER = 0 → `range` → hệ số nhóm xu hướng 0.6 → 0.375 × 0.6 = 0.225.
+    const choppy = computeAnalysisInputs(candlesFromCloses([10, 12, 10, 12, 10]), GP);
+    const range = evaluateAt(choppy, trendOnly(), 4, GP);
+    expect(range.regime?.regime).toBe('range');
+    expect(range.maxScore).toBeCloseTo(0.225, 12);
+  });
+
+  it('`regimeAware: false` → gộp nhóm nhưng không nhân hệ số chế độ (maxScore = 0.375)', () => {
+    const rising = computeAnalysisInputs(candlesFromCloses([10, 11, 12, 13, 14]), GP);
+    const result = evaluateAt(rising, { ...trendOnly(), regimeAware: false }, 4, GP);
+    expect(result.maxScore).toBeCloseTo(0.375, 12);
+    expect(result.regime).toBeNull();
+  });
+
+  it('`linear` giữ nguyên hành vi v1: maxScore = tổng trọng số đang bật (0.5)', () => {
+    const rising = computeAnalysisInputs(candlesFromCloses([10, 11, 12, 13, 14]), GP);
+    const result = evaluateAt(rising, { ...trendOnly(), combineMode: 'linear' }, 4, GP);
+    expect(result.maxScore).toBeCloseTo(0.5, 12);
+    expect(result.regime).toBeNull();
+  });
+
+  it('score luôn khớp công thức gộp nhóm tính lại từ chính các verdict đã trả về', () => {
+    const inputs = computeAnalysisInputs(
+      candlesFromCloses([44, 44.25, 44.5, 43.75, 44.5, 45, 44, 43, 42.5, 43]),
+      GP,
+    );
+    const config: AnalysisConfig = {
+      ...testConfig({
+        'ma-cross': 0.25,
+        'price-vs-ma': 0.1,
+        'rsi-zone': 0.15,
+        'macd-cross': 0.2,
+        'bb-touch': 0.05,
+        'ichimoku-cloud': 0.15,
+        'rsi-stack': 0.1,
+      }),
+      combineMode: 'grouped',
+      regimeAware: true,
+    };
+
+    for (let i = 0; i < 10; i++) {
+      const result = evaluateAt(inputs, config, i, GP);
+      const regime = result.regime?.regime ?? 'range';
+
+      const buckets = new Map<string, { signed: number; total: number; max: number }>();
+      for (const signal of result.signals) {
+        const family = RULE_FAMILY[signal.ruleId];
+        const b = buckets.get(family) ?? { signed: 0, total: 0, max: 0 };
+        const dir = signal.direction === 'buy' ? 1 : signal.direction === 'sell' ? -1 : 0;
+        b.signed += dir * signal.weight;
+        b.total += signal.weight;
+        b.max = Math.max(b.max, signal.weight);
+        buckets.set(family, b);
+      }
+
+      let expectedScore = 0;
+      let expectedMax = 0;
+      for (const [family, b] of buckets) {
+        const effective =
+          (b.max + REDUNDANCY_FACTOR * (b.total - b.max)) *
+          REGIME_FAMILY_MULTIPLIER[regime][family as RuleFamily];
+        expectedScore += (b.signed / b.total) * effective;
+        expectedMax += effective;
+      }
+
+      expect(result.score).toBeCloseTo(expectedScore, 12);
+      expect(result.maxScore).toBeCloseTo(expectedMax, 12);
+      // Bất biến quan trọng: điểm chuẩn hoá luôn nằm trong [−1, 1] để dùng chung ngưỡng + bảng
+      // hiệu chuẩn xác suất.
+      expect(Math.abs(result.score) / result.maxScore).toBeLessThanOrEqual(1 + 1e-12);
+    }
   });
 });

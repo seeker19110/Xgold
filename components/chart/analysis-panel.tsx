@@ -3,9 +3,12 @@
 import { useMemo } from 'react';
 import type { Candle, Timeframe } from '@/lib/candles/types';
 import {
+  buildCalibration,
+  calibratedProbability,
   computeAnalysisInputs,
   computeTradeLevels,
   DEFAULT_ANALYSIS_PARAMS,
+  labelSignals,
   RULE_IDS,
   suggestLatest,
   type AnalysisConfig,
@@ -73,6 +76,18 @@ export function AnalysisPanel({ candles, timeframe, config, onChange }: Analysis
     const inputs = computeAnalysisInputs(candles, DEFAULT_ANALYSIS_PARAMS);
     return computeTradeLevels(inputs, suggestion, candles.length - 1, DEFAULT_ANALYSIS_PARAMS);
   }, [candles, config.enabled, suggestion]);
+
+  // Đợt B — xác suất HIỆU CHUẨN: học tần suất TP1-trước-SL từ chính các tín hiệu đã đóng trong
+  // lịch sử đang tải, thay vì đổi thang tuyến tính điểm đồng thuận. Chỉ dùng nhãn của những tín
+  // hiệu đã có kết cục trong quá khứ — tín hiệu hiện tại chưa được biết kết quả, không rò rỉ.
+  const calibrated = useMemo(() => {
+    if (!config.enabled || !suggestion || suggestion.direction === 'neutral') return null;
+    if (suggestion.maxScore <= 0) return null;
+    const { labeled } = labelSignals(candles, config, DEFAULT_ANALYSIS_PARAMS);
+    const table = buildCalibration(labeled);
+    const ratio = Math.abs(suggestion.score) / suggestion.maxScore;
+    return { result: calibratedProbability(table, ratio), sampleSize: labeled.length };
+  }, [candles, config, suggestion]);
 
   function updateRule(ruleId: RuleId, patch: Partial<RuleSetting>) {
     onChange({
@@ -146,8 +161,24 @@ export function AnalysisPanel({ candles, timeframe, config, onChange }: Analysis
           <div className="border-border bg-surface rounded-md border px-3 py-2 text-sm">
             <p className="font-semibold">Mức tham chiếu giao dịch (ADR-0011)</p>
             <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
-              <dt className="text-muted-foreground">Xác suất</dt>
-              <dd>{tradeLevels.confidence.toFixed(0)}%</dd>
+              <dt className="text-muted-foreground">Xác suất chạm TP1 trước SL</dt>
+              <dd>
+                {calibrated?.result
+                  ? `${(calibrated.result.probability * 100).toFixed(0)}% (khoảng ${(
+                      calibrated.result.ciLow * 100
+                    ).toFixed(0)}–${(calibrated.result.ciHigh * 100).toFixed(0)}%, ${
+                      calibrated.result.sampleSize
+                    } lần tương tự trong lịch sử đang xem)`
+                  : `chưa đủ dữ liệu lịch sử để ước lượng (${calibrated?.sampleSize ?? 0} tín hiệu đã gán nhãn)`}
+              </dd>
+              <dt className="text-muted-foreground">Điểm đồng thuận quy tắc</dt>
+              <dd>{tradeLevels.confidence.toFixed(0)}/100</dd>
+              <dt className="text-muted-foreground">Chế độ thị trường</dt>
+              <dd>
+                {suggestion.regime
+                  ? `${suggestion.regime.regime === 'trend' ? 'Xu hướng' : 'Đi ngang'} — ${suggestion.regime.reason}`
+                  : 'không đánh giá (chế độ cộng thẳng)'}
+              </dd>
               <dt className="text-muted-foreground">Rủi ro</dt>
               <dd>{tradeLevels.risk ? RISK_LABEL[tradeLevels.risk] : '-'}</dd>
               <dt className="text-muted-foreground">Entry / SL</dt>
@@ -160,6 +191,16 @@ export function AnalysisPanel({ candles, timeframe, config, onChange }: Analysis
               </dd>
             </dl>
           </div>
+        )}
+
+      {config.enabled &&
+        suggestion &&
+        suggestion.direction !== 'neutral' &&
+        tradeLevels &&
+        tradeLevels.blockedReason !== null && (
+          <p className="text-muted-foreground text-sm">
+            Không đưa mức tham chiếu giao dịch: {tradeLevels.blockedReason}.
+          </p>
         )}
 
       {config.enabled && noRuleEnabled && (

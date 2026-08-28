@@ -15,6 +15,14 @@ export type RuleSetting = z.infer<typeof RuleSettingSchema>;
  */
 export const AnalysisConfigSchema = z.object({
   enabled: z.boolean(),
+  /**
+   * `grouped` (mặc định, Đợt C): gộp quy tắc theo nhóm, chiết khấu bằng chứng trùng lặp trong
+   * nhóm, và chỉnh trọng số nhóm theo chế độ thị trường. `linear`: cộng thẳng như v1 — giữ lại để
+   * đối chiếu và cho cấu hình cũ đã lưu vẫn chạy đúng như trước.
+   */
+  combineMode: z.enum(['grouped', 'linear']).default('grouped'),
+  /** Chỉ có tác dụng ở `grouped`: tắt để gộp nhóm nhưng KHÔNG đổi trọng số theo chế độ. */
+  regimeAware: z.boolean().default(true),
   // Ngưỡng phân loại đối xứng: score >= buyThreshold → Mua; score <= -buyThreshold → Bán.
   buyThreshold: z.number().gt(0).max(1),
   rules: z.object(
@@ -34,6 +42,8 @@ export type AnalysisConfig = z.infer<typeof AnalysisConfigSchema>;
  */
 export const DEFAULT_ANALYSIS_CONFIG: AnalysisConfig = {
   enabled: true,
+  combineMode: 'grouped',
+  regimeAware: true,
   buyThreshold: 0.25,
   rules: {
     'ma-cross': { enabled: true, weight: 0.25 },

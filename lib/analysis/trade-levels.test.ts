@@ -27,7 +27,7 @@ function suggestion(
   score: number,
   maxScore = 1,
 ): Suggestion {
-  return { ts: base.ts[0] ?? '', direction, score, maxScore, signals: [] };
+  return { ts: base.ts[0] ?? '', direction, regime: null, score, maxScore, signals: [] };
 }
 
 describe('computeTradeLevels', () => {
@@ -41,6 +41,7 @@ describe('computeTradeLevels', () => {
       sl: null,
       tp1: null,
       tp2: null,
+      blockedReason: 'Phân loại tổng hợp Trung lập — không có mức tham chiếu',
     });
   });
 
@@ -69,14 +70,15 @@ describe('computeTradeLevels', () => {
 
   it('Bán, mây mỏng + giá xa mây + RSI quá bán ngược hướng → HIGH, confidence giảm vì phân kỳ', () => {
     // ratio 0.6 → confRaw 3.6; RSI cả ba <30 (oversold) NGƯỢC hướng bán → confRaw -2 = 1.6 →
-    // confidence 50+9.6=59.6. cloud (bot100,top110): mỏng vì 10 < 0.3*40=12 → true.
-    // xa mây (bán) = bot-close = 100-5=95 > 2*40=80 → true. riskScore = 1+1+1 = 3 → HIGH.
-    // sl = 110+0.5*40=130; riskDist=|5-130|=125; tp1=5-187.5=-182.5; tp2=5-312.5=-307.5.
+    // confidence 50+9.6=59.6. cloud (bot1100,top1110): mỏng vì 10 < 0.3*40=12 → true.
+    // xa mây (bán) = bot-close = 1100-1000=100 > 2*40=80 → true. riskScore = 1+1+1 = 3 → HIGH.
+    // sl thô = 1110+0.5*40=1130, cách entry 130 > 3*40=120 → chặn: sl = 1000+120 = 1120.
+    // riskDist=120; tp1=1000-180=820; tp2=1000-300=700.
     const inputs = {
       ...base,
-      closes: [5],
+      closes: [1000],
       atr: [40],
-      ichimoku: [{ ts: base.ts[0] ?? '', spanA: 110, spanB: 100 }],
+      ichimoku: [{ ts: base.ts[0] ?? '', spanA: 1110, spanB: 1100 }],
       rsiFast: [25],
       rsi: [20],
       rsiSlow: [15],
@@ -85,9 +87,9 @@ describe('computeTradeLevels', () => {
     expect(levels.confidence).toBeCloseTo(59.6, 10);
     expect(levels.risk).toBe('HIGH');
     expect(levels.riskScore).toBe(3);
-    expect(levels.sl).toBeCloseTo(130, 10);
-    expect(levels.tp1).toBeCloseTo(-182.5, 10);
-    expect(levels.tp2).toBeCloseTo(-307.5, 10);
+    expect(levels.sl).toBeCloseTo(1120, 10);
+    expect(levels.tp1).toBeCloseTo(820, 10);
+    expect(levels.tp2).toBeCloseTo(700, 10);
   });
 
   it('Mua nhưng thiếu mây/ATR → mọi trường null kể cả confidence (F-018: nhất quán, không nửa vời)', () => {
@@ -99,5 +101,80 @@ describe('computeTradeLevels', () => {
     expect(levels.sl).toBeNull();
     expect(levels.tp1).toBeNull();
     expect(levels.tp2).toBeNull();
+  });
+
+  // --- Đợt A: ca tái hiện lỗi trước khi vá (đánh giá 2026-08-28) ---
+
+  it('F-020: Mua nhưng giá NẰM DƯỚI mây → KHÔNG trả mức giao dịch (trước đây SL nằm trên entry)', () => {
+    // Trước khi vá: sl = cloud.bot - 0.5*atr = 120-1 = 119 > entry 100 → lệnh Mua có SL trên giá
+    // vào, TP1 128.5, mà vẫn gắn nhãn "Rủi ro THẤP, xác suất 71.6%". R6 chỉ nặng 0.15/1.0 nên 6 quy
+    // tắc còn lại thừa sức đẩy score qua ngưỡng khi giá đang dưới mây.
+    const inputs = {
+      ...base,
+      closes: [100],
+      atr: [2],
+      ichimoku: [{ ts: base.ts[0] ?? '', spanA: 120, spanB: 130 }],
+      rsiFast: [50],
+      rsi: [50],
+      rsiSlow: [50],
+    };
+    const levels = computeTradeLevels(inputs, suggestion('buy', 0.6), 0, P);
+    expect(levels.entry).toBeNull();
+    expect(levels.sl).toBeNull();
+    expect(levels.confidence).toBeNull();
+    expect(levels.blockedReason).toContain('mây');
+  });
+
+  it('F-020: Bán nhưng giá NẰM TRÊN mây → KHÔNG trả mức giao dịch (đối xứng)', () => {
+    const inputs = {
+      ...base,
+      closes: [200],
+      atr: [2],
+      ichimoku: [{ ts: base.ts[0] ?? '', spanA: 120, spanB: 130 }],
+      rsiFast: [50],
+      rsi: [50],
+      rsiSlow: [50],
+    };
+    const levels = computeTradeLevels(inputs, suggestion('sell', -0.6), 0, P);
+    expect(levels.entry).toBeNull();
+    expect(levels.blockedReason).toContain('mây');
+  });
+
+  it('F-021: SL bị chặn ở MAX_SL_ATR_MULTIPLE × ATR nên TP không thể âm', () => {
+    // Bán: cloud top 110, atr 40 → sl thô = 130, cách entry 5 tới 125 (>3×ATR=120) → chặn còn 120.
+    // tp1 = 5 - 1.5*120 = -175 vẫn âm → bất biến "mọi mức > 0" chặn → không trả mức.
+    const inputs = {
+      ...base,
+      closes: [5],
+      atr: [40],
+      ichimoku: [{ ts: base.ts[0] ?? '', spanA: 110, spanB: 100 }],
+      rsiFast: [25],
+      rsi: [20],
+      rsiSlow: [15],
+    };
+    const levels = computeTradeLevels(inputs, suggestion('sell', -0.6), 0, P);
+    expect(levels.entry).toBeNull();
+    expect(levels.blockedReason).toContain('không hợp lệ');
+  });
+
+  it('F-021: SL xa hợp lý vẫn được chặn về 3×ATR, thứ tự entry/sl/tp luôn đúng chiều', () => {
+    // Mua: entry 200, cloud (bot 100, top 110) → sl thô = 100-0.5*10 = 95, cách entry 105 > 3*10=30
+    // → sl = 200-30 = 170. riskDist 30 → tp1 245, tp2 275.
+    const inputs = {
+      ...base,
+      closes: [200],
+      atr: [10],
+      ichimoku: [{ ts: base.ts[0] ?? '', spanA: 110, spanB: 100 }],
+      rsiFast: [50],
+      rsi: [50],
+      rsiSlow: [50],
+    };
+    const levels = computeTradeLevels(inputs, suggestion('buy', 0.5), 0, P);
+    expect(levels.sl).toBeCloseTo(170, 10);
+    expect(levels.tp1).toBeCloseTo(245, 10);
+    expect(levels.tp2).toBeCloseTo(275, 10);
+    expect(levels.sl!).toBeLessThan(levels.entry!);
+    expect(levels.entry!).toBeLessThan(levels.tp1!);
+    expect(levels.tp1!).toBeLessThan(levels.tp2!);
   });
 });

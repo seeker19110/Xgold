@@ -32,7 +32,9 @@ function testConfig(enabled: Partial<Record<RuleId, number>>, buyThreshold = 0.5
       ] satisfies [string, RuleSetting];
     }),
   ) as AnalysisConfig['rules'];
-  return { enabled: true, buyThreshold, rules };
+  // Các giá trị dưới đây tính tay theo phép cộng thẳng của v1 → cố định `linear`;
+  // chế độ `grouped` (mặc định Đợt C) có bộ test riêng ở cuối file.
+  return { enabled: true, combineMode: 'linear', regimeAware: false, buyThreshold, rules };
 }
 
 // Chu kỳ nhỏ để dùng được fixture 4 nến (khớp combine.test.ts).
@@ -90,43 +92,39 @@ describe('computeConfluence', () => {
     expect(result.overall).toBe('neutral');
   });
 
-  it('ngưỡng biên +0.25: meanNorm = 0.25 (đúng ngưỡng) → overall buy (>=)', () => {
-    // Chỉ rsi-zone bật, weight 1 → norm mỗi khung ∈ {-1,0,1}. Kết hợp 2 Mua (+1,+1), 1 Trung lập (0),
-    // 1 Bán (-1) trên 4 khung có suggestion → mean = (1+1+0-1)/4 = 0.25 (tính tay).
+  it('Đợt C: khung lớn có tiếng nói lớn hơn — 1W ngược chiều lật kết quả của 1h+4h', () => {
     const config = testConfig({ 'rsi-zone': 1 });
     const result = computeConfluence(
       {
-        '1h': BUY_AT_LAST, // norm +1
-        '4h': BUY_AT_LAST, // norm +1
-        '1D': NEUTRAL_AT_LAST, // norm 0
-        '1W': SELL_AT_LAST, // norm -1
+        '1h': BUY_AT_LAST, // norm +1, trọng số 1
+        '4h': BUY_AT_LAST, // norm +1, trọng số 2
+        '1D': NEUTRAL_AT_LAST, // norm 0, trọng số 3
+        '1W': SELL_AT_LAST, // norm −1, trọng số 4
       },
       config,
       P,
     );
 
-    // Xác nhận khung '1D' quả thật cho norm 0 (Trung lập) trước khi khẳng định boundary — không
-    // đoán, đọc lại giá trị thật do computeConfluence trả về.
-    const neutralVerdict = result.perTimeframe.find((v) => v.timeframe === '1D');
-    expect(neutralVerdict?.norm).toBe(0);
+    // Xác nhận khung '1D' quả thật cho norm 0 trước khi khẳng định phép tính — không đoán.
+    expect(result.perTimeframe.find((v) => v.timeframe === '1D')?.norm).toBe(0);
+    // (1·1 + 1·2 + 0·3 − 1·4) / (1+2+3+4) = −1/10 = −0.1.
+    expect(result.meanNorm).toBeCloseTo(-0.1, 12);
+    expect(result.overall).toBe('neutral');
+    // Trung bình cộng của v1 sẽ cho +0.25 → 'buy'; trọng số theo khung đảo lại kết luận đó.
+  });
+
+  it('ngưỡng biên +0.25: 1h Mua (ts 1) + 1D Trung lập (ts 3) → 1/4 = 0.25 → buy (>=)', () => {
+    const config = testConfig({ 'rsi-zone': 1 });
+    const result = computeConfluence({ '1h': BUY_AT_LAST, '1D': NEUTRAL_AT_LAST }, config, P);
 
     expect(result.meanNorm).toBeCloseTo(0.25, 12);
     expect(result.meanNorm).toBeGreaterThanOrEqual(CONFLUENCE_THRESHOLD);
     expect(result.overall).toBe('buy');
   });
 
-  it('ngưỡng biên -0.25: meanNorm = -0.25 (đúng ngưỡng) → overall sell (<=)', () => {
+  it('ngưỡng biên -0.25: 1h Bán + 1D Trung lập → −0.25 → sell (<=)', () => {
     const config = testConfig({ 'rsi-zone': 1 });
-    const result = computeConfluence(
-      {
-        '1h': SELL_AT_LAST, // norm -1
-        '4h': SELL_AT_LAST, // norm -1
-        '1D': NEUTRAL_AT_LAST, // norm 0
-        '1W': BUY_AT_LAST, // norm +1
-      },
-      config,
-      P,
-    );
+    const result = computeConfluence({ '1h': SELL_AT_LAST, '1D': NEUTRAL_AT_LAST }, config, P);
 
     expect(result.meanNorm).toBeCloseTo(-0.25, 12);
     expect(result.meanNorm).toBeLessThanOrEqual(-CONFLUENCE_THRESHOLD);
@@ -136,12 +134,22 @@ describe('computeConfluence', () => {
   it('meanNorm = 0 (giữa hai ngưỡng) → overall neutral', () => {
     const config = testConfig({ 'rsi-zone': 1 });
     const result = computeConfluence(
-      { '1h': BUY_AT_LAST, '4h': SELL_AT_LAST, '1D': [], '1W': [] },
+      { '1h': NEUTRAL_AT_LAST, '4h': NEUTRAL_AT_LAST, '1D': [], '1W': [] },
       config,
       P,
     );
 
     expect(result.meanNorm).toBe(0);
     expect(result.overall).toBe('neutral');
+  });
+
+  it('khung thiếu nến không tham gia mẫu số (không kéo trung bình về 0)', () => {
+    const config = testConfig({ 'rsi-zone': 1 });
+    const result = computeConfluence({ '1W': BUY_AT_LAST }, config, P);
+
+    // Chỉ 1W có dữ liệu → meanNorm = norm của chính nó, không bị 3 khung rỗng pha loãng.
+    expect(result.meanNorm).toBeCloseTo(1, 12);
+    expect(result.overall).toBe('buy');
+    expect(result.neutralCount).toBe(3);
   });
 });

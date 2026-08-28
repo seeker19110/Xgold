@@ -1,3 +1,4 @@
+import type { RegimeAssessment } from '@/lib/analysis/regime';
 import type { MacdPoint } from '@/lib/indicators/macd';
 import type { BollingerPoint } from '@/lib/indicators/bollinger';
 import type { IchimokuPoint } from '@/lib/indicators/ichimoku';
@@ -33,6 +34,8 @@ export interface RuleSignal extends RuleVerdict {
 export interface Suggestion {
   ts: string;
   direction: SignalDirection;
+  /** Chế độ thị trường đã dùng để chỉnh trọng số; `null` ở chế độ tổng hợp `linear`. */
+  regime: RegimeAssessment | null;
   /** Tổng có trọng số: Mua = +weight, Bán = −weight, Trung lập = 0 cho từng quy tắc đang bật. */
   score: number;
   /** Tổng trọng số các quy tắc đang bật — biên độ tối đa của |score| (0 nếu tắt hết quy tắc). */
@@ -77,6 +80,10 @@ export interface AnalysisParams {
   rsiStackSlowPeriod: number;
   /** ATR dùng chung cho `trade-levels.ts` (Entry/SL/TP, rủi ro — ADR-0011). */
   atrPeriod: number;
+  /** Số nến đo Kaufman Efficiency Ratio để nhận diện chế độ thị trường (Đợt C). */
+  regimeLookback: number;
+  /** ER ≥ ngưỡng này → coi là chế độ xu hướng; dưới → đi ngang. */
+  regimeTrendThreshold: number;
 }
 
 export const DEFAULT_ANALYSIS_PARAMS: AnalysisParams = {
@@ -100,6 +107,8 @@ export const DEFAULT_ANALYSIS_PARAMS: AnalysisParams = {
   rsiStackFastPeriod: 10,
   rsiStackSlowPeriod: 21,
   atrPeriod: 14,
+  regimeLookback: 20,
+  regimeTrendThreshold: 0.3,
 };
 
 /** Chuỗi chỉ báo đã tính sẵn cho toàn bộ nến — mỗi quy tắc đọc theo index, không tính lại. */
