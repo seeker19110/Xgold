@@ -73,7 +73,7 @@ export function rowFromCandles(
 ): ScreenerRow {
   const latest = candles.at(-1) ?? null;
   const suggestion = suggestLatest(candles, DEFAULT_ANALYSIS_CONFIG);
-  const norm = suggestion && suggestion.maxScore > 0 ? suggestion.score / suggestion.maxScore : 0;
+  const norm = suggestion?.norm ?? 0;
 
   const rsiPoint = rsi(candles, 14).at(-1) ?? null;
   const smaPoint = sma(candles, 200).at(-1) ?? null;

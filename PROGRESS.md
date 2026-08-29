@@ -18,6 +18,24 @@
 
 ## Đã xong
 
+- ✅ **Đợt 20 — Gỡ nhóm hồi quy trung bình + lớp làm trơn EMA (ADR-0015, 2026-08-29):** người dùng
+  yêu cầu gỡ tiếp `bb-touch` rồi `rsi-zone`. Đo lại cho thấy gỡ **cả nhóm** đẩy nhiễu từ 3.4% lên
+  **23.3%** (gần 7 lần) — đã trình bày số đo phản đối kèm phương án bù trước khi làm; người dùng
+  chọn **gỡ cả hai + EMA(8)**.
+  - Kết quả bản đã ship (đo lại trên chính cấu hình mặc định): tín hiệu **45.6/1000 nến**, đảo
+    chiều ≤5 nến **0.5%** (trước: 3.4%), giữ hướng **10.5 nến** (trước: 4.1).
+  - `lib/analysis/smoothing.ts` + `evaluateSeries`: làm trơn chuỗi điểm chuẩn hoá TRƯỚC khi phân
+    ngưỡng. `suggestLatest`/`signalEvents`/`labelSignals` đều đi qua đường này nên gợi ý hiển thị,
+    markers lịch sử và bảng hiệu chuẩn nói về cùng một tập tín hiệu. `Suggestion.norm` là điểm dùng
+    để phân loại — mọi nơi cần "tỷ lệ đồng thuận" phải đọc trường này thay vì tự chia `score/maxScore`.
+  - Vá luôn chi phí **O(n²)** trong rule Ichimoku (dựng lại mảng biên mây mỗi lần gọi) bằng
+    `findRecentCrossBy` — vô hại khi đánh giá một nến, nhưng `evaluateSeries` quét cả chuỗi.
+  - **Phát hiện:** cảnh báo "bb-touch là chất ổn định" ở ADR-0014 hoá ra CÓ ĐIỀU KIỆN — thứ cần giữ
+    là tiếng nói của cả nhóm, không phải quy tắc cụ thể; chuyển trọng số sang `rsi-zone` thì gỡ
+    `bb-touch` còn giảm nhiễu nhẹ (3.0%).
+  - Nợ mới: **độ trễ vào lệnh do EMA(8) chưa đo được** (cần dữ liệu thật), và ngân sách dữ liệu để
+    hiệu chuẩn căng gần gấp đôi vì tần suất tín hiệu giảm 47%.
+
 - ✅ **Đợt 19 — Gỡ quy tắc `macd-cross` (ADR-0014, 2026-08-29):** nghiên cứu lọc nhiễu đo trên 25
   đường × 400 nến cho thấy engine phát 97.5 tín hiệu/1000 nến trong khi hướng chỉ giữ 3.6 nến, và
   **16.0%** tín hiệu đảo chiều trong ≤5 nến. Bỏ `macd-cross` (trọng số 0.20, trung lập 64% thời

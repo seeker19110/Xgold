@@ -13,10 +13,9 @@ import {
   type Suggestion,
 } from '@/lib/analysis/types';
 import { computeAnalysisInputs } from '@/lib/analysis/inputs';
+import { emaSeries } from '@/lib/analysis/smoothing';
 import { evaluateMaCross } from '@/lib/analysis/rules/ma-cross';
 import { evaluatePriceVsMa } from '@/lib/analysis/rules/price-vs-ma';
-import { evaluateRsiZone } from '@/lib/analysis/rules/rsi-zone';
-import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
 import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
 import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
 import {
@@ -32,8 +31,6 @@ type RuleEvaluator = (inputs: AnalysisInputs, index: number, params: AnalysisPar
 const EVALUATORS: Record<RuleId, RuleEvaluator> = {
   'ma-cross': evaluateMaCross,
   'price-vs-ma': evaluatePriceVsMa,
-  'rsi-zone': evaluateRsiZone,
-  'bb-touch': evaluateBbTouch,
   'ichimoku-cloud': evaluateIchimokuCloud,
   'rsi-stack': evaluateRsiStack,
 };
@@ -122,14 +119,47 @@ export function evaluateAt(
     }
   }
 
-  const direction: SignalDirection =
-    maxScore > 0 && score >= config.buyThreshold * maxScore
-      ? 'buy'
-      : maxScore > 0 && score <= -config.buyThreshold * maxScore
-        ? 'sell'
-        : 'neutral';
+  const norm = maxScore > 0 ? score / maxScore : 0;
+  return {
+    ts,
+    direction: classify(norm, config.buyThreshold),
+    regime,
+    score,
+    maxScore,
+    norm,
+    signals,
+  };
+}
 
-  return { ts, direction, regime, score, maxScore, signals };
+/** Phân ngưỡng đối xứng trên điểm CHUẨN HOÁ (dải −1..+1) — dùng chung cho bản thô và bản làm trơn. */
+function classify(norm: number, threshold: number): SignalDirection {
+  return norm >= threshold ? 'buy' : norm <= -threshold ? 'sell' : 'neutral';
+}
+
+/**
+ * Đánh giá TOÀN CHUỖI, có áp lớp làm trơn EMA lên điểm chuẩn hoá trước khi phân ngưỡng
+ * (`config.smoothingSpan`, ADR-0015). Đây là đường đi chính của sản phẩm — `evaluateAt` chỉ là
+ * đánh giá THÔ tại một nến, không làm trơn được vì EMA cần trạng thái chạy dọc chuỗi.
+ *
+ * Vẫn nhân quả: EMA tại nến i chỉ dùng điểm của các nến ≤ i.
+ */
+export function evaluateSeries(
+  inputs: AnalysisInputs,
+  config: AnalysisConfig,
+  params: AnalysisParams = DEFAULT_ANALYSIS_PARAMS,
+): Suggestion[] {
+  const raw: Suggestion[] = [];
+  for (let i = 0; i < inputs.ts.length; i++) raw.push(evaluateAt(inputs, config, i, params));
+  if (config.smoothingSpan <= 1) return raw;
+
+  const smoothed = emaSeries(
+    raw.map((r) => r.norm),
+    config.smoothingSpan,
+  );
+  return raw.map((r, i) => {
+    const norm = smoothed[i] ?? r.norm;
+    return { ...r, norm, direction: classify(norm, config.buyThreshold) };
+  });
 }
 
 /** Gợi ý tại nến gần nhất (nến đã đóng cuối cùng của dữ liệu) — `null` nếu chưa có nến nào. */
@@ -140,12 +170,14 @@ export function suggestLatest(
 ): Suggestion | null {
   if (candles.length === 0) return null;
   const inputs = computeAnalysisInputs(candles, params);
-  return evaluateAt(inputs, config, candles.length - 1, params);
+  const series = evaluateSeries(inputs, config, params);
+  return series[series.length - 1] ?? null;
 }
 
 /**
  * Các thời điểm phân loại tổng hợp CHUYỂN sang Mua/Bán trong toàn lịch sử (markers + backtest).
- * Mỗi nến chỉ dùng dữ liệu ≤ nến đó (không nhìn tương lai) — cùng `evaluateAt` với gợi ý hiện tại.
+ * Mỗi nến chỉ dùng dữ liệu ≤ nến đó (không nhìn tương lai) — cùng `evaluateSeries` với gợi ý hiện
+ * tại, nên markers lịch sử và gợi ý đang hiển thị luôn khớp nhau kể cả khi bật làm trơn.
  */
 export function signalEvents(
   candles: readonly Candle[],
@@ -156,8 +188,7 @@ export function signalEvents(
   const events: SignalEvent[] = [];
   let prev: SignalDirection = 'neutral';
 
-  for (let i = 0; i < candles.length; i++) {
-    const { ts, direction, score } = evaluateAt(inputs, config, i, params);
+  for (const { ts, direction, score } of evaluateSeries(inputs, config, params)) {
     if (direction !== prev && direction !== 'neutral') {
       events.push({ ts, direction, score });
     }

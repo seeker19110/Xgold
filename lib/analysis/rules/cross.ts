@@ -30,3 +30,30 @@ export function findRecentCross(
   }
   return null;
 }
+
+/**
+ * Như `findRecentCross` nhưng đọc giá trị qua HÀM TRUY CẬP thay vì mảng dựng sẵn — dùng khi một
+ * trong hai chuỗi phải tính tại chỗ (vd biên mây Ichimoku). Tránh việc dựng lại mảng dài bằng cả
+ * lịch sử ở mỗi lần gọi, thứ biến một lần quét toàn chuỗi thành chi phí bậc hai.
+ */
+export function findRecentCrossBy(
+  a: (index: number) => number | null | undefined,
+  b: (index: number) => number | null | undefined,
+  index: number,
+  lookback: number,
+): Cross | null {
+  const from = Math.max(1, index - lookback + 1);
+  for (let j = index; j >= from; j--) {
+    const aPrev = a(j - 1);
+    const bPrev = b(j - 1);
+    const aCur = a(j);
+    const bCur = b(j);
+    if (aPrev === null || bPrev === null || aCur === null || bCur === null) continue;
+    if (aPrev === undefined || bPrev === undefined || aCur === undefined || bCur === undefined)
+      continue;
+
+    if (aPrev <= bPrev && aCur > bCur) return { at: j, direction: 'up' };
+    if (aPrev >= bPrev && aCur < bCur) return { at: j, direction: 'down' };
+  }
+  return null;
+}

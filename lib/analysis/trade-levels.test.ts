@@ -27,7 +27,15 @@ function suggestion(
   score: number,
   maxScore = 1,
 ): Suggestion {
-  return { ts: base.ts[0] ?? '', direction, regime: null, score, maxScore, signals: [] };
+  return {
+    ts: base.ts[0] ?? '',
+    direction,
+    regime: null,
+    score,
+    maxScore,
+    norm: maxScore > 0 ? score / maxScore : 0,
+    signals: [],
+  };
 }
 
 describe('computeTradeLevels', () => {

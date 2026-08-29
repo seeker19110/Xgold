@@ -1,6 +1,6 @@
 import type { Candle } from '@/lib/candles/types';
 import type { AnalysisConfig } from '@/lib/analysis/config';
-import { evaluateAt } from '@/lib/analysis/combine';
+import { evaluateSeries } from '@/lib/analysis/combine';
 import { computeAnalysisInputs } from '@/lib/analysis/inputs';
 import { computeTradeLevels, TP1_R_MULTIPLE, TP2_R_MULTIPLE } from '@/lib/analysis/trade-levels';
 import {
@@ -160,8 +160,11 @@ export function labelSignals(
   let skippedNoFuture = 0;
   let prev: SignalDirection = 'neutral';
 
-  for (let i = 0; i < candles.length; i++) {
-    const suggestion = evaluateAt(inputs, config, i, params);
+  // Dùng CÙNG đường đi với gợi ý hiển thị (`evaluateSeries` — có làm trơn nếu bật), nếu không bảng
+  // hiệu chuẩn sẽ học trên một tập tín hiệu khác với tập người dùng thực sự nhìn thấy.
+  const series = evaluateSeries(inputs, config, params);
+  for (let i = 0; i < series.length; i++) {
+    const suggestion = series[i]!;
     const { direction } = suggestion;
     const isNewSignal = direction !== prev && direction !== 'neutral';
     prev = direction;
@@ -193,7 +196,7 @@ export function labelSignals(
     const tp1 = isBuy ? entry + TP1_R_MULTIPLE * riskDist : entry - TP1_R_MULTIPLE * riskDist;
     const tp2 = isBuy ? entry + TP2_R_MULTIPLE * riskDist : entry - TP2_R_MULTIPLE * riskDist;
 
-    const ratio = suggestion.maxScore > 0 ? Math.abs(suggestion.score) / suggestion.maxScore : 0;
+    const ratio = Math.abs(suggestion.norm);
 
     const resolved = resolveBarriers(candles, i, entry, riskDist, isBuy, options);
 

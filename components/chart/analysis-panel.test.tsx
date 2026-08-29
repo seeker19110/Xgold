@@ -10,15 +10,14 @@ const START_TS = Date.parse('2024-01-01T00:00:00.000Z');
 
 // seed=1, 120 nến 1h giá 2000 → tín hiệu Bán đủ dữ liệu (mây/ATR/RSI đầy đủ) → trade levels đầy đủ
 // (xác nhận bằng script dò seed thủ công, xem docs/ops/COMPLETION-PLAN.md W-402).
-// seed=23: dưới cấu hình mặc định (Đợt C: gộp nhóm + cổng chế độ) cho tín hiệu Mua VÀ giá đã ở
-// đúng phía mây → có mức tham chiếu hợp lệ. (seed=1 ban đầu rơi đúng ca F-020 — hướng tổng hợp
-// mâu thuẫn cấu trúc mây; engine nay từ chối đưa mức thay vì trả SL nằm sai phía entry.)
-const CANDLES_FULL_SIGNAL = generateWalk(START_TS, HOUR_MS, 120, 2000, 23);
+// seed=8: dưới cấu hình mặc định (4 quy tắc + làm trơn EMA(8), ADR-0015) cho tín hiệu Mua VÀ giá
+// đã ở đúng phía mây → có mức tham chiếu hợp lệ. Fixture phải đổi mỗi khi bộ quy tắc đổi: seed cũ
+// không còn cho tín hiệu vượt ngưỡng sau khi gỡ nhóm hồi quy trung bình.
+const CANDLES_FULL_SIGNAL = generateWalk(START_TS, HOUR_MS, 120, 2000, 8);
 
-// seed=33, 30 nến (chưa đủ 52 nến cho Ichimoku Span B + dịch chuyển) → có tín hiệu Bán nhưng
+// seed=2, 30 nến (chưa đủ 52 nến cho Ichimoku Span B + dịch chuyển) → có tín hiệu Bán nhưng
 // computeTradeLevels không trả mức nào (F-018 — nhất quán, không hiển thị "nửa vời").
-// (seed=5/40 nến trước đây dựa vào macd-cross để qua ngưỡng; quy tắc đó đã gỡ ở ADR-0014.)
-const CANDLES_INSUFFICIENT_DATA = generateWalk(START_TS, HOUR_MS, 30, 2000, 33);
+const CANDLES_INSUFFICIENT_DATA = generateWalk(START_TS, HOUR_MS, 30, 2000, 2);
 
 const TIMEFRAME = '1h' as const;
 

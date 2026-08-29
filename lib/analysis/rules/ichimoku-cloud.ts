@@ -1,6 +1,6 @@
 import type { AnalysisInputs, AnalysisParams, RuleVerdict } from '@/lib/analysis/types';
 import { cloudAt } from '@/lib/indicators';
-import { findRecentCross } from '@/lib/analysis/rules/cross';
+import { findRecentCrossBy } from '@/lib/analysis/rules/cross';
 
 /**
  * R6 — Mây Ichimoku (ADR-0011): giá trên mây (đã dịch `ichimokuDisplacement` nến) → thiên Mua; giá
@@ -23,10 +23,12 @@ export function evaluateIchimokuCloud(
   const colorText = cloud.green ? 'mây xanh' : 'mây đỏ';
 
   if (close > cloud.top) {
-    const cloudTops = inputs.ichimoku.map(
-      (_, i) => cloudAt(inputs.ichimoku, i, displacement)?.top ?? null,
+    const breakout = findRecentCrossBy(
+      (i) => inputs.closes[i],
+      (i) => cloudAt(inputs.ichimoku, i, displacement)?.top ?? null,
+      index,
+      lookback,
     );
-    const breakout = findRecentCross(inputs.closes, cloudTops, index, lookback);
     const breakoutText = breakout?.direction === 'up' ? ', vừa breakout lên khỏi mây' : '';
     return {
       direction: 'buy',
@@ -34,10 +36,12 @@ export function evaluateIchimokuCloud(
     };
   }
   if (close < cloud.bot) {
-    const cloudBots = inputs.ichimoku.map(
-      (_, i) => cloudAt(inputs.ichimoku, i, displacement)?.bot ?? null,
+    const breakout = findRecentCrossBy(
+      (i) => inputs.closes[i],
+      (i) => cloudAt(inputs.ichimoku, i, displacement)?.bot ?? null,
+      index,
+      lookback,
     );
-    const breakout = findRecentCross(inputs.closes, cloudBots, index, lookback);
     const breakoutText = breakout?.direction === 'down' ? ', vừa breakout xuống dưới mây' : '';
     return {
       direction: 'sell',

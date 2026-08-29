@@ -133,7 +133,8 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
   `components/domestic-gold/`, `components/gold-compare/`, `components/screener/` (UI theo tính năng) ·
   `lib/instruments.ts` (registry mã — nguồn sự thật đa symbol: XAU/USD, XAG/USD, DXY, USD/VND) ·
   `lib/indicators/` (SMA/EMA/RSI/MACD/Bollinger/Ichimoku/ATR thuần TS) · `lib/analysis/` (engine gợi ý
-  mua/bán — `lib/analysis/rules/` chứa 6 quy tắc, `trade-levels.ts` cho Entry/SL/TP) ·
+  mua/bán — `lib/analysis/rules/` chứa 4 quy tắc, `smoothing.ts` làm trơn điểm tổng hợp,
+  `trade-levels.ts` cho Entry/SL/TP) ·
   `lib/providers/` (adapter nguồn dữ liệu quốc tế: Twelve Data, Stooq) · `lib/providers-domestic/`
   (adapter BTMC, vang.today) · `lib/candles/` (resample timeframe, `legend.ts` OHLC, `csv.ts` xuất
   CSV) · `lib/gold-compare/` (quy đổi giá vàng SJC vs thế giới) · `lib/fixtures/` (dữ liệu mẫu đa mã +

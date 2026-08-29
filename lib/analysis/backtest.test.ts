@@ -7,45 +7,49 @@ import { generateWalk } from '@/lib/fixtures/generate';
 import type { AnalysisConfig } from '@/lib/analysis/config';
 import { DEFAULT_ANALYSIS_PARAMS, RULE_IDS, type AnalysisParams } from '@/lib/analysis/types';
 
-/** Chỉ bật rsi-zone trọng số 1 — chuỗi sự kiện đã tính tay ở combine.test.ts (signalEvents). */
-const RSI_ONLY_CONFIG: AnalysisConfig = {
+/** Chỉ bật price-vs-ma trọng số 1 — chuỗi sự kiện đã tính tay ở combine.test.ts (signalEvents). */
+const PRICE_VS_MA_ONLY_CONFIG: AnalysisConfig = {
   enabled: true,
   combineMode: 'linear',
   regimeAware: false,
+  smoothingSpan: 0,
   buyThreshold: 0.5,
   rules: Object.fromEntries(
-    RULE_IDS.map((id) => [id, { enabled: id === 'rsi-zone', weight: id === 'rsi-zone' ? 1 : 0 }]),
+    RULE_IDS.map((id) => [
+      id,
+      { enabled: id === 'price-vs-ma', weight: id === 'price-vs-ma' ? 1 : 0 },
+    ]),
   ) as AnalysisConfig['rules'],
 };
 
-const P: AnalysisParams = { ...DEFAULT_ANALYSIS_PARAMS, rsiPeriod: 2 };
+const P: AnalysisParams = { ...DEFAULT_ANALYSIS_PARAMS, maSlowPeriod: 3 };
 
 function candleAt(iso: string, close: number): Candle {
   return { ts: iso, open: close, high: close, low: close, close, volume: null };
 }
 
 describe('summarizeSignalHistory', () => {
-  it('đếm đúng số sự kiện và phân bố theo năm UTC — chuỗi RSI(2) tính tay [null,null,100,25]', () => {
-    // Sự kiện: Bán tại nến thứ 3 (năm 2025), Mua tại nến thứ 4 (năm 2026) — xem combine.test.ts.
+  it('đếm đúng số sự kiện và phân bố theo năm UTC — chuỗi price-vs-ma tính tay', () => {
+    // [1,2,3,1] với SMA3: Mua tại nến thứ 3 (năm 2025), Bán tại nến thứ 4 (năm 2026).
     const candles = [
-      candleAt('2025-12-29T00:00:00.000Z', 44),
-      candleAt('2025-12-30T00:00:00.000Z', 44.25),
-      candleAt('2025-12-31T00:00:00.000Z', 44.5),
-      candleAt('2026-01-01T00:00:00.000Z', 43.75),
+      candleAt('2025-12-29T00:00:00.000Z', 1),
+      candleAt('2025-12-30T00:00:00.000Z', 2),
+      candleAt('2025-12-31T00:00:00.000Z', 3),
+      candleAt('2026-01-01T00:00:00.000Z', 1),
     ];
 
-    const summary = summarizeSignalHistory(candles, RSI_ONLY_CONFIG, P);
+    const summary = summarizeSignalHistory(candles, PRICE_VS_MA_ONLY_CONFIG, P);
     expect(summary.totalSell).toBe(1);
     expect(summary.totalBuy).toBe(1);
     expect(summary.byYear).toEqual({
-      '2025': { buy: 0, sell: 1 },
-      '2026': { buy: 1, sell: 0 },
+      '2025': { buy: 1, sell: 0 },
+      '2026': { buy: 0, sell: 1 },
     });
     expect(summary.events).toHaveLength(2);
   });
 
   it('không có nến → thống kê rỗng', () => {
-    const summary = summarizeSignalHistory([], RSI_ONLY_CONFIG, P);
+    const summary = summarizeSignalHistory([], PRICE_VS_MA_ONLY_CONFIG, P);
     expect(summary).toEqual({ totalBuy: 0, totalSell: 0, byYear: {}, events: [] });
   });
 });

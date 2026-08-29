@@ -5,8 +5,6 @@ import { DEFAULT_ANALYSIS_PARAMS, type AnalysisParams } from '@/lib/analysis/typ
 import { findRecentCross } from '@/lib/analysis/rules/cross';
 import { evaluateMaCross } from '@/lib/analysis/rules/ma-cross';
 import { evaluatePriceVsMa } from '@/lib/analysis/rules/price-vs-ma';
-import { evaluateRsiZone } from '@/lib/analysis/rules/rsi-zone';
-import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
 import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
 import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
 
@@ -28,8 +26,6 @@ const P: AnalysisParams = {
   maSlowPeriod: 3,
   maCrossLookback: 3,
   rsiPeriod: 2,
-  bbPeriod: 3,
-  bbMultiplier: 1,
   ichimokuConversionPeriod: 1,
   ichimokuBasePeriod: 2,
   ichimokuSpanBPeriod: 2,
@@ -111,62 +107,6 @@ describe('evaluatePriceVsMa (R2)', () => {
 
   it('chưa đủ dữ liệu → Trung lập', () => {
     expect(evaluatePriceVsMa(vShape, 1, P).direction).toBe('neutral');
-  });
-});
-
-describe('evaluateRsiZone (R3)', () => {
-  // RSI(2) trên [44, 44.25, 44.5, 43.75] = [null, null, 100, 25] — tính tay ở rsi.test.ts.
-  const inputs = computeAnalysisInputs(candlesFromCloses([44, 44.25, 44.5, 43.75]), P);
-
-  it('RSI 100 > 70 → Bán (quá mua); RSI 25 < 30 → Mua (quá bán)', () => {
-    const overbought = evaluateRsiZone(inputs, 2, P);
-    expect(overbought.direction).toBe('sell');
-    expect(overbought.reason).toContain('quá mua');
-
-    const oversold = evaluateRsiZone(inputs, 3, P);
-    expect(oversold.direction).toBe('buy');
-    expect(oversold.reason).toContain('quá bán');
-  });
-
-  it('giá đứng yên → RSI 50 (quy ước) → Trung lập', () => {
-    const flat = computeAnalysisInputs(candlesFromCloses([5, 5, 5, 5]), P);
-    const verdict = evaluateRsiZone(flat, 3, P);
-    expect(verdict.direction).toBe('neutral');
-    expect(verdict.reason).toContain('trung tính');
-  });
-
-  it('chưa đủ dữ liệu → Trung lập', () => {
-    expect(evaluateRsiZone(inputs, 1, P).direction).toBe('neutral');
-  });
-});
-
-describe('evaluateBbTouch (R5)', () => {
-  it('giá chạm băng trên (chuỗi tăng) → Bán; chạm băng dưới (chuỗi giảm) → Mua', () => {
-    // BB(3,1) trên [1,2,3]: basis 2, σ = √(2/3) ≈ 0.816 → upper ≈ 2.816; close 3 ≥ upper.
-    const rising = computeAnalysisInputs(candlesFromCloses([1, 2, 3]), P);
-    expect(evaluateBbTouch(rising, 2, P).direction).toBe('sell');
-
-    // BB(3,1) trên [5,4,3]: basis 4, lower ≈ 3.184; close 3 ≤ lower.
-    const falling = computeAnalysisInputs(candlesFromCloses([5, 4, 3]), P);
-    expect(evaluateBbTouch(falling, 2, P).direction).toBe('buy');
-  });
-
-  it('giá nằm trong dải → Trung lập', () => {
-    // Cửa sổ [3,2,3]: mean 8/3, σ = √(2/9) ≈ 0.471 → dải [2.195, 3.138]; close 3 nằm trong.
-    const inputs = computeAnalysisInputs(candlesFromCloses([1, 2, 3, 2, 3]), P);
-    expect(evaluateBbTouch(inputs, 4, P).direction).toBe('neutral');
-  });
-
-  it('giá đứng yên (σ = 0, hai băng trùng) → Trung lập, không thiên về phía nào', () => {
-    const flat = computeAnalysisInputs(candlesFromCloses([5, 5, 5]), P);
-    const verdict = evaluateBbTouch(flat, 2, P);
-    expect(verdict.direction).toBe('neutral');
-    expect(verdict.reason).toContain('Biên độ Bollinger bằng 0');
-  });
-
-  it('chưa đủ dữ liệu → Trung lập', () => {
-    const inputs = computeAnalysisInputs(candlesFromCloses([1, 2, 3]), P);
-    expect(evaluateBbTouch(inputs, 1, P).direction).toBe('neutral');
   });
 });
 
