@@ -15,9 +15,10 @@ const START_TS = Date.parse('2024-01-01T00:00:00.000Z');
 // mâu thuẫn cấu trúc mây; engine nay từ chối đưa mức thay vì trả SL nằm sai phía entry.)
 const CANDLES_FULL_SIGNAL = generateWalk(START_TS, HOUR_MS, 120, 2000, 23);
 
-// seed=5, 40 nến (chưa đủ 52 nến cho Ichimoku Span B + dịch chuyển) → tín hiệu Bán nhưng
-// computeTradeLevels trả EMPTY_LEVELS (F-018 — nhất quán, không hiển thị "nửa vời").
-const CANDLES_INSUFFICIENT_DATA = generateWalk(START_TS, HOUR_MS, 40, 2000, 5);
+// seed=33, 30 nến (chưa đủ 52 nến cho Ichimoku Span B + dịch chuyển) → có tín hiệu Bán nhưng
+// computeTradeLevels không trả mức nào (F-018 — nhất quán, không hiển thị "nửa vời").
+// (seed=5/40 nến trước đây dựa vào macd-cross để qua ngưỡng; quy tắc đó đã gỡ ở ADR-0014.)
+const CANDLES_INSUFFICIENT_DATA = generateWalk(START_TS, HOUR_MS, 30, 2000, 33);
 
 const TIMEFRAME = '1h' as const;
 

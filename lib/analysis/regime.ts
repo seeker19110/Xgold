@@ -15,7 +15,6 @@ export const RULE_FAMILY: Record<RuleId, RuleFamily> = {
   'ma-cross': 'trend',
   'price-vs-ma': 'trend',
   'ichimoku-cloud': 'trend',
-  'macd-cross': 'momentum',
   'rsi-stack': 'momentum',
   'rsi-zone': 'mean-reversion',
   'bb-touch': 'mean-reversion',

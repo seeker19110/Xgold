@@ -30,7 +30,6 @@ const RULE_LABELS: Record<RuleId, string> = {
   'ma-cross': 'Giao cắt MA (SMA 50/200)',
   'price-vs-ma': 'Giá so với SMA200',
   'rsi-zone': 'Vùng RSI 14 (30/70)',
-  'macd-cross': 'Giao cắt MACD (12/26/9)',
   'bb-touch': 'Chạm băng Bollinger (20, 2σ)',
   'ichimoku-cloud': 'Mây Ichimoku (9/26/52, dịch 26)',
   'rsi-stack': 'Xếp chồng RSI (10/14/21)',
@@ -57,7 +56,7 @@ const DIRECTION_BORDER: Record<SignalDirection, string> = {
 const inputClass = 'border-border bg-input text-foreground min-h-11 rounded-md border px-2 text-sm';
 
 /**
- * Khối "Phân tích kết hợp": gợi ý tổng hợp Mua/Bán/Trung lập từ 7 quy tắc rule-based
+ * Khối "Phân tích kết hợp": gợi ý tổng hợp Mua/Bán/Trung lập từ 6 quy tắc rule-based
  * (`lib/analysis/`) trên nến đã đóng gần nhất của khung đang xem, kèm lý do từng quy tắc,
  * bật/tắt + trọng số từng quy tắc, mức tham chiếu Xác suất/Rủi ro/Entry-SL-TP (ADR-0011), và
  * disclaimer bắt buộc (ADR-0007/0010/0011).

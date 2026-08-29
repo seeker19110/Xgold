@@ -36,9 +36,10 @@ export const AnalysisConfigSchema = z.object({
 export type AnalysisConfig = z.infer<typeof AnalysisConfigSchema>;
 
 /**
- * Trọng số mặc định — kế hoạch mục 4.4 gốc (R1 0.30 · R2 0.15 · R3 0.20 · R4 0.25 · R5 0.10) được
- * phân bổ lại (ADR-0011) để nhường chỗ cho R6/R7, giữ tổng = 1.0:
- * R1 0.25 · R2 0.10 · R3 0.15 · R4 0.20 · R5 0.05 · R6 0.15 · R7 0.10.
+ * Trọng số mặc định. Sau khi gỡ `macd-cross` (ADR-0014), 6 trọng số còn lại được nhân đều ×1.25 để
+ * giữ quy ước tổng = 1.0. Phép nhân này KHÔNG đổi hành vi: từ ADR-0013, ngưỡng phân loại là tỷ lệ
+ * trên `maxScore`, nên thang tuyệt đối của trọng số không còn ảnh hưởng — đã đo và xác nhận trùng
+ * khớp với phương án giữ tổng 0.8. Chỉ TỶ LỆ giữa các quy tắc mới có ý nghĩa.
  */
 export const DEFAULT_ANALYSIS_CONFIG: AnalysisConfig = {
   enabled: true,
@@ -46,12 +47,11 @@ export const DEFAULT_ANALYSIS_CONFIG: AnalysisConfig = {
   regimeAware: true,
   buyThreshold: 0.25,
   rules: {
-    'ma-cross': { enabled: true, weight: 0.25 },
-    'price-vs-ma': { enabled: true, weight: 0.1 },
-    'rsi-zone': { enabled: true, weight: 0.15 },
-    'macd-cross': { enabled: true, weight: 0.2 },
-    'bb-touch': { enabled: true, weight: 0.05 },
-    'ichimoku-cloud': { enabled: true, weight: 0.15 },
-    'rsi-stack': { enabled: true, weight: 0.1 },
+    'ma-cross': { enabled: true, weight: 0.3125 },
+    'price-vs-ma': { enabled: true, weight: 0.125 },
+    'rsi-zone': { enabled: true, weight: 0.1875 },
+    'bb-touch': { enabled: true, weight: 0.0625 },
+    'ichimoku-cloud': { enabled: true, weight: 0.1875 },
+    'rsi-stack': { enabled: true, weight: 0.125 },
   },
 };

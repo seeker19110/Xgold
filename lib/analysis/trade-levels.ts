@@ -99,7 +99,7 @@ export function computeTradeLevels(
   if (atr14 <= 0) return blocked('ATR bằng 0 — không đo được biên độ để đặt SL/TP');
 
   // F-020: SL neo vào biên mây CHỈ có nghĩa khi giá đã ở đúng phía mây so với hướng lệnh. Hướng
-  // tổng hợp đến từ 7 quy tắc, R6 (mây) chỉ nặng 0.15/1.0 — 6 quy tắc còn lại thừa sức đẩy score
+  // tổng hợp đến từ 6 quy tắc, R6 (mây) chỉ nặng 0.1875/1.0 — 5 quy tắc còn lại thừa sức đẩy score
   // qua ngưỡng khi giá đang ở phía ngược lại. Khi đó công thức cũ cho SL nằm SAI PHÍA entry (lệnh
   // Mua có SL trên giá vào). Không "sửa" bằng cách đảo dấu — cấu trúc mâu thuẫn thì không đưa mức.
   const aligned = isBuy ? close > cloud.top : close < cloud.bot;
