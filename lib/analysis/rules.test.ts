@@ -6,7 +6,6 @@ import { findRecentCross } from '@/lib/analysis/rules/cross';
 import { evaluateMaCross } from '@/lib/analysis/rules/ma-cross';
 import { evaluatePriceVsMa } from '@/lib/analysis/rules/price-vs-ma';
 import { evaluateRsiZone } from '@/lib/analysis/rules/rsi-zone';
-import { evaluateMacdCross } from '@/lib/analysis/rules/macd-cross';
 import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
 import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
 import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
@@ -29,10 +28,6 @@ const P: AnalysisParams = {
   maSlowPeriod: 3,
   maCrossLookback: 3,
   rsiPeriod: 2,
-  macdFast: 2,
-  macdSlow: 3,
-  macdSignal: 2,
-  macdCrossLookback: 5,
   bbPeriod: 3,
   bbMultiplier: 1,
   ichimokuConversionPeriod: 1,
@@ -142,30 +137,6 @@ describe('evaluateRsiZone (R3)', () => {
 
   it('chưa đủ dữ liệu → Trung lập', () => {
     expect(evaluateRsiZone(inputs, 1, P).direction).toBe('neutral');
-  });
-});
-
-describe('evaluateMacdCross (R4)', () => {
-  // MACD(2,3,2) trên [10,20,10,20,10]: macd = [null,null,−5/3,5/9,−25/27],
-  // signal = [null,null,null,−5/9,−65/81] — tính tay ở macd.test.ts.
-  // Tại index 4: macd đi từ 5/9 ≥ −5/9 xuống −75/81 < −65/81 → cắt XUỐNG, histogram −10/81 < 0.
-  const inputs = computeAnalysisInputs(candlesFromCloses([10, 20, 10, 20, 10]), P);
-
-  it('MACD cắt xuống Signal, histogram âm → Bán kèm lý do củng cố', () => {
-    const verdict = evaluateMacdCross(inputs, 4, P);
-    expect(verdict.direction).toBe('sell');
-    expect(verdict.reason).toContain('cắt xuống');
-    expect(verdict.reason).toContain('histogram âm củng cố');
-  });
-
-  it('có MACD/Signal nhưng không có giao cắt trong cửa sổ → Trung lập', () => {
-    const verdict = evaluateMacdCross(inputs, 3, P);
-    expect(verdict.direction).toBe('neutral');
-    expect(verdict.reason).toContain('Không có giao cắt');
-  });
-
-  it('Signal chưa đủ dữ liệu → Trung lập', () => {
-    expect(evaluateMacdCross(inputs, 2, P).direction).toBe('neutral');
   });
 });
 

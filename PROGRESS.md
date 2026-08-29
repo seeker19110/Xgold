@@ -18,6 +18,21 @@
 
 ## Đã xong
 
+- ✅ **Đợt 19 — Gỡ quy tắc `macd-cross` (ADR-0014, 2026-08-29):** nghiên cứu lọc nhiễu đo trên 25
+  đường × 400 nến cho thấy engine phát 97.5 tín hiệu/1000 nến trong khi hướng chỉ giữ 3.6 nến, và
+  **16.0%** tín hiệu đảo chiều trong ≤5 nến. Bỏ `macd-cross` (trọng số 0.20, trung lập 64% thời
+  gian) kéo tỷ lệ đảo chiều xuống **3.4%**, độ bền lên 4.1 nến. Đã xoá hẳn rule + tham số
+  `macd*` + trường `AnalysisInputs.macd` (chỉ báo MACD **hiển thị trên chart không đổi** — đường dẫn
+  cấu hình riêng). 6 trọng số còn lại nhân đều ×1.25 giữ tổng 1.0 — phép nhân này không đổi hành vi
+  vì ADR-0013 đã đưa ngưỡng về tỷ lệ trên `maxScore` (đã đo, trùng khớp phương án giữ tổng 0.8).
+  - **Phát hiện phương pháp luận:** độ ồn của quy tắc khi đứng riêng KHÔNG dự đoán đóng góp vào
+    nhiễu tổng hợp — `rsi-stack` đổi ý nhiều nhất (285 lần/1000 nến) nhưng bỏ nó gần như vô ích,
+    còn `ichimoku-cloud`/`bb-touch` là chất ổn định (bỏ đi thì nhiễu tăng gấp đôi). Phương án phân
+    bổ lại "đúng lý thuyết" (dồn 0.20 cho `rsi-stack` để giữ cân bằng nhóm) khi đo ra **46.2%** đảo
+    chiều — tệ gấp ba hiện trạng.
+  - Còn để ngỏ: **làm trơn EMA(5) trên điểm tổng hợp** cho kết quả tốt hơn nữa (đảo chiều 0.6%, giữ
+    hướng 5.2 nến) mà không mất quy tắc nào — ứng viên cho đợt sau, độc lập với ADR-0014.
+
 - ✅ **Đợt 18 — Nâng cấp phân tích xác suất mua/bán (ADR-0013, 2026-08-28):** đánh giá toàn bộ
   `lib/analysis/` rồi thực thi 3 đợt người dùng duyệt.
   - **Đợt A — vá lỗi thật (F-020/F-021):** `computeTradeLevels` từng trả **SL nằm sai phía entry**

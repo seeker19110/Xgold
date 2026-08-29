@@ -1,15 +1,16 @@
 import type { RegimeAssessment } from '@/lib/analysis/regime';
-import type { MacdPoint } from '@/lib/indicators/macd';
 import type { BollingerPoint } from '@/lib/indicators/bollinger';
 import type { IchimokuPoint } from '@/lib/indicators/ichimoku';
 
-/** 5 quy tắc v1 (R1–R5, `docs/plans/xgold-development-plan.md` mục 4.4) + R6/R7 (ADR-0011, mây
- * Ichimoku + xếp chồng RSI 10/14/21). */
+/**
+ * Bộ quy tắc hiện hành. Gốc là 5 quy tắc v1 (R1–R5) + R6/R7 (ADR-0011, mây Ichimoku + xếp chồng
+ * RSI 10/14/21); R4 `macd-cross` đã được GỠ BỎ ở ADR-0014 vì là nguồn nhiễu lớn nhất ở cấp tổng
+ * hợp (bỏ nó, tỷ lệ đảo chiều trong 5 nến giảm từ 16.0% xuống 3.4%).
+ */
 export const RULE_IDS = [
   'ma-cross',
   'price-vs-ma',
   'rsi-zone',
-  'macd-cross',
   'bb-touch',
   'ichimoku-cloud',
   'rsi-stack',
@@ -62,10 +63,6 @@ export interface AnalysisParams {
   rsiPeriod: number;
   rsiOversold: number;
   rsiOverbought: number;
-  macdFast: number;
-  macdSlow: number;
-  macdSignal: number;
-  macdCrossLookback: number;
   bbPeriod: number;
   bbMultiplier: number;
   /** R6 — mây Ichimoku (ADR-0011): Conversion/Base/Span B Length + độ dịch mây tới trước. */
@@ -93,10 +90,6 @@ export const DEFAULT_ANALYSIS_PARAMS: AnalysisParams = {
   rsiPeriod: 14,
   rsiOversold: 30,
   rsiOverbought: 70,
-  macdFast: 12,
-  macdSlow: 26,
-  macdSignal: 9,
-  macdCrossLookback: 5,
   bbPeriod: 20,
   bbMultiplier: 2,
   ichimokuConversionPeriod: 9,
@@ -118,7 +111,6 @@ export interface AnalysisInputs {
   maFast: (number | null)[];
   maSlow: (number | null)[];
   rsi: (number | null)[];
-  macd: MacdPoint[];
   bb: BollingerPoint[];
   /** RSI 10/21 — cùng với `rsi` (14) tạo bộ Seeker-RSI cho R7 (ADR-0011). */
   rsiFast: (number | null)[];

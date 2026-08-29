@@ -1,5 +1,5 @@
 import type { Candle } from '@/lib/candles/types';
-import { atr, bollinger, ichimokuCloud, macd, rsi, sma } from '@/lib/indicators';
+import { atr, bollinger, ichimokuCloud, rsi, sma } from '@/lib/indicators';
 import {
   DEFAULT_ANALYSIS_PARAMS,
   type AnalysisInputs,
@@ -17,7 +17,6 @@ export function computeAnalysisInputs(
     maFast: sma(candles, params.maFastPeriod).map((p) => p.value),
     maSlow: sma(candles, params.maSlowPeriod).map((p) => p.value),
     rsi: rsi(candles, params.rsiPeriod).map((p) => p.value),
-    macd: macd(candles, params.macdFast, params.macdSlow, params.macdSignal),
     bb: bollinger(candles, params.bbPeriod, params.bbMultiplier),
     rsiFast: rsi(candles, params.rsiStackFastPeriod).map((p) => p.value),
     rsiSlow: rsi(candles, params.rsiStackSlowPeriod).map((p) => p.value),

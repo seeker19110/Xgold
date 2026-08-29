@@ -16,7 +16,6 @@ import { computeAnalysisInputs } from '@/lib/analysis/inputs';
 import { evaluateMaCross } from '@/lib/analysis/rules/ma-cross';
 import { evaluatePriceVsMa } from '@/lib/analysis/rules/price-vs-ma';
 import { evaluateRsiZone } from '@/lib/analysis/rules/rsi-zone';
-import { evaluateMacdCross } from '@/lib/analysis/rules/macd-cross';
 import { evaluateBbTouch } from '@/lib/analysis/rules/bb-touch';
 import { evaluateIchimokuCloud } from '@/lib/analysis/rules/ichimoku-cloud';
 import { evaluateRsiStack } from '@/lib/analysis/rules/rsi-stack';
@@ -34,7 +33,6 @@ const EVALUATORS: Record<RuleId, RuleEvaluator> = {
   'ma-cross': evaluateMaCross,
   'price-vs-ma': evaluatePriceVsMa,
   'rsi-zone': evaluateRsiZone,
-  'macd-cross': evaluateMacdCross,
   'bb-touch': evaluateBbTouch,
   'ichimoku-cloud': evaluateIchimokuCloud,
   'rsi-stack': evaluateRsiStack,

@@ -48,9 +48,6 @@ const P: AnalysisParams = {
   maFastPeriod: 2,
   maSlowPeriod: 3,
   rsiPeriod: 2,
-  macdFast: 2,
-  macdSlow: 3,
-  macdSignal: 2,
   bbPeriod: 3,
   bbMultiplier: 1,
 };
@@ -206,7 +203,6 @@ describe('evaluateAt — chế độ `grouped` (Đợt C)', () => {
         'ma-cross': 0.25,
         'price-vs-ma': 0.1,
         'rsi-zone': 0.15,
-        'macd-cross': 0.2,
         'bb-touch': 0.05,
         'ichimoku-cloud': 0.15,
         'rsi-stack': 0.1,
