@@ -34,7 +34,7 @@ quy tắc khi đứng riêng không dự đoán được đóng góp của nó v
 
 ## Quyết định
 
-- **Gỡ bỏ hoàn toàn** quy tắc `macd-cross`: xoá `lib/analysis/rules/macd-cross.ts`, gỡ khỏi
+- **Gỡ bỏ hoàn toàn** quy tắc `macd-cross`: xoá file quy tắc của nó trong `lib/analysis/rules/`, gỡ khỏi
   `RULE_IDS`, `RULE_FAMILY`, bảng evaluator của `combine.ts`, nhãn UI, và bộ test của nó.
 - Gỡ luôn các tham số chỉ phục vụ quy tắc này (`macdFast`, `macdSlow`, `macdSignal`,
   `macdCrossLookback`) và trường `macd` trong `AnalysisInputs` — không còn nơi dùng. **Chỉ báo MACD
