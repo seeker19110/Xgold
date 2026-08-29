@@ -8,6 +8,20 @@ và dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 > Vì commit theo _conventional commits_, phần "Unreleased" có thể được sinh tự động sau
 > (ví dụ `standard-version` / `changesets`). Trước mắt cập nhật tay khi có thay đổi đáng kể.
 
+## [2.0.0](https://github.com/seeker19110/Xgold/compare/v1.6.0...v2.0.0) (2026-08-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **analysis:** hành vi phân loại Mua/Bán mặc định thay đổi với mọi mã và mọi khung.
+* **analysis:** hành vi phân loại Mua/Bán mặc định thay đổi với mọi mã và mọi khung.
+
+### Features
+
+* **analysis:** gỡ nhóm hồi quy trung bình, thêm làm trơn EMA điểm tổng hợp ([#45](https://github.com/seeker19110/Xgold/issues/45)) ([5193a2c](https://github.com/seeker19110/Xgold/commit/5193a2cb0dc950eea54967cf0fb0b6045147ff01))
+* **analysis:** gỡ quy tắc macd-cross khỏi engine phân tích ([#44](https://github.com/seeker19110/Xgold/issues/44)) ([e4f7201](https://github.com/seeker19110/Xgold/commit/e4f720147245808150db6d8da7fa653dca175c84))
+* **analysis:** hiệu chuẩn xác suất mua/bán + vá lỗi mức giao dịch ([#42](https://github.com/seeker19110/Xgold/issues/42)) ([73a3123](https://github.com/seeker19110/Xgold/commit/73a31230767529fcf9acb7e73ff25263f18cfcd6))
+
 ## [1.6.0](https://github.com/seeker19110/Xgold/compare/v1.5.1...v1.6.0) (2026-08-08)
 
 
