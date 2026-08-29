@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Candle } from '@/lib/candles/types';
-import { evaluateAt, signalEvents, suggestLatest } from '@/lib/analysis/combine';
+import { evaluateAt, evaluateSeries, signalEvents, suggestLatest } from '@/lib/analysis/combine';
 import { computeAnalysisInputs } from '@/lib/analysis/inputs';
 import {
   REDUNDANCY_FACTOR,
@@ -38,9 +38,16 @@ function testConfig(enabled: Partial<Record<RuleId, number>>, buyThreshold = 0.2
       ] satisfies [string, RuleSetting];
     }),
   ) as AnalysisConfig['rules'];
-  // Các giá trị dưới đây tính tay theo phép cộng thẳng của v1 → cố định `linear`;
-  // chế độ `grouped` (mặc định Đợt C) có bộ test riêng ở cuối file.
-  return { enabled: true, combineMode: 'linear', regimeAware: false, buyThreshold, rules };
+  // Các giá trị dưới đây tính tay theo phép cộng thẳng của v1 → cố định `linear` và TẮT làm trơn
+  // (`smoothingSpan: 0`); chế độ `grouped` và lớp làm trơn có bộ test riêng ở cuối file.
+  return {
+    enabled: true,
+    combineMode: 'linear',
+    regimeAware: false,
+    smoothingSpan: 0,
+    buyThreshold,
+    rules,
+  };
 }
 
 const P: AnalysisParams = {
@@ -48,48 +55,50 @@ const P: AnalysisParams = {
   maFastPeriod: 2,
   maSlowPeriod: 3,
   rsiPeriod: 2,
-  bbPeriod: 3,
-  bbMultiplier: 1,
 };
 
 describe('evaluateAt', () => {
   it('một quy tắc, trọng số 1: score = ±1 đúng theo hướng quy tắc', () => {
-    // RSI(2) trên [44,44.25,44.5,43.75] = [null,null,100,25] (tính tay ở rsi.test.ts).
-    const inputs = computeAnalysisInputs(candlesFromCloses([44, 44.25, 44.5, 43.75]), P);
-    const config = testConfig({ 'rsi-zone': 1 }, 0.5);
+    // price-vs-ma so giá đóng cửa với SMA3. [1,2,3,1]:
+    //   index 2 → SMA3 = (1+2+3)/3 = 2, close 3 > 2 → Mua.
+    //   index 3 → SMA3 = (2+3+1)/3 = 2, close 1 < 2 → Bán.
+    const inputs = computeAnalysisInputs(candlesFromCloses([1, 2, 3, 1]), P);
+    const config = testConfig({ 'price-vs-ma': 1 }, 0.5);
 
-    const sell = evaluateAt(inputs, config, 2, P);
-    expect(sell).toMatchObject({ direction: 'sell', score: -1, maxScore: 1 });
-    expect(sell.signals).toHaveLength(1);
+    const buy = evaluateAt(inputs, config, 2, P);
+    expect(buy).toMatchObject({ direction: 'buy', score: 1, maxScore: 1, norm: 1 });
+    expect(buy.signals).toHaveLength(1);
 
-    const buy = evaluateAt(inputs, config, 3, P);
-    expect(buy).toMatchObject({ direction: 'buy', score: 1, maxScore: 1 });
+    const sell = evaluateAt(inputs, config, 3, P);
+    expect(sell).toMatchObject({ direction: 'sell', score: -1, maxScore: 1, norm: -1 });
   });
 
   it('ngưỡng là TỶ LỆ trên maxScore: 0.15/0.45 = 0.33 ≥ 0.25 → Mua (đổi so với v1)', () => {
-    // Chuỗi giảm đều [5,4,3,2,1] tại index 4:
-    //  - rsi-zone (0.2): toàn giảm → RSI 0 < 30 → Mua (+0.2)
-    //  - bb-touch (0.1): cửa sổ [3,2,1] basis 2, σ = √(2/3), lower ≈ 1.184; close 1 ≤ lower → Mua (+0.1)
-    //  - price-vs-ma (0.15): close 1 < SMA3 = 2 → Bán (−0.15)
-    const inputs = computeAnalysisInputs(candlesFromCloses([5, 4, 3, 2, 1]), P);
-    const config = testConfig({ 'rsi-zone': 0.2, 'bb-touch': 0.1, 'price-vs-ma': 0.15 });
+    // [1,2,3] tại index 2:
+    //  - price-vs-ma (0.15): close 3 > SMA3 = 2 → Mua (+0.15)
+    //  - ma-cross (0.3): không có giao cắt SMA2/SMA3 trong cửa sổ → Trung lập (0), nhưng vẫn
+    //    đóng góp trọng số vào maxScore.
+    const inputs = computeAnalysisInputs(candlesFromCloses([1, 2, 3]), P);
+    const config = testConfig({ 'price-vs-ma': 0.15, 'ma-cross': 0.3 });
 
-    const result = evaluateAt(inputs, config, 4, P);
+    const result = evaluateAt(inputs, config, 2, P);
     expect(result.score).toBeCloseTo(0.15, 12);
     expect(result.maxScore).toBeCloseTo(0.45, 12);
     // Đợt C: `buyThreshold` được hiểu là tỷ lệ trên tổng trọng số đang bật, không còn là con số
     // tuyệt đối. Nhờ vậy ngưỡng giữ nguyên ý nghĩa khi người dùng tắt bớt quy tắc (v1: tắt quy tắc
     // làm ngưỡng ngầm khó lên) và trùng đơn vị với `ratio` mà bảng hiệu chuẩn xác suất dùng.
     expect(result.direction).toBe('buy');
-    expect(result.signals).toHaveLength(3);
+    expect(result.signals).toHaveLength(2);
   });
 
-  it('tắt quy tắc ngược chiều → score 0.3 ≥ ngưỡng 0.25 → Mua', () => {
-    const inputs = computeAnalysisInputs(candlesFromCloses([5, 4, 3, 2, 1]), P);
-    const config = testConfig({ 'rsi-zone': 0.2, 'bb-touch': 0.1 });
+  it('hai quy tắc cùng chiều → score bằng tổng trọng số, ratio = 1 → Mua', () => {
+    // [3,2,1,2,3] tại index 4: SMA2 vừa cắt lên SMA3 → ma-cross Mua; close 3 > SMA3 = 2 → Mua.
+    const inputs = computeAnalysisInputs(candlesFromCloses([3, 2, 1, 2, 3]), P);
+    const config = testConfig({ 'ma-cross': 0.2, 'price-vs-ma': 0.1 });
 
     const result = evaluateAt(inputs, config, 4, P);
     expect(result.score).toBeCloseTo(0.3, 12);
+    expect(result.maxScore).toBeCloseTo(0.3, 12);
     expect(result.direction).toBe('buy');
   });
 
@@ -100,9 +109,9 @@ describe('evaluateAt', () => {
   });
 
   it('quy tắc thiếu dữ liệu đóng góp 0 nhưng maxScore giữ nguyên trọng số (|score| chỉ giảm)', () => {
-    // index 1: RSI(2) chưa có giá trị → neutral "chưa đủ dữ liệu" → score 0, maxScore vẫn 1.
-    const inputs = computeAnalysisInputs(candlesFromCloses([44, 44.25]), P);
-    const result = evaluateAt(inputs, testConfig({ 'rsi-zone': 1 }), 1, P);
+    // index 1: SMA3 chưa có giá trị → neutral "chưa đủ dữ liệu" → score 0, maxScore vẫn 1.
+    const inputs = computeAnalysisInputs(candlesFromCloses([1, 2]), P);
+    const result = evaluateAt(inputs, testConfig({ 'price-vs-ma': 1 }), 1, P);
     expect(result).toMatchObject({ direction: 'neutral', score: 0, maxScore: 1 });
     expect(result.signals[0]?.reason).toContain('Chưa đủ dữ liệu');
   });
@@ -115,40 +124,40 @@ describe('evaluateAt', () => {
 
 describe('suggestLatest', () => {
   it('trả gợi ý tại nến cuối cùng', () => {
-    const candles = candlesFromCloses([44, 44.25, 44.5, 43.75]);
-    const result = suggestLatest(candles, testConfig({ 'rsi-zone': 1 }, 0.5), P);
+    const candles = candlesFromCloses([1, 2, 3]);
+    const result = suggestLatest(candles, testConfig({ 'price-vs-ma': 1 }, 0.5), P);
     expect(result?.direction).toBe('buy');
-    expect(result?.ts).toBe(candles[3]?.ts);
+    expect(result?.ts).toBe(candles[2]?.ts);
   });
 
   it('không có nến nào → null (không đoán)', () => {
-    expect(suggestLatest([], testConfig({ 'rsi-zone': 1 }), P)).toBeNull();
+    expect(suggestLatest([], testConfig({ 'price-vs-ma': 1 }), P)).toBeNull();
   });
 });
 
 describe('signalEvents', () => {
   it('chỉ ghi sự kiện khi phân loại CHUYỂN sang Mua/Bán — tính tay từng nến', () => {
-    // RSI(2) = [null,null,100,25]: phân loại = [neutral, neutral, sell, buy]
-    // → 2 sự kiện: sell tại nến 2, buy tại nến 3.
-    const candles = candlesFromCloses([44, 44.25, 44.5, 43.75]);
-    const events = signalEvents(candles, testConfig({ 'rsi-zone': 1 }, 0.5), P);
+    // price-vs-ma trên [1,2,3,1]: phân loại = [neutral, neutral, buy, sell]
+    // → 2 sự kiện: buy tại nến 2, sell tại nến 3.
+    const candles = candlesFromCloses([1, 2, 3, 1]);
+    const events = signalEvents(candles, testConfig({ 'price-vs-ma': 1 }, 0.5), P);
     expect(events).toEqual([
-      { ts: candles[2]?.ts, direction: 'sell', score: -1 },
-      { ts: candles[3]?.ts, direction: 'buy', score: 1 },
+      { ts: candles[2]?.ts, direction: 'buy', score: 1 },
+      { ts: candles[3]?.ts, direction: 'sell', score: -1 },
     ]);
   });
 
   it('phân loại giữ nguyên liên tiếp → không lặp sự kiện', () => {
-    // [44, 44.25, 44.5, 44.75]: RSI(2) = [null, null, 100, 100] → sell tại nến 2, nến 3 vẫn sell
+    // [1,2,3,4]: index 2 → close 3 > SMA3 2 → Mua; index 3 → close 4 > SMA3 3 → vẫn Mua
     // → chỉ 1 sự kiện.
-    const candles = candlesFromCloses([44, 44.25, 44.5, 44.75]);
-    const events = signalEvents(candles, testConfig({ 'rsi-zone': 1 }, 0.5), P);
+    const candles = candlesFromCloses([1, 2, 3, 4]);
+    const events = signalEvents(candles, testConfig({ 'price-vs-ma': 1 }, 0.5), P);
     expect(events).toHaveLength(1);
-    expect(events[0]?.direction).toBe('sell');
+    expect(events[0]?.direction).toBe('buy');
   });
 
   it('không có nến → không có sự kiện', () => {
-    expect(signalEvents([], testConfig({ 'rsi-zone': 1 }), P)).toEqual([]);
+    expect(signalEvents([], testConfig({ 'price-vs-ma': 1 }), P)).toEqual([]);
   });
 });
 
@@ -202,8 +211,6 @@ describe('evaluateAt — chế độ `grouped` (Đợt C)', () => {
       ...testConfig({
         'ma-cross': 0.25,
         'price-vs-ma': 0.1,
-        'rsi-zone': 0.15,
-        'bb-touch': 0.05,
         'ichimoku-cloud': 0.15,
         'rsi-stack': 0.1,
       }),
@@ -242,5 +249,65 @@ describe('evaluateAt — chế độ `grouped` (Đợt C)', () => {
       // hiệu chuẩn xác suất.
       expect(Math.abs(result.score) / result.maxScore).toBeLessThanOrEqual(1 + 1e-12);
     }
+  });
+});
+
+describe('evaluateSeries — lớp làm trơn EMA (ADR-0015)', () => {
+  // Chuỗi zig-zag quanh SMA3 làm price-vs-ma lật dấu liên tục — đúng dạng nhiễu mà lớp làm trơn
+  // sinh ra để xử lý.
+  const ZIGZAG = candlesFromCloses([2, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1]);
+
+  function directions(span: number): string[] {
+    const inputs = computeAnalysisInputs(ZIGZAG, P);
+    const config = { ...testConfig({ 'price-vs-ma': 1 }, 0.25), smoothingSpan: span };
+    return evaluateSeries(inputs, config, P).map((s) => s.direction);
+  }
+
+  it('tắt làm trơn → hướng lật dấu theo từng nến', () => {
+    const raw = directions(0);
+    let flips = 0;
+    for (let i = 1; i < raw.length; i++) if (raw[i] !== raw[i - 1]) flips++;
+    expect(flips).toBeGreaterThan(4);
+  });
+
+  it('bật làm trơn → số lần đổi hướng giảm hẳn', () => {
+    const raw = directions(0);
+    const smooth = directions(8);
+    const count = (xs: string[]) => {
+      let n = 0;
+      for (let i = 1; i < xs.length; i++) if (xs[i] !== xs[i - 1]) n++;
+      return n;
+    };
+    expect(count(smooth)).toBeLessThan(count(raw));
+  });
+
+  it('`norm` là bản ĐÃ làm trơn, còn `score`/`maxScore` giữ nguyên giá trị thô', () => {
+    const inputs = computeAnalysisInputs(ZIGZAG, P);
+    const config = { ...testConfig({ 'price-vs-ma': 1 }, 0.25), smoothingSpan: 8 };
+    const series = evaluateSeries(inputs, config, P);
+    const last = series[series.length - 1]!;
+    // Quy tắc đơn, trọng số 1 → score thô luôn là ±1; norm đã làm trơn thì không còn là ±1.
+    expect(Math.abs(last.score)).toBe(1);
+    expect(Math.abs(last.norm)).toBeLessThan(1);
+    // Và norm phải nằm trong dải hợp lệ để dùng chung ngưỡng + bảng hiệu chuẩn.
+    for (const s of series) expect(Math.abs(s.norm)).toBeLessThanOrEqual(1 + 1e-12);
+  });
+
+  it('NHÂN QUẢ: kết quả tại nến i không đổi khi có thêm nến phía sau', () => {
+    const config = { ...testConfig({ 'price-vs-ma': 1 }, 0.25), smoothingSpan: 8 };
+    const full = evaluateSeries(computeAnalysisInputs(ZIGZAG, P), config, P);
+    const cut = evaluateSeries(computeAnalysisInputs(ZIGZAG.slice(0, 8), P), config, P);
+    for (let i = 0; i < cut.length; i++) {
+      expect(cut[i]!.norm).toBeCloseTo(full[i]!.norm, 12);
+      expect(cut[i]!.direction).toBe(full[i]!.direction);
+    }
+  });
+
+  it('suggestLatest và signalEvents dùng CÙNG đường đi (markers khớp gợi ý đang hiện)', () => {
+    const config = { ...testConfig({ 'price-vs-ma': 1 }, 0.25), smoothingSpan: 8 };
+    const latest = suggestLatest(ZIGZAG, config, P);
+    const series = evaluateSeries(computeAnalysisInputs(ZIGZAG, P), config, P);
+    expect(latest?.direction).toBe(series[series.length - 1]?.direction);
+    expect(latest?.norm).toBeCloseTo(series[series.length - 1]!.norm, 12);
   });
 });

@@ -23,6 +23,13 @@ export const AnalysisConfigSchema = z.object({
   combineMode: z.enum(['grouped', 'linear']).default('grouped'),
   /** Chỉ có tác dụng ở `grouped`: tắt để gộp nhóm nhưng KHÔNG đổi trọng số theo chế độ. */
   regimeAware: z.boolean().default(true),
+  /**
+   * Số nến của EMA làm trơn điểm tổng hợp TRƯỚC khi phân ngưỡng (ADR-0015). 0 = tắt.
+   * Nhiễu của engine nằm ở chỗ DẤU của điểm lật qua lật lại chứ không phải điểm dao động quanh
+   * ngưỡng — nên làm trơn chính chuỗi điểm mới trúng nguyên nhân (dead band quanh ngưỡng đã đo là
+   * vô dụng, thậm chí làm tệ hơn).
+   */
+  smoothingSpan: z.number().int().min(0).max(50).default(8),
   // Ngưỡng phân loại đối xứng: score >= buyThreshold → Mua; score <= -buyThreshold → Bán.
   buyThreshold: z.number().gt(0).max(1),
   rules: z.object(
@@ -36,22 +43,21 @@ export const AnalysisConfigSchema = z.object({
 export type AnalysisConfig = z.infer<typeof AnalysisConfigSchema>;
 
 /**
- * Trọng số mặc định. Sau khi gỡ `macd-cross` (ADR-0014), 6 trọng số còn lại được nhân đều ×1.25 để
- * giữ quy ước tổng = 1.0. Phép nhân này KHÔNG đổi hành vi: từ ADR-0013, ngưỡng phân loại là tỷ lệ
- * trên `maxScore`, nên thang tuyệt đối của trọng số không còn ảnh hưởng — đã đo và xác nhận trùng
- * khớp với phương án giữ tổng 0.8. Chỉ TỶ LỆ giữa các quy tắc mới có ý nghĩa.
+ * Trọng số mặc định. Sau khi gỡ `macd-cross` (ADR-0014) rồi `rsi-zone` + `bb-touch` (ADR-0015),
+ * 4 trọng số còn lại được nhân đều ×4/3 để giữ quy ước tổng = 1.0. Phép nhân này KHÔNG đổi hành
+ * vi: từ ADR-0013, ngưỡng phân loại là tỷ lệ trên `maxScore`, nên thang tuyệt đối của trọng số
+ * không còn ảnh hưởng — chỉ TỶ LỆ giữa các quy tắc mới có ý nghĩa.
  */
 export const DEFAULT_ANALYSIS_CONFIG: AnalysisConfig = {
   enabled: true,
   combineMode: 'grouped',
   regimeAware: true,
+  smoothingSpan: 8,
   buyThreshold: 0.25,
   rules: {
-    'ma-cross': { enabled: true, weight: 0.3125 },
-    'price-vs-ma': { enabled: true, weight: 0.125 },
-    'rsi-zone': { enabled: true, weight: 0.1875 },
-    'bb-touch': { enabled: true, weight: 0.0625 },
-    'ichimoku-cloud': { enabled: true, weight: 0.1875 },
-    'rsi-stack': { enabled: true, weight: 0.125 },
+    'ma-cross': { enabled: true, weight: 0.4167 },
+    'price-vs-ma': { enabled: true, weight: 0.1667 },
+    'ichimoku-cloud': { enabled: true, weight: 0.25 },
+    'rsi-stack': { enabled: true, weight: 0.1666 },
   },
 };

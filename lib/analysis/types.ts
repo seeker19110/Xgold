@@ -1,20 +1,13 @@
 import type { RegimeAssessment } from '@/lib/analysis/regime';
-import type { BollingerPoint } from '@/lib/indicators/bollinger';
 import type { IchimokuPoint } from '@/lib/indicators/ichimoku';
 
 /**
  * Bộ quy tắc hiện hành. Gốc là 5 quy tắc v1 (R1–R5) + R6/R7 (ADR-0011, mây Ichimoku + xếp chồng
  * RSI 10/14/21); R4 `macd-cross` đã được GỠ BỎ ở ADR-0014 vì là nguồn nhiễu lớn nhất ở cấp tổng
- * hợp (bỏ nó, tỷ lệ đảo chiều trong 5 nến giảm từ 16.0% xuống 3.4%).
+ * hợp; R3 `rsi-zone` và R5 `bb-touch` — toàn bộ nhóm hồi quy trung bình — được gỡ ở ADR-0015 theo
+ * quyết định của người dùng, bù lại bằng lớp làm trơn EMA (xem `smoothing.ts`).
  */
-export const RULE_IDS = [
-  'ma-cross',
-  'price-vs-ma',
-  'rsi-zone',
-  'bb-touch',
-  'ichimoku-cloud',
-  'rsi-stack',
-] as const;
+export const RULE_IDS = ['ma-cross', 'price-vs-ma', 'ichimoku-cloud', 'rsi-stack'] as const;
 export type RuleId = (typeof RULE_IDS)[number];
 
 export type SignalDirection = 'buy' | 'sell' | 'neutral';
@@ -41,6 +34,12 @@ export interface Suggestion {
   score: number;
   /** Tổng trọng số các quy tắc đang bật — biên độ tối đa của |score| (0 nếu tắt hết quy tắc). */
   maxScore: number;
+  /**
+   * Điểm CHUẨN HOÁ dùng để phân loại, dải −1..+1. Bằng `score / maxScore` khi tắt làm trơn; khi bật
+   * (`smoothingSpan > 1`) đây là bản đã qua EMA, nên KHÁC `score / maxScore` — mọi nơi cần "tỷ lệ
+   * đồng thuận" (hiệu chuẩn xác suất, mức tham chiếu) phải đọc trường này, không tự chia lại.
+   */
+  norm: number;
   signals: RuleSignal[];
 }
 
@@ -61,10 +60,6 @@ export interface AnalysisParams {
   /** Số nến gần nhất mà một giao cắt MA còn được tính là tín hiệu hiện hành. */
   maCrossLookback: number;
   rsiPeriod: number;
-  rsiOversold: number;
-  rsiOverbought: number;
-  bbPeriod: number;
-  bbMultiplier: number;
   /** R6 — mây Ichimoku (ADR-0011): Conversion/Base/Span B Length + độ dịch mây tới trước. */
   ichimokuConversionPeriod: number;
   ichimokuBasePeriod: number;
@@ -88,10 +83,6 @@ export const DEFAULT_ANALYSIS_PARAMS: AnalysisParams = {
   maSlowPeriod: 200,
   maCrossLookback: 10,
   rsiPeriod: 14,
-  rsiOversold: 30,
-  rsiOverbought: 70,
-  bbPeriod: 20,
-  bbMultiplier: 2,
   ichimokuConversionPeriod: 9,
   ichimokuBasePeriod: 26,
   ichimokuSpanBPeriod: 52,
@@ -111,7 +102,6 @@ export interface AnalysisInputs {
   maFast: (number | null)[];
   maSlow: (number | null)[];
   rsi: (number | null)[];
-  bb: BollingerPoint[];
   /** RSI 10/21 — cùng với `rsi` (14) tạo bộ Seeker-RSI cho R7 (ADR-0011). */
   rsiFast: (number | null)[];
   rsiSlow: (number | null)[];

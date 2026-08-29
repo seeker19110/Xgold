@@ -65,7 +65,7 @@ export function computeConfluence(
   const perTimeframe: TimeframeVerdict[] = CONFLUENCE_TIMEFRAMES.map((timeframe) => {
     const candles = candlesByTimeframe[timeframe] ?? [];
     const suggestion = suggestLatest(candles, config, params);
-    const norm = suggestion && suggestion.maxScore > 0 ? suggestion.score / suggestion.maxScore : 0;
+    const norm = suggestion?.norm ?? 0;
     return { timeframe, suggestion, norm };
   });
 

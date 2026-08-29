@@ -112,7 +112,7 @@ export function computeTradeLevels(
   const r14 = inputs.rsi[index];
   const r21 = inputs.rsiSlow[index];
 
-  const ratio = suggestion.maxScore > 0 ? Math.abs(suggestion.score) / suggestion.maxScore : 0;
+  const ratio = Math.abs(suggestion.norm);
   const rsiValid = isNum(r10) && isNum(r14) && isNum(r21);
   const allOverbought =
     rsiValid && r10 > RSI_OVERBOUGHT && r14 > RSI_OVERBOUGHT && r21 > RSI_OVERBOUGHT;

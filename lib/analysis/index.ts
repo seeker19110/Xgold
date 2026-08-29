@@ -1,4 +1,5 @@
-export { evaluateAt, suggestLatest, signalEvents } from '@/lib/analysis/combine';
+export { evaluateAt, evaluateSeries, suggestLatest, signalEvents } from '@/lib/analysis/combine';
+export { emaSeries } from '@/lib/analysis/smoothing';
 export {
   summarizeSignalHistory,
   evaluatePerformance,

@@ -9,15 +9,13 @@ export type MarketRegime = 'trend' | 'range';
  *    (vd `price-vs-ma` và `ichimoku-cloud` đều là "giá đứng phía nào so với vùng giá trị").
  * 2. Cho phép đổi trọng số theo chế độ thị trường — hồi quy trung bình chỉ đáng tin khi đi ngang.
  */
-export type RuleFamily = 'trend' | 'momentum' | 'mean-reversion';
+export type RuleFamily = 'trend' | 'momentum';
 
 export const RULE_FAMILY: Record<RuleId, RuleFamily> = {
   'ma-cross': 'trend',
   'price-vs-ma': 'trend',
   'ichimoku-cloud': 'trend',
   'rsi-stack': 'momentum',
-  'rsi-zone': 'mean-reversion',
-  'bb-touch': 'mean-reversion',
 };
 
 export interface RegimeAssessment {
@@ -77,13 +75,16 @@ export function detectRegime(
 }
 
 /**
- * Hệ số nhân trọng số theo chế độ. Trong xu hướng, quy tắc hồi quy trung bình liên tục "bắt dao
- * rơi" ngược xu hướng nên bị hạ mạnh; khi đi ngang thì ngược lại, quy tắc thuận xu hướng hay bị
- * cưa. Đây là heuristic có chủ đích — đo lại bằng `walkForward` khi có dữ liệu thật.
+ * Hệ số nhân trọng số theo chế độ: khi đi ngang, quy tắc thuận xu hướng hay bị cưa nên bị hạ.
+ * Đây là heuristic có chủ đích — đo lại bằng `walkForward` khi có dữ liệu thật.
+ *
+ * Nhóm `mean-reversion` đã biến mất cùng `rsi-zone`/`bb-touch` (ADR-0015). Nếu sau này thêm lại một
+ * quy tắc hồi quy trung bình thì phải khôi phục cả nhóm lẫn hệ số của nó (bản cũ: trend 0.4 /
+ * range 1.5).
  */
 export const REGIME_FAMILY_MULTIPLIER: Record<MarketRegime, Record<RuleFamily, number>> = {
-  trend: { trend: 1.2, momentum: 1, 'mean-reversion': 0.4 },
-  range: { trend: 0.6, momentum: 1, 'mean-reversion': 1.5 },
+  trend: { trend: 1.2, momentum: 1 },
+  range: { trend: 0.6, momentum: 1 },
 };
 
 /**
