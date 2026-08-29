@@ -728,6 +728,23 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
 
 ## Tiếp theo
 
+- ⏸️ **Tối ưu trọng số theo từng khung thời gian — HOÃN có chủ đích tới khi có dữ liệu thật
+  (quyết định của người dùng, 2026-08-29).** Hai lý do đã đo, không phải suy đoán:
+  1. **Chỉ tiêu ổn định đã cạn sau EMA(8).** Dò 200 bộ trọng số ngẫu nhiên: bộ "tối ưu" theo
+     nháy-thấp-nhất đẩy `rsi-stack` về 0 và hạ tần suất còn 9.7 tín hiệu/1000 nến (nháy 0%, giữ
+     hướng 73 nến) — thoái hoá, đạt 0% bằng cách gần như không phát tín hiệu. Ngay cả khi ràng
+     buộc tần suất ≥ 30/1000 vẫn có nhiều bộ chạm 0.00%: chỉ tiêu **bão hoà**, không còn phân biệt
+     được bộ nào hơn. Mặc định hiện tại đã ở 0.54%.
+  2. **Fixture KHÔNG có cấu trúc theo khung — về mặt xây dựng.** `generateWalk` dùng `stepMs` chỉ
+     để đánh dấu thời gian; chuỗi giá sinh ra như nhau ở mọi khung. Tối ưu riêng từng khung trên
+     fixture cho ra khác biệt 100% là nhiễu.
+  - **Điều kiện mở lại:** có dữ liệu thật (backfill 1D ≥ 3 năm, 1h ≥ 2 năm, 5m ≥ 6 tháng — xem
+    ngân sách mẫu ở mục "Nợ kỹ thuật"). Khi đó tối ưu theo **kỳ vọng R** (`evaluatePerformance`),
+    KHÔNG theo tỷ lệ thắng (hạ TP là đòn bẩy giả), có **ràng buộc tần suất tín hiệu tối thiểu** để
+    tránh thoái hoá, và chấm bằng **walk-forward** để không fit vào mẫu.
+  - **Hạ tầng còn thiếu:** `ChartConfig.analysis` hiện là MỘT bộ trọng số dùng chung cho mọi khung
+    5m→1M — chưa có chiều "khung thời gian" trong schema. Phải thêm trước khi tối ưu riêng từng khung.
+
 - ✅ **Kế hoạch phát triển toàn diện sau MVP: ĐÃ CHỐT và ĐÃ THỰC THI Đợt 6–8 (2026-07-04)** —
   người dùng duyệt "theo đề xuất" cả 5 điểm mục 6 của `docs/plans/xgold-development-plan.md`;
   ADR-0007 ghi quyết định pure TS không thêm dependency. Kết quả xem mục "Đã xong" (Đợt 6–8).
@@ -791,6 +808,21 @@ sau khi merge cả 3 PR — không phát sinh phát hiện Cao mới.
 - i18n/PWA hoãn tới khi thật sự áp dụng (ngoài phạm vi MVP đã duyệt).
 
 ## Nợ kỹ thuật (chỗ "làm tạm" cần quay lại)
+
+- **Ngân sách dữ liệu để hiệu chuẩn xác suất (nghiên cứu 2026-08-29):** vùng khởi động bắt buộc là
+  **200 nến** (SMA200 chặt hơn mây Ichimoku 78). Một tháng dữ liệu cho ra: 5m → ~536 tín hiệu
+  (~87 không chồng lấn) · 1h → ~29 (~5) · **1D → 0 nến dùng được** (22 nến/tháng < 200 khởi động).
+  Cần **384 lệnh không chồng lấn** để ghim tỷ lệ thắng ở ±5 điểm phần trăm (±2.5 điểm cần ~1537)
+  → 5m ~4.5 tháng, 1h ~6.4 năm, 1D không khả thi với `maxBars = 60`. Sau ADR-0015 tần suất tín
+  hiệu giảm 47% nên các mốc này căng thêm gần gấp đôi. **Khuyến nghị backfill: 1D ≥ 3 năm, 1h ≥ 2
+  năm, 5m ≥ 6 tháng**; cần kiểm giới hạn lịch sử của gói Twelve Data trước khi lên lịch (chưa xác
+  minh được — mạng sandbox chặn).
+- **`maxBars = 60` không phụ thuộc khung thời gian** (`lib/analysis/labeling.ts`): trên 5m là 5
+  giờ, trên 1D là 60 ngày. Chân trời giữ lệnh nên đặt theo khung thay vì dùng chung một hằng số —
+  chưa sửa vì đụng ngữ nghĩa nhãn của toàn bộ bảng hiệu chuẩn.
+- **Khoảng tin cậy Wilson trong `calibration.ts` quá tự tin:** giả định các quan sát độc lập, trong
+  khi tín hiệu chồng lấn nhau (chỉ 29% số lệnh không chồng lấn). Đo được: sai số theo cụm rộng hơn
+  sai số ngây thơ 30–100% tuỳ nhánh. Cần chuyển sang sai số theo cụm và đếm **cỡ mẫu hiệu dụng**.
 
 - **Dependency lệch major (F-019, W-409, quyết định 2026-07-16):** `npm outdated` cho thấy 3 gói lệch
   major — `typescript` 6.0.3→7.0.2, `eslint` 9.39.4→10.7.0, `@types/node` 22.20.0→26.1.1. **Quyết
