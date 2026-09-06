@@ -147,9 +147,24 @@ jobs:
         run: npm ci
 
       # Cả project desktop (Desktop Chrome) lẫn mobile (Pixel 5) đều dùng Chromium.
-      - name: Cài trình duyệt Playwright
+      # Cache Chromium của Playwright (~/.cache/ms-playwright), khoá theo phiên bản @playwright/test
+      # trong package-lock.json: đổi phiên bản là tự miss. Trước đây tải lại mỗi lượt, 29 s/job.
+      - name: Cache trình duyệt Playwright
         if: steps.app.outputs.exists == 'true'
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Cài trình duyệt Playwright
+        if: steps.app.outputs.exists == 'true' && steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      # Cache trúng thì chỉ cần gói hệ thống (không tải trình duyệt).
+      - name: Cài gói hệ thống cho Chromium (cache trúng)
+        if: steps.app.outputs.exists == 'true' && steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Build
         if: steps.app.outputs.exists == 'true'

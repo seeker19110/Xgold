@@ -11,6 +11,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI, // CI không cho lọt test.only
   retries: process.env.CI ? 2 : 0,
+  // Playwright mặc định 1 worker trên CI. Runner ubuntu-latest có 4 nhân và hai project
+  // (desktop + mobile) hoàn toàn độc lập, nên 4 worker chia đều tải; đo trước khi đổi: bước E2E
+  // 80 s trong tổng 150 s của job (2026-09-06). Máy dev để undefined = Playwright tự chọn.
+  workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI ? 'html' : 'list',
 
   use: {
