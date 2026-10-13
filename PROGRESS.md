@@ -556,6 +556,14 @@
   - Cổng sau cùng (chỉ giữ `@types/node`): `build` ✅ · `type-check` ✅ · `lint` ✅ (0 cảnh báo) ·
     `format` ✅ · `test` ✅ (426/426) · `npm audit --omit=dev --audit-level=high` ✅.
 
+- ✅ **Vá advisory npm (2026-10-13):** job `quality` đỏ ở `npm audit --omit=dev --audit-level=high`
+  vì `next` 16.0.0–16.3.7 (critical), `source-map-js` ≤1.2.1 (high), `baseline-browser-mapping`
+  <2.11.0 (moderate). Nâng `next` + `eslint-config-next` 16.3.0→**16.3.8** (bản vá trong cùng nhánh
+  16.3, không nhảy 16.4); `npm update source-map-js baseline-browser-mapping` (1.2.2 / 2.11.28) —
+  `npm audit fix` gặp lỗi nội bộ npm 10.9.4 (`Cannot read properties of null (reading 'edgesOut')`)
+  nên cập nhật đích danh. Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format:check` ✅ ·
+  `test` ✅ (481/481) · audit prod ✅ (0). Gỡ chặn PR tài liệu gợi ý nâng cấp (#48).
+
 ## Đang làm
 
 - ✅ **Đợt 14 — TradingView parity: kiểu chart + tiện ích thang giá (2026-07-17, PLAN.md/ADR-0012,
