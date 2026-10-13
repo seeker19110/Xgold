@@ -4,17 +4,17 @@
 
 ## Hiện trạng đo được
 
-| HEAD đọc | Action ghim SHA | Workflow thiếu `permissions:` cấp đầu | Dependabot | LICENSE · SECURITY | File test |
-|---|---|---|---|---|---|
-| `4fdb6f5` (2026-09-06) | 0/19 | `ci.yml`, `codeql.yml`, `lighthouse-ci.yml` | npm | có · có | 78 |
+| HEAD đọc               | Action ghim SHA | Workflow thiếu `permissions:` cấp đầu       | Dependabot | LICENSE · SECURITY | File test |
+| ---------------------- | --------------- | ------------------------------------------- | ---------- | ------------------ | --------- |
+| `4fdb6f5` (2026-09-06) | 0/19            | `ci.yml`, `codeql.yml`, `lighthouse-ci.yml` | npm        | có · có            | 78        |
 
 ## Đề xuất (🔴 cao · 🟠 trung bình · 🟢 nhẹ)
 
-| # | Mức | Đề xuất | Bằng chứng | Kiểm xong khi |
-|---|---|---|---|---|
-| 1 | 🟠 | Đồng bộ lại khung (`copy-framework.sh` của projects-template): repo đã đứng yên từ 6/9 và bỏ lỡ ADR-0007…0012 | HEAD `4fdb6f5` ngày 6/9; `.claude/hooks/` không có `auto-complete-guard.sh`; `settings.json` còn `"model": "opusplan"` | Không còn `opusplan`; Stop có guard |
-| 2 | 🟠 | Ghim **19** action theo SHA và thêm ecosystem `github-actions` vào Dependabot (hiện chỉ có npm) | Ghim 0/19 | Lệnh grep `uses:` không ghim trả về 0 |
-| 3 | 🟢 | Thêm `permissions: contents: read` cấp đầu cho `ci.yml`, `codeql.yml` và `lighthouse-ci.yml` | Ba workflow này không khai `permissions:`, nên dùng quyền mặc định của repo | `grep -L "^permissions:" .github/workflows/*.yml` rỗng |
+| #   | Mức | Đề xuất                                                                                                       | Bằng chứng                                                                                                             | Kiểm xong khi                                          |
+| --- | --- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 1   | 🟠  | Đồng bộ lại khung (`copy-framework.sh` của projects-template): repo đã đứng yên từ 6/9 và bỏ lỡ ADR-0007…0012 | HEAD `4fdb6f5` ngày 6/9; `.claude/hooks/` không có `auto-complete-guard.sh`; `settings.json` còn `"model": "opusplan"` | Không còn `opusplan`; Stop có guard                    |
+| 2   | 🟠  | Ghim **19** action theo SHA và thêm ecosystem `github-actions` vào Dependabot (hiện chỉ có npm)               | Ghim 0/19                                                                                                              | Lệnh grep `uses:` không ghim trả về 0                  |
+| 3   | 🟢  | Thêm `permissions: contents: read` cấp đầu cho `ci.yml`, `codeql.yml` và `lighthouse-ci.yml`                  | Ba workflow này không khai `permissions:`, nên dùng quyền mặc định của repo                                            | `grep -L "^permissions:" .github/workflows/*.yml` rỗng |
 
 ## Giữ nguyên (điểm mạnh)
 
