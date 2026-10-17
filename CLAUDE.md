@@ -143,3 +143,5 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
 - Quy ước đặt tên file/component: tên file `kebab-case.tsx` (khớp `components/theme-toggle.tsx` sẵn có), export component `PascalCase`; route/file đặc biệt Next theo quy ước framework (`page.tsx`, `layout.tsx`...); hàm/biến `camelCase`; hằng số `UPPER_SNAKE_CASE`; bảng/cột CSDL `snake_case`.
 - Thư viện chính & lý do dùng: xem bảng đầy đủ ở `docs/plans/xgold-mvp-plan.md` mục 4 (ma trận chọn thư viện chart + nguồn dữ liệu, đã xác minh phiên bản).
 - Giai đoạn hiện tại: GĐ 4 (Phát triển) — MVP Đợt 0–4 + Đợt 5 (vàng trong nước) + Đợt 6–8 (MACD/Bollinger + engine phân tích gợi ý mua/bán) + Đợt 9 (đa symbol: XAU/USD + XAG/USD) đã xong, kiểm chứng thật bằng trình duyệt + E2E xanh (52 test desktop+mobile). Việc còn lại chỉ làm được ngoài sandbox (deploy Supabase thật) — xem `PROGRESS.md` mục "Tiếp theo"/"Nợ kỹ thuật".
+
+@AGENTS.md
