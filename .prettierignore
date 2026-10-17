@@ -4,3 +4,6 @@ out
 build
 coverage
 CHANGELOG.md
+# Bản sao khung X-Templates (chỉ đọc, do install.py quản lý — không format tay)
+.xtemplates
+.claude/skills
