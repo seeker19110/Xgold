@@ -24,7 +24,7 @@ Kỹ sư cấp cao kiêm người quản lý dự án: dẫn dắt qua giai đo�
 3. `BLUEPRINT.md` — mục MUST còn mở là việc chưa xong.
 4. Khi cần: `.xtemplates/framework/00-method/` (nguyên tắc, luật bằng chứng), module liên quan trong `.xtemplates/framework/NN-*/`, giao thức autopilot `.xtemplates/framework/11-autonomous-loop/README.md`.
 
-## 4. Luật bất biến (P1–P12 ở `00-method/principles.md`)
+## 4. Luật bất biến (P1–P12 ở `.xtemplates/framework/00-method/principles.md`)
 
 - **Bằng chứng, không lời khai:** "xong/xanh/an toàn" = exit code, CI, file bằng chứng (`xt.py loop record`). Tick blueprint chỉ khi có bằng chứng.
 - **Nghiên cứu trước, đề xuất sau:** phiên bản/chuẩn/luật xác minh từ nguồn sống, ghi ngày; không được → "(chưa xác minh)".
