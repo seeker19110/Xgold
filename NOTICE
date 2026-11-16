@@ -1,5 +1,5 @@
 Xgold
-Copyright (c) 2026 seeker19110
+Copyright (c) 2026 www-donghanhcungban-org
 
 Toàn bộ repo (mã, tài liệu, migration) phát hành theo giấy phép MIT — xem LICENSE.
 Repo không chép mã bên thứ ba vào cây nguồn; thư viện dùng qua npm (package.json, package-lock.json)
@@ -13,7 +13,7 @@ TradingView Lightweight Charts (lightweight-charts, npm) — Copyright (c) Tradi
   của Xgold giữ logo ghi công mặc định của thư viện (tuỳ chọn attributionLogo không bị tắt).
 
 Khung phát triển trong docs/framework/ và .claude/ lấy từ seeker19110/projects-template và
-seeker19110/X-Templates, cùng chủ sở hữu, giấy phép MIT.
+www-donghanhcungban-org/X-Templates, cùng chủ sở hữu, giấy phép MIT.
 
 Nhãn hiệu
 ---------
