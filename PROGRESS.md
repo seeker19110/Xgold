@@ -564,6 +564,13 @@
   nên cập nhật đích danh. Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format:check` ✅ ·
   `test` ✅ (481/481) · audit prod ✅ (0). Gỡ chặn PR tài liệu gợi ý nâng cấp (#48).
 
+- ✅ **Vá advisory npm (2026-11-16):** job `quality` đỏ ở `npm audit --omit=dev --audit-level=high`
+  vì `next` 16.0.0–16.4.0 (critical: GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r, GHSA-673q-mjm6-r5xr,
+  công bố 2026-10-22; nhánh 16.3 không có bản vá) và `zod` <4.6.6 (high: GHSA-mrhx-c7xc-m3w5).
+  Nâng `next` + `eslint-config-next` 16.3.8→**16.4.6**, `zod` 4.4.3→**4.6.7** (cùng major).
+  Cổng: `build` ✅ · `type-check` ✅ · `lint` ✅ · `format:check` ✅ · `test:coverage` ✅ (481/481) ·
+  audit prod ✅ (0). Gỡ chặn PR mở mã (#51).
+
 ## Đang làm
 
 - ✅ **Đợt 14 — TradingView parity: kiểu chart + tiện ích thang giá (2026-07-17, PLAN.md/ADR-0012,
