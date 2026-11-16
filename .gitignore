@@ -30,3 +30,6 @@ next-env.d.ts
 # Ước tính usage (tự hiệu chỉnh) + marker
 .claude/usage-budget.sh
 .claude/.winddown-nudged
+
+# X-Templates: trạng thái autopilot cục bộ
+.autopilot/

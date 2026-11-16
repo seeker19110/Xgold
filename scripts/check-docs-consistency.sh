@@ -29,18 +29,25 @@ ALLOW_MISSING_PATH=(
   # đường dẫn thật bên trong đó (dùng làm bằng chứng xác minh API, vd ADR-0012) luôn "thiếu" ở CI
   # dù đúng thật khi có cài dependency.
   "node_modules/lightweight-charts/dist/typings.d.ts"
+  # Sinh ra khi chạy skill/autopilot của khung X-Templates (AGENTS.md, .claude/skills/).
+  ".autopilot/state.json" "docs/autopilot/DECISIONS.md" "docs/autopilot/PLAN.md"
+  "docs/ops/AUDIT-STATUS.md"
 )
 
 is_in() { local needle="$1"; shift; for x in "$@"; do [ "$x" = "$needle" ] && return 0; done; return 1; }
 
+# `.xtemplates/` là khung X-Templates chép nguyên (vendored, install.py): tài liệu của nó nhắc
+# đường dẫn ở dự án đích và đã có kiểm liên kết riêng ở repo khung — không quét ở đây.
+DOC_SPECS=('*.md' '*.sh' '*.ps1' ':(exclude).xtemplates/**')
+
 grep_files() {
-  git grep -l "$@" -- '*.md' '*.sh' '*.ps1' 2>/dev/null || true
+  git grep -l "$@" -- "${DOC_SPECS[@]}" 2>/dev/null || true
 }
 
 echo "== 1. Đường dẫn file tham chiếu trong backtick =="
 mapfile -t refs < <(
   git grep -hoE '`[A-Za-z0-9_./-]+\.(md|sh|ps1|json|ts|tsx|yml|cjs|mjs)`' \
-    -- '*.md' '*.sh' '*.ps1' 2>/dev/null \
+    -- "${DOC_SPECS[@]}" 2>/dev/null \
   | tr -d '`' | sort -u
 )
 for ref in "${refs[@]}"; do
