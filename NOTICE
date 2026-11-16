@@ -1,0 +1,24 @@
+Xgold
+Copyright (c) 2026 www-donghanhcungban-org
+
+Toàn bộ repo (mã, tài liệu, migration) phát hành theo giấy phép MIT — xem LICENSE.
+Repo không chép mã bên thứ ba vào cây nguồn; thư viện dùng qua npm (package.json, package-lock.json)
+giữ giấy phép gốc của chúng.
+
+Phụ thuộc cần ghi công khi phân phối
+------------------------------------
+
+TradingView Lightweight Charts (lightweight-charts, npm) — Copyright (c) TradingView, Inc.
+  Giấy phép: Apache License 2.0. Giấy phép này yêu cầu ghi công TradingView khi dùng thư viện; chart
+  của Xgold giữ logo ghi công mặc định của thư viện (tuỳ chọn attributionLogo không bị tắt).
+
+Khung phát triển trong docs/framework/ và .claude/ lấy từ seeker19110/projects-template và
+www-donghanhcungban-org/X-Templates, cùng chủ sở hữu, giấy phép MIT.
+
+Nhãn hiệu
+---------
+
+Tên sản phẩm và tổ chức nhắc trong repo (ví dụ TradingView, Supabase, Vercel, Next.js, GitHub, Claude;
+Techcombank, VietQR, NAPAS 247 trên ảnh mã ủng hộ docs/assets/) là nhãn hiệu của chủ sở hữu tương ứng,
+chỉ dùng để gọi đúng tên. Xgold không liên kết với, không được tài trợ hay xác nhận bởi các chủ sở hữu
+đó. Dữ liệu giá hiển thị thuộc nhà cung cấp dữ liệu tương ứng.
